@@ -1,9 +1,9 @@
 # Informe técnico — TPI Food Store, primera entrega
 
 **Base de Datos II — UTN, Tecnicatura Universitaria en Programación**
-**Alumno:** Moran, Joaquín Leandro
-**Alcance:** Unidades 1, 2 y 3
-**Entorno de las evidencias:** PostgreSQL 16.15, base `tpi_food_store` creada desde cero con `ejecutar_todo.sh` (50.010 productos, 20.005 clientes, 200.006 pedidos, 399.996 líneas de detalle).
+- **Alumno:** Moran, Joaquín Leandro
+- **Alcance:** Unidades 1, 2 y 3
+- **Entorno de las evidencias:** PostgreSQL 16.15, base `tpi_food_store` creada desde cero con `ejecutar_todo.sh` (50.010 productos, 20.005 clientes, 200.006 pedidos, 399.996 líneas de detalle).
 
 ---
 

@@ -1,9 +1,9 @@
 # TPI Food Store — Base de Datos II
 
 **Tecnicatura Universitaria en Programación — UTN**
-**Alumno:** Moran, Joaquín Leandro
-**Entrega:** primera entrega parcial del TPI (Unidades 1, 2 y 3)
-**Motor:** PostgreSQL 16+ con PL/pgSQL
+- **Alumno:** Moran, Joaquín Leandro
+- **Entrega:** primera entrega parcial del TPI (Unidades 1, 2 y 3)
+- **Motor:** PostgreSQL 16+ con PL/pgSQL
 
 Food Store es un sistema de gestión de pedidos para un negocio de comidas: categorías, productos, clientes, pedidos y su detalle, más usuarios del sistema. Este repositorio reúne el modelo de datos, los scripts SQL, los objetos programables y la documentación que acreditan los nueve objetivos de la entrega. El informe técnico está en [`docs/informe_tecnico.md`](docs/informe_tecnico.md).
 

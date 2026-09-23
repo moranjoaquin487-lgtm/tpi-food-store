@@ -1,8 +1,8 @@
 # Declaración de Uso de IA (DUIA) — Resumen del proyecto
 
-**Proyecto:** TPI Food Store — Base de Datos II (UTN)
-**Alumno:** Moran, Joaquín Leandro
-**Alcance:** Unidades 1, 2 y 3, y la primera entrega del TPI
+- **Proyecto:** TPI Food Store — Base de Datos II (UTN)
+- **Alumno:** Moran, Joaquín Leandro
+- **Alcance:** Unidades 1, 2 y 3, y la primera entrega del TPI
 
 Este documento resume qué herramientas de IA se usaron en cada unidad, para qué, y qué se aceptó o descartó. El criterio fue siempre el mismo: la IA propone, y la decisión se toma con el resultado del motor (errores, planes de `EXPLAIN ANALYZE`, tiempos y comparaciones con `EXCEPT`), nunca por lo convincente de la explicación.
 
@@ -50,4 +50,4 @@ En esta entrega usé **Claude** para:
 | Carga masiva rápida | Generar el mismo volumen sin ordenar tablas por cada fila | La primera versión repetía casi siempre los mismos productos (11 distintos en 400.000 líneas); se detectó al verificar la distribución y se reescribió |
 | Redacción del documento de normalización, el informe técnico y este resumen | La organización y la redacción | Verifiqué cada dato contra los scripts y las evidencias |
 
-Todos los scripts se ejecutaron primero sobre una base de prueba, siguiendo `protocolo_seguridad.md`. El detalle completo de cada unidad está en los demás archivos de esta carpeta.
+Todos los scripts se ejecutaron primero sobre una base de prueba, siguiendo `protocolo_seguridad.md`. El detalle de cada unidad está en los informes de docs/unidad1, docs/unidad2 y docs/unidad3.
