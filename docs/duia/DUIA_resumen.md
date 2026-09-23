@@ -15,9 +15,11 @@ La IA propone y el motor decide. Ninguna propuesta se aceptó por lo convincente
 |---|---|
 | **Kiro** | Escribir la especificación antes de generar código |
 | **OpenCode** | Generar y revisar SQL a partir de esa especificación, y explicar planes de ejecución |
-| **Claude** (Anthropic) | Explicar conceptos, reconstruir escenarios de concurrencia y, en el TPI, revisar el proyecto y generar scripts |
+| **Claude** (Anthropic) | Explicar conceptos, reconstruir escenarios de concurrencia y, en el TPI, revisar el proyecto, generar scripts y redactar la documentación |
 
 ---
+
+
 
 ## Unidad 1 — Integridad, transacciones y concurrencia
 
@@ -77,8 +79,19 @@ En esta entrega usé **Claude** para:
 **Acelerar la carga masiva**
 - ✏️ La primera versión repetía casi siempre los mismos 11 productos; se detectó al revisar la distribución y se reescribió.
 
+**Ordenar y limpiar los scripts**
+- ✅ Numerarlos en orden de ejecución y reducir los comentarios a un título por archivo y una línea por bloque.
+
+**Generar y corregir las evidencias**
+- ✏️ Las evidencias de construcción (`01` a `06`) quedaban vacías porque esos scripts corrían en modo silencioso: se agregó una consulta que muestra qué quedó creado.
+- ✏️ Al correrlo en mi PC con Windows, la evidencia `08d` salió con los acentos rotos: se convirtió a UTF-8 y la espera pasó a medirse con SQL (`clock_timestamp() - now()`) en lugar de `\timing`.
+
+**Rehacer el diagrama ER**
+- ✅ Un diagrama dibujado a partir de `01_schema.sql`, con los tipos reales y la cardinalidad en pata de gallo.
+- ✏️ Pedí sacar el título, la tabla `usuario` y las referencias para dejar solo el dominio de ventas.
+
 **Redactar los documentos de la entrega**
-- ✅ La organización y la redacción. Verifiqué cada dato contra los scripts y las evidencias.
+- ✅ El informe técnico, el README, el documento de modelado y esta declaración. Verifiqué cada dato contra los scripts y contra las evidencias generadas en mi PC.
 
 ---
 
