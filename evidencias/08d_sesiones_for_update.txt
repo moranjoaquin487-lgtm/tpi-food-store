@@ -14,17 +14,17 @@ COMMIT
 
 ----- SESI√ìN B (arranca 1 s despu√©s) -----
 \timing on
-El despliegue de duraciÛn est· activado.
+El despliegue de duraci√≥n est√° activado.
 BEGIN;
 BEGIN
-DuraciÛn: 0,093 ms
+Duraci√≥n: 0,093 ms
 SELECT id_producto, stock FROM producto WHERE id_producto = 20 FOR UPDATE;
  id_producto | stock 
 -------------+-------
           20 |   164
 (1 fila)
 
-DuraciÛn: 918,565 ms
+Duraci√≥n: 918,565 ms
 COMMIT;
 COMMIT
-DuraciÛn: 0,579 ms
+Duraci√≥n: 0,579 ms

@@ -56,9 +56,9 @@ dos_sesiones 08c_sesiones_repeatable_read "La misma prueba en REPEATABLE READ" \
   "BEGIN ISOLATION LEVEL REPEATABLE READ; $CONTAR|pausa|$CONTAR COMMIT;" "$INSERTAR"
 dos_sesiones 08d_sesiones_for_update "Espera por bloqueo con FOR UPDATE" \
   "BEGIN; SELECT id_producto, stock FROM producto WHERE id_producto = 20 FOR UPDATE;|pausa|UPDATE producto SET stock = stock - 1 WHERE id_producto = 20; COMMIT;" \
-  "\\timing on
-BEGIN;
+  "BEGIN;
 SELECT id_producto, stock FROM producto WHERE id_producto = 20 FOR UPDATE;
+SELECT clock_timestamp() - now() AS tiempo_de_espera;
 COMMIT;"
 
 echo ">> Listo. Revisá la carpeta evidencias/."

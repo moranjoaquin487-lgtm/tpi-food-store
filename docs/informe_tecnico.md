@@ -3,8 +3,8 @@
 **Base de Datos II · UTN · Primera entrega (Unidades 1, 2 y 3)**
 
 - **Alumno:** Moran, Joaquín Leandro
-- **Motor:** PostgreSQL 16.15, base creada desde cero con `ejecutar_todo.sh`
-- **Volumen de prueba:** 50.010 productos · 20.005 clientes · 200.006 pedidos · 399.996 líneas de detalle
+- **Motor:** PostgreSQL 18.6 en Windows, base creada desde cero con `ejecutar_todo.sh`
+- **Volumen de prueba:** 50.010 productos · 20.005 clientes · 200.005 pedidos · 399.994 líneas de detalle
 
 ## Resumen
 
@@ -65,19 +65,19 @@ La salida completa de cada prueba está en la carpeta `evidencias/`.
 
 | Prueba | Qué se esperaba | Qué pasó | Evidencia |
 |---|---|---|---|
-| Registrar un pedido válido con `CALL` | Se crea el pedido y baja el stock | Pedido creado; stock 188 → 186 y 182 → 181 | `08_transacciones` |
+| Registrar un pedido válido con `CALL` | Se crea el pedido y baja el stock | Pedido creado; stock 167 → 165 y 149 → 148 | `08_transacciones` |
 | Registrar un pedido con un ítem sin stock | Se rechaza **todo**, incluso los ítems válidos | Error del trigger; la cantidad de pedidos y el stock no cambiaron | `08_transacciones` |
-| Aumentar un precio y hacer `ROLLBACK` | El cambio se descarta | 570,32 → 627,35 dentro de la transacción; vuelve a 570,32 | `08_transacciones` |
-| `SAVEPOINT` con un paso inválido | Se deshace solo ese paso | Stock 75 → 74 confirmado; el precio inválido se descartó | `08_transacciones` |
+| Aumentar un precio y hacer `ROLLBACK` | El cambio se descarta | 438,10 → 481,91 dentro de la transacción; vuelve a 438,10 | `08_transacciones` |
+| `SAVEPOINT` con un paso inválido | Se deshace solo ese paso | Stock 79 → 78 confirmado; el precio inválido se descartó | `08_transacciones` |
 | Contar pedidos mientras otra sesión inserta (READ COMMITTED) | El conteo cambia (lectura fantasma) | 9 → 10 | `08b_sesiones_read_committed` |
 | Lo mismo en REPEATABLE READ | El conteo no cambia | 10 → 10 | `08c_sesiones_repeatable_read` |
-| Dos sesiones piden el mismo producto con `FOR UPDATE` | La segunda espera a que la primera termine | La segunda esperó 973 ms y ya vio el stock actualizado por la primera | `08d_sesiones_for_update` |
+| Dos sesiones piden el mismo producto con `FOR UPDATE` | La segunda espera a que la primera termine | La segunda esperó 919 ms y ya vio el stock actualizado por la primera | `08d_sesiones_for_update` |
 | Vender un producto dado de baja o sin stock | Rechazo | Ambos rechazados por los triggers | `03b_pruebas_restricciones` |
 | Borrar físicamente un producto vendido | Rechazo, para proteger el historial | Error de clave foránea | `09_soft_delete` |
 | Dar de baja lógica un producto | Sale del catálogo, conserva sus ventas | 0 filas en la vista de vigentes; 8 ventas conservadas | `09_soft_delete` |
 | Subir 5 precios en un solo `UPDATE` | 5 registros de auditoría | 5 registros en `JSONB`; el trigger corrió una sola vez | `10_auditoria_precios` |
 
-**Impacto del borrado lógico en los índices.** El índice de productos por categoría solo incluye los productos activos. Cuando la consulta filtra `activo = TRUE`, el motor lo usa (2,20 ms). Cuando no filtra, no puede usarlo, recorre toda la tabla (4,24 ms) y además devuelve productos dados de baja. Olvidarse del filtro da un resultado incorrecto y más lento.
+**Impacto del borrado lógico en los índices.** El índice de productos por categoría solo incluye los productos activos. Cuando la consulta filtra `activo = TRUE`, el motor lo usa (2,02 ms). Cuando no filtra, no puede usarlo, recorre toda la tabla (3,45 ms) y además devuelve productos dados de baja. Olvidarse del filtro da un resultado incorrecto y más lento.
 
 ---
 
@@ -87,16 +87,16 @@ Cada caso se midió en la misma base con `EXPLAIN ANALYZE` (evidencia completa e
 
 | Consulta | Sin optimizar | Optimizada | Mejora |
 |---|--:|--:|---|
-| **C2** · Pedidos de un cliente | 16,27 ms · `Parallel Seq Scan` | 0,072 ms · índice por cliente | ✅ 226 veces más rápida |
-| **C3** · Pedidos en los que se vendió un producto | 37,04 ms · `Parallel Seq Scan` | 0,084 ms · índice por producto | ✅ 441 veces más rápida |
-| **C4** · Facturación por categoría y mes | 1.150 ms · calculada en el momento | 0,023 ms · vista materializada | ✅ Casi instantánea, con datos al último refresco |
-| **C1** · Productos vigentes de una categoría | 9,45 ms · `Seq Scan` | 6,56 ms · índice parcial | ⚠️ Solo 31 % |
-| **C5** · 20.000 altas de pedidos con un índice de más | 130 ms | 178 ms | ❌ 37 % más lentas |
+| **C2** · Pedidos de un cliente | 30,28 ms · `Parallel Seq Scan` | 0,067 ms · índice por cliente | ✅ 452 veces más rápida |
+| **C3** · Pedidos en los que se vendió un producto | 32,70 ms · `Parallel Seq Scan` | 0,089 ms · índice por producto | ✅ 367 veces más rápida |
+| **C4** · Facturación por categoría y mes | 432 ms · calculada en el momento | 0,024 ms · vista materializada | ✅ Casi instantánea, con datos al último refresco |
+| **C1** · Productos vigentes de una categoría | 8,20 ms · `Seq Scan` | 4,99 ms · índice parcial | ⚠️ Solo 39 % |
+| **C5** · 20.000 altas de pedidos con un índice de más | 143 ms | 262 ms | ❌ 84 % más lentas |
 
 **Qué se aprendió:**
 
 - **Un índice sirve cuando la consulta trae pocas filas.** C2 y C3 devuelven unas pocas filas de cientos de miles, y bajan de decenas de milisegundos a menos de 0,1 ms. C1 trae el 20 % de la tabla: el índice ayuda, pero poco, porque igual hay que leer miles de filas.
-- **Materializar es la mejora más grande, con un costo.** El reporte de C4 pasa de más de un segundo a instantáneo porque ya está calculado, pero muestra los datos del último `REFRESH`, no los de este momento.
+- **Materializar es la mejora más grande, con un costo.** El reporte de C4 pasa de casi medio segundo a instantáneo porque ya está calculado, pero muestra los datos del último `REFRESH`, no los de este momento.
 - **Indexar de más tiene costo.** Un índice extra sobre `pedido (id_cliente, fecha)` no aporta a las consultas, porque `id_cliente` ya está indexado, y hace más lentas todas las inserciones: cada alta tiene que actualizar un índice más.
 
 ---
