@@ -32,7 +32,7 @@ Food Store es un sistema de gestión de pedidos para un negocio de comidas: cate
 ├── docs/
 │   ├── informe_tecnico.md
 │   ├── Diagrama ER.png
-│   ├── modelo_ER_relacional_normalizacion.docx
+│   ├── modelo_ER_relacional_normalizacion.md
 │   ├── unidad1/  unidad2/  unidad3/   Informes y specs de cada unidad
 │   └── duia/                         Declaraciones de uso de IA
 └── evidencias/                 Salida real de cada script (psql -a)
@@ -69,7 +69,7 @@ En READ COMMITTED el conteo del paso 4 aumenta (lectura fantasma); en REPEATABLE
 
 | # | Objetivo | Dónde se acredita |
 |---|---|---|
-| 1 | Modelo ER | `docs/Diagrama ER.png` y Parte 1 de `docs/modelo_ER_relacional_normalizacion.docx` |
+| 1 | Modelo ER | `docs/Diagrama ER.png` y Parte 1 de `docs/modelo_ER_relacional_normalizacion.md` |
 | 2 | ER a modelo relacional (1:N y N:M) | Parte 2 del mismo documento; `detalle_pedido` en `01_schema.sql` |
 | 3 | Normalización hasta 3FN/BCNF | Parte 3 del mismo documento |
 | 4 | DDL completo | `01_schema.sql`, `04_indices.sql` |

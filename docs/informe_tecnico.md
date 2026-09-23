@@ -11,7 +11,7 @@
 
 | Unidad | Objetivo | Implementación | Archivo |
 |---|---|---|---|
-| 1 | 1. Modelo ER | 5 entidades más la asociativa Detalle; claves, cardinalidades y participación justificadas con las reglas R1 a R7 | `docs/Diagrama ER.png`, `docs/modelo_ER_relacional_normalizacion.docx` (Parte 1) |
+| 1 | 1. Modelo ER | 5 entidades más la asociativa Detalle; claves, cardinalidades y participación justificadas con las reglas R1 a R7 | `docs/Diagrama ER.png`, `docs/modelo_ER_relacional_normalizacion.md` (Parte 1) |
 | 1 | 2. ER a relacional | Las 1:N con FK en el lado N; la N:M pedido–producto con la tabla intermedia `detalle_pedido` (clave sustituta + `UNIQUE (id_pedido, id_producto)`) | Mismo documento (Parte 2), `sql/01_schema.sql` |
 | 1 | 3. Normalización | Planilla plana llevada a 1FN, 2FN, 3FN y BCNF con cada dependencia funcional explicitada | Mismo documento (Parte 3) |
 | 1 | 4. DDL | `IDENTITY`, `TIMESTAMPTZ`, `NUMERIC` para montos, `ENUM` para `forma_pago` y `rol`, PK y FK con `ON DELETE` justificado, `CHECK`, `UNIQUE`, `DEFAULT` e índices comentados | `sql/01_schema.sql` |
