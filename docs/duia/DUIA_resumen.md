@@ -1,53 +1,85 @@
-# Declaración de Uso de IA (DUIA) — Resumen del proyecto
+# Declaración de Uso de IA (DUIA)
 
-- **Proyecto:** TPI Food Store — Base de Datos II (UTN)
+**TPI Food Store · Base de Datos II · UTN**
+
 - **Alumno:** Moran, Joaquín Leandro
 - **Alcance:** Unidades 1, 2 y 3, y la primera entrega del TPI
 
-Este documento resume qué herramientas de IA se usaron en cada unidad, para qué, y qué se aceptó o descartó. El criterio fue siempre el mismo: la IA propone, y la decisión se toma con el resultado del motor (errores, planes de `EXPLAIN ANALYZE`, tiempos y comparaciones con `EXCEPT`), nunca por lo convincente de la explicación.
+## Criterio
+
+La IA propone y el motor decide. Ninguna propuesta se aceptó por lo convincente de la explicación: cada una se probó en una base de prueba y se aceptó solo si el resultado (un error esperado, un plan de ejecución, un tiempo medido o una comparación de resultados) lo confirmaba.
 
 ## Herramientas
 
-| Herramienta | Uso principal |
+| Herramienta | Para qué se usó |
 |---|---|
-| **OpenCode** (agente de terminal) | Generar y revisar SQL a partir de specs; explicar planes de ejecución |
-| **Kiro** | Escribir las specs antes de generar código; steering docs del esquema |
-| **Claude (Anthropic)** | Explicaciones conceptuales, reconstrucción de escenarios de concurrencia y, en el TPI, revisión del proyecto y generación de scripts |
+| **Kiro** | Escribir la especificación antes de generar código |
+| **OpenCode** | Generar y revisar SQL a partir de esa especificación, y explicar planes de ejecución |
+| **Claude** (Anthropic) | Explicar conceptos, reconstruir escenarios de concurrencia y, en el TPI, revisar el proyecto y generar scripts |
+
+---
 
 ## Unidad 1 — Integridad, transacciones y concurrencia
 
-| Uso | Herramienta | Qué se aceptó | Qué se corrigió o descartó |
-|---|---|---|---|
-| Restricciones de integridad desde una spec | Kiro + OpenCode (modo Plan) | Dos triggers `BEFORE ... FOR EACH ROW` (producto activo y stock suficiente), porque un `CHECK` no puede leer otra tabla | Se le pidió separar las pruebas en su propio archivo, cada caso en `BEGIN ... ROLLBACK` |
-| Escenarios de concurrencia con dos sesiones | Claude | Las secuencias de comandos y las explicaciones de cada anomalía | La IA concluyó que la espera por bloqueo no se había reproducido; se demostró lo contrario con `\timing on` (31.170 ms bloqueado contra 0,3 ms sin bloqueo). Su afirmación sobre Repeatable Read y los fantasmas se verificó aparte antes de darla por válida |
-| Lectura crítica de scripts peligrosos | Claude | Explicación de `NOT IN` frente a `NULL` y de la alternativa `NOT EXISTS` | La conclusión de que el `DELETE` del script contradice la baja lógica del proyecto salió del análisis del modelo, no de la IA |
+**Reglas de negocio** · Kiro + OpenCode
+- ✅ Dos triggers (producto activo y stock suficiente), porque un `CHECK` no puede consultar otra tabla.
+- ✏️ Se pidió separar las pruebas en su propio archivo, cada una dentro de `BEGIN ... ROLLBACK`.
+
+**Escenarios de concurrencia** · Claude
+- ✅ Las secuencias de comandos para cada sesión y la explicación de cada anomalía.
+- ❌ La IA concluyó que la espera por bloqueo no se había reproducido. Midiendo con `\timing on` se comprobó que sí: más de 30 segundos bloqueada contra 0,3 ms sin bloqueo.
+
+**Lectura crítica de scripts peligrosos** · Claude
+- ✅ La explicación de por qué `NOT IN` falla con valores `NULL` y la alternativa con `NOT EXISTS`.
 
 ## Unidad 2 — Optimización de consultas
 
-| Uso | Herramienta | Qué se aceptó | Qué se corrigió o descartó |
-|---|---|---|---|
-| Carga masiva (50.000 / 20.000 / 200.000) | OpenCode, Kiro y Claude | El diagnóstico del `InitPlan` (un subquery no correlacionado se evalúa una sola vez) y su corrección | Se descartó una fórmula de Kiro que dejaba ~3/4 de los clientes sin pedidos; un `CROSS JOIN` de OpenCode de 10.000 millones de filas; y una variante que prometía una mejora estructural y midió solo 1,4x. Se corrigieron un `LIMIT`, una confusión entre líneas y cantidad, y un casteo de `ENUM` faltante |
-| Índices a partir de planes reales | OpenCode | Los índices sobre `pedido.id_cliente` y `detalle_pedido.id_producto` (de 39 ms a 0,15 ms y de 44 ms a 0,41 ms) | Tres índices compuestos propuestos: se midieron y se descartaron por no mejorar el plan |
-| Explicación de un plan nodo por nodo | OpenCode | Cuatro afirmaciones correctas | Cinco afirmaciones incorrectas detectadas y documentadas |
-| Consultas bajo spec y reescrituras (TP4) | OpenCode | Ranking con ventana, subconsultas y la reescritura del ranking de clientes (de 1.682 ms a 1.004 ms) | La reescritura de la facturación por categoría y mes: empeoró de 1.367 ms a 3.150 ms |
+**Carga masiva** · Kiro, OpenCode y Claude
+- ✅ El diagnóstico de por qué la selección al azar no variaba entre filas: el motor evaluaba la subconsulta una sola vez.
+- ❌ Una fórmula que dejaba a tres de cada cuatro clientes sin pedidos, y un `CROSS JOIN` que generaba 10.000 millones de filas.
+- ✏️ Se corrigieron un `LIMIT`, una confusión entre líneas de pedido y unidades, y un casteo de tipo faltante.
+
+**Índices y planes de ejecución** · OpenCode
+- ✅ Los índices por cliente y por producto, que llevaron dos consultas de decenas de milisegundos a menos de medio milisegundo.
+- ❌ Tres índices compuestos: se midieron y no mejoraban ningún plan.
+- ❌ De nueve afirmaciones de la IA al explicar un plan, cinco eran incorrectas; se documentaron contra el plan real.
+
+**Consultas y reescrituras** · OpenCode
+- ✅ Rankings con funciones de ventana, subconsultas y una reescritura que mejoró un 40 %.
+- ❌ Otra reescritura con la misma idea más que duplicó el tiempo y se descartó.
 
 ## Unidad 3 — Índices, vistas y objetos programables
 
-| Uso | Herramienta | Qué se aceptó | Qué se corrigió o descartó |
-|---|---|---|---|
-| Plan de indexado | Kiro (specs) + OpenCode | Mantener los índices existentes | Los tres candidatos: dos por no mejorar y uno por redundancia (sobreindexación); uno además hacía un 62,5 % más lenta la escritura |
-| Vistas | Kiro + OpenCode | Cinco vistas, incluida la que expone `usuario` sin la contraseña | Cada vista se aceptó recién después de dar 0 filas con `EXCEPT` en los dos sentidos contra la consulta manual |
-| Vista materializada | Kiro + OpenCode | `mv_facturacion_cat_mes` con índice único para `REFRESH CONCURRENTLY` (de 870 ms a 0,07 ms) | — |
+**Plan de indexado** · Kiro + OpenCode
+- ✅ Mantener los índices existentes.
+- ❌ Los tres candidatos nuevos: dos no mejoraban ningún plan y el tercero era redundante con los índices existentes.
+
+**Vistas y vista materializada** · Kiro + OpenCode
+- ✅ Cinco vistas, entre ellas la que muestra los usuarios sin la contraseña, y la vista materializada de facturación.
+- ✏️ Cada vista se aceptó recién después de comprobar con `EXCEPT` que devolvía lo mismo que la consulta escrita a mano.
+
+---
 
 ## Primera entrega del TPI
 
 En esta entrega usé **Claude** para:
 
-| Uso | Qué acepté | Qué se corrigió o descartó |
-|---|---|---|
-| Revisar el proyecto contra los 9 objetivos | El diagnóstico de lo que faltaba: `HAVING`, un procedimiento con `CALL`, la prueba de atomicidad, `SAVEPOINT`, un trigger con tablas de transición y la evidencia del borrado lógico | — |
-| Generar los scripts `06` a `10` y `ejecutar_todo.sh` | La estructura de los scripts, el procedimiento con `JSONB` y la auditoría por sentencia | La consulta del ticket promedio comparaba contra el promedio por línea y no por pedido; `DENSE_RANK` devolvía decenas de filas por categoría y se cambió por `ROW_NUMBER`; el trigger de auditoría no puede usar `AFTER UPDATE OF precio` con tablas de transición |
-| Carga masiva rápida | Generar el mismo volumen sin ordenar tablas por cada fila | La primera versión repetía casi siempre los mismos productos (11 distintos en 400.000 líneas); se detectó al verificar la distribución y se reescribió |
-| Redacción del documento de normalización, el informe técnico y este resumen | La organización y la redacción | Verifiqué cada dato contra los scripts y las evidencias |
+**Revisar el proyecto contra los nueve objetivos**
+- ✅ El diagnóstico de lo que faltaba: `HAVING`, un procedimiento con `CALL`, las pruebas de atomicidad y `SAVEPOINT`, un trigger con tablas de transición y la evidencia del borrado lógico.
 
-Todos los scripts se ejecutaron primero sobre una base de prueba, siguiendo `protocolo_seguridad.md`. El detalle de cada unidad está en los informes de docs/unidad1, docs/unidad2 y docs/unidad3.
+**Generar los scripts 06 a 11 y `ejecutar_todo.sh`**
+- ✅ El procedimiento con `JSONB`, la auditoría por sentencia y las pruebas automáticas con dos sesiones.
+- ✏️ El ticket promedio se calculaba por línea y no por pedido.
+- ✏️ El top 3 por categoría devolvía decenas de filas por los empates: se cambió `DENSE_RANK` por `ROW_NUMBER`.
+- ✏️ El trigger de auditoría usaba una sintaxis que PostgreSQL no admite con tablas de transición.
+- ✏️ La medición del costo de sobreindexar daba resultados que se invertían entre corridas, porque los triggers tapaban el costo del índice: se pasó a una tabla sin triggers.
+
+**Acelerar la carga masiva**
+- ✏️ La primera versión repetía casi siempre los mismos 11 productos; se detectó al revisar la distribución y se reescribió.
+
+**Redactar los documentos de la entrega**
+- ✅ La organización y la redacción. Verifiqué cada dato contra los scripts y las evidencias.
+
+---
+
+✅ aceptado · ✏️ corregido · ❌ descartado

@@ -63,13 +63,13 @@ SELECT id_producto, nombre, precio FROM producto
 WHERE id_categoria = 1 AND activo = TRUE;
                                                QUERY PLAN                                               
 --------------------------------------------------------------------------------------------------------
- Bitmap Heap Scan on producto (actual time=0.206..1.625 rows=10002 loops=1)
+ Bitmap Heap Scan on producto (actual time=0.267..1.853 rows=10002 loops=1)
    Recheck Cond: ((id_categoria = 1) AND activo)
    Heap Blocks: exact=516
-   ->  Bitmap Index Scan on idx_producto_categoria_activo (actual time=0.156..0.156 rows=10003 loops=1)
+   ->  Bitmap Index Scan on idx_producto_categoria_activo (actual time=0.212..0.212 rows=10003 loops=1)
          Index Cond: (id_categoria = 1)
- Planning Time: 0.037 ms
- Execution Time: 1.961 ms
+ Planning Time: 0.039 ms
+ Execution Time: 2.195 ms
 (7 rows)
 
 -- Sin el filtro -> NO puede usarlo y recorre la tabla entera
@@ -78,10 +78,10 @@ SELECT id_producto, nombre, precio FROM producto
 WHERE id_categoria = 1;
                              QUERY PLAN                             
 --------------------------------------------------------------------
- Seq Scan on producto (actual time=0.004..3.390 rows=10002 loops=1)
+ Seq Scan on producto (actual time=0.004..3.905 rows=10002 loops=1)
    Filter: (id_categoria = 1)
    Rows Removed by Filter: 40008
- Planning Time: 0.022 ms
- Execution Time: 3.721 ms
+ Planning Time: 0.025 ms
+ Execution Time: 4.242 ms
 (5 rows)
 

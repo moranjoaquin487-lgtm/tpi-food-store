@@ -48,13 +48,13 @@ UPDATE producto SET stock = stock + 1 WHERE id_producto = 40;
 UPDATE 1
 SELECT id, cambiado_at::timestamp(0) AS cambiado_at, detalle
 FROM auditoria_precio ORDER BY id;
- id |     cambiado_at     |                                                 detalle                                                 
-----+---------------------+---------------------------------------------------------------------------------------------------------
-  1 | 2026-09-22 23:33:18 | {"antes": 522.49, "despues": 548.61, "producto": "Producto 30", "id_producto": 40, "variacion_%": 5.00}
-  2 | 2026-09-22 23:33:18 | {"antes": 93.50, "despues": 98.18, "producto": "Producto 31", "id_producto": 41, "variacion_%": 5.01}
-  3 | 2026-09-22 23:33:18 | {"antes": 506.46, "despues": 531.78, "producto": "Producto 32", "id_producto": 42, "variacion_%": 5.00}
-  4 | 2026-09-22 23:33:18 | {"antes": 193.51, "despues": 203.19, "producto": "Producto 33", "id_producto": 43, "variacion_%": 5.00}
-  5 | 2026-09-22 23:33:18 | {"antes": 403.08, "despues": 423.23, "producto": "Producto 34", "id_producto": 44, "variacion_%": 5.00}
+ id |     cambiado_at     |                                                 detalle                                                  
+----+---------------------+----------------------------------------------------------------------------------------------------------
+  1 | 2026-09-23 14:35:51 | {"antes": 970.32, "despues": 1018.84, "producto": "Producto 30", "id_producto": 40, "variacion_%": 5.00}
+  2 | 2026-09-23 14:35:51 | {"antes": 984.30, "despues": 1033.52, "producto": "Producto 31", "id_producto": 41, "variacion_%": 5.00}
+  3 | 2026-09-23 14:35:51 | {"antes": 132.39, "despues": 139.01, "producto": "Producto 32", "id_producto": 42, "variacion_%": 5.00}
+  4 | 2026-09-23 14:35:51 | {"antes": 127.90, "despues": 134.30, "producto": "Producto 33", "id_producto": 43, "variacion_%": 5.00}
+  5 | 2026-09-23 14:35:51 | {"antes": 504.41, "despues": 529.63, "producto": "Producto 34", "id_producto": 44, "variacion_%": 5.00}
 (5 rows)
 
 -- Consulta sobre el JSONB: aumentos mayores al 4 %
@@ -65,10 +65,10 @@ FROM auditoria_precio
 WHERE (detalle->>'variacion_%')::NUMERIC > 4;
   producto   | antes  | despues 
 -------------+--------+---------
- Producto 30 | 522.49 |  548.61
- Producto 31 |  93.50 |   98.18
- Producto 32 | 506.46 |  531.78
- Producto 33 | 193.51 |  203.19
- Producto 34 | 403.08 |  423.23
+ Producto 30 | 970.32 | 1018.84
+ Producto 31 | 984.30 | 1033.52
+ Producto 32 | 132.39 |  139.01
+ Producto 33 | 127.90 |  134.30
+ Producto 34 | 504.41 |  529.63
 (5 rows)
 

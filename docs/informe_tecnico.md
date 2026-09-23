@@ -19,7 +19,7 @@ Food Store es un sistema de pedidos para un negocio de comidas. La entrega cubre
 | 5 | Consultas (JOIN, agregación, subconsultas, HAVING, ventana) | ✅ | `sql/07_consultas.sql` |
 | 6 | Vistas, funciones y procedimientos | ✅ | `sql/05_vistas.sql`, `sql/05b_materializadas.sql`, `sql/06_funciones_procedimientos.sql` |
 | 7 | Reglas de negocio (CHECK, UNIQUE, triggers) | ✅ | `sql/03_restricciones.sql`, `sql/10_auditoria_precios.sql` |
-| 8 | Transacciones y concurrencia | ✅ | `sql/08_transacciones.sql`, evidencias `08b` y `08c` |
+| 8 | Transacciones y concurrencia | ✅ | `sql/08_transacciones.sql`, evidencias `08b`, `08c` y `08d` |
 | 9 | Borrado lógico | ✅ | `sql/09_soft_delete.sql` |
 
 ---
@@ -31,13 +31,13 @@ Food Store es un sistema de pedidos para un negocio de comidas. La entrega cubre
 - **El esquema** con cinco tablas del negocio (categoría, producto, cliente, pedido y su detalle) más los usuarios del sistema. Usa claves autogeneradas (`IDENTITY`), montos con precisión fija (`NUMERIC`), fechas con zona horaria (`TIMESTAMPTZ`) y tipos cerrados (`ENUM`) para la forma de pago y el rol.
 - **Reglas de negocio en el motor**, para que no dependan de que la aplicación se acuerde de validarlas: precios y stock nunca negativos (`CHECK`), email y nombre de categoría únicos (`UNIQUE`), y dos triggers que impiden vender un producto dado de baja o sin stock suficiente.
 - **Transacciones**: un pedido se registra entero o no se registra (atomicidad), y `SAVEPOINT` permite deshacer solo una parte.
-- **Concurrencia**: se reprodujeron anomalías con dos sesiones abiertas a la vez para ver qué nivel de aislamiento las evita.
+- **Concurrencia**: se reprodujeron, con dos sesiones abiertas a la vez, una lectura fantasma y una espera por bloqueo, para ver qué nivel de aislamiento o qué bloqueo las controla.
 
 ### Unidad 2 — Optimización de consultas
 
 - **Carga masiva** del volumen de arriba, para que las diferencias de rendimiento se puedan medir.
 - **Consultas de negocio** que combinan varias tablas: historial de un cliente, facturación por categoría y mes, productos nunca vendidos, clientes frecuentes (`HAVING`) y rankings con funciones de ventana (`RANK`, `ROW_NUMBER`).
-- **Optimización medida**: cada consulta lenta se midió con `EXPLAIN ANALYZE` antes y después de agregar un índice o reescribirla (ver sección 4).
+- **Optimización medida**: cada consulta lenta se midió con `EXPLAIN ANALYZE` con y sin su índice (ver sección 4).
 
 ### Unidad 3 — Índices, vistas y objetos programables
 
@@ -52,11 +52,10 @@ Food Store es un sistema de pedidos para un negocio de comidas. La entrega cubre
 
 ## 2. Cómo se probó
 
-1. **Todo desde cero y en orden.** `ejecutar_todo.sh` crea una base nueva y corre los 14 scripts. Si algún script de construcción falla, se detiene sin dejar nada a medias.
+1. **Todo desde cero y en orden.** `ejecutar_todo.sh` crea una base nueva y corre los 15 scripts. Si algún script de construcción falla, se detiene sin dejar nada a medias.
 2. **Un caso válido y uno inválido por regla.** En los inválidos se comprueba el error y también que la base quede igual que antes.
-3. **Dos sesiones al mismo tiempo** para las pruebas de concurrencia, abriendo dos ventanas de `psql`.
-4. **Comparación de resultados** con `EXCEPT` para confirmar que cada vista y cada reescritura devuelven exactamente lo mismo que la consulta original.
-5. **Mediciones con `EXPLAIN ANALYZE`**, siempre después de actualizar las estadísticas con `ANALYZE`.
+3. **Dos sesiones al mismo tiempo** para las pruebas de concurrencia: el mismo script abre dos conexiones de `psql` en paralelo, con la segunda arrancando un segundo después.
+4. **Mediciones con `EXPLAIN ANALYZE`**, siempre después de actualizar las estadísticas con `ANALYZE`. Para medir "sin índice", el índice se borra dentro de `BEGIN ... ROLLBACK`, así vuelve solo al terminar.
 
 La salida completa de cada prueba está en la carpeta `evidencias/`.
 
@@ -66,39 +65,39 @@ La salida completa de cada prueba está en la carpeta `evidencias/`.
 
 | Prueba | Qué se esperaba | Qué pasó | Evidencia |
 |---|---|---|---|
-| Registrar un pedido válido con `CALL` | Se crea el pedido y baja el stock | Pedido creado; stock 195 → 193 y 85 → 84 | `08_transacciones` |
+| Registrar un pedido válido con `CALL` | Se crea el pedido y baja el stock | Pedido creado; stock 188 → 186 y 182 → 181 | `08_transacciones` |
 | Registrar un pedido con un ítem sin stock | Se rechaza **todo**, incluso los ítems válidos | Error del trigger; la cantidad de pedidos y el stock no cambiaron | `08_transacciones` |
-| Aumentar un precio y hacer `ROLLBACK` | El cambio se descarta | 186,68 → 205,35 dentro de la transacción; vuelve a 186,68 | `08_transacciones` |
-| `SAVEPOINT` con un paso inválido | Se deshace solo ese paso | Stock 147 → 146 confirmado; el precio inválido se descartó | `08_transacciones` |
-| Contar pedidos mientras otra sesión inserta (READ COMMITTED) | El conteo cambia (lectura fantasma) | 14 → 15 | `08b_sesiones_read_committed` |
-| Lo mismo en REPEATABLE READ | El conteo no cambia | 15 → 15 | `08c_sesiones_repeatable_read` |
+| Aumentar un precio y hacer `ROLLBACK` | El cambio se descarta | 570,32 → 627,35 dentro de la transacción; vuelve a 570,32 | `08_transacciones` |
+| `SAVEPOINT` con un paso inválido | Se deshace solo ese paso | Stock 75 → 74 confirmado; el precio inválido se descartó | `08_transacciones` |
+| Contar pedidos mientras otra sesión inserta (READ COMMITTED) | El conteo cambia (lectura fantasma) | 9 → 10 | `08b_sesiones_read_committed` |
+| Lo mismo en REPEATABLE READ | El conteo no cambia | 10 → 10 | `08c_sesiones_repeatable_read` |
+| Dos sesiones piden el mismo producto con `FOR UPDATE` | La segunda espera a que la primera termine | La segunda esperó 973 ms y ya vio el stock actualizado por la primera | `08d_sesiones_for_update` |
 | Vender un producto dado de baja o sin stock | Rechazo | Ambos rechazados por los triggers | `03b_pruebas_restricciones` |
 | Borrar físicamente un producto vendido | Rechazo, para proteger el historial | Error de clave foránea | `09_soft_delete` |
 | Dar de baja lógica un producto | Sale del catálogo, conserva sus ventas | 0 filas en la vista de vigentes; 8 ventas conservadas | `09_soft_delete` |
 | Subir 5 precios en un solo `UPDATE` | 5 registros de auditoría | 5 registros en `JSONB`; el trigger corrió una sola vez | `10_auditoria_precios` |
 
-**Impacto del borrado lógico en los índices.** El índice de productos por categoría solo incluye los productos activos. Cuando la consulta filtra `activo = TRUE`, el motor lo usa (1,96 ms). Cuando no filtra, no puede usarlo, recorre toda la tabla (3,72 ms) y además devuelve productos dados de baja. Olvidarse del filtro da un resultado incorrecto y más lento.
+**Impacto del borrado lógico en los índices.** El índice de productos por categoría solo incluye los productos activos. Cuando la consulta filtra `activo = TRUE`, el motor lo usa (2,20 ms). Cuando no filtra, no puede usarlo, recorre toda la tabla (4,24 ms) y además devuelve productos dados de baja. Olvidarse del filtro da un resultado incorrecto y más lento.
 
 ---
 
 ## 4. Consultas optimizadas
 
-Mediciones realizadas durante la cursada (detalle en `docs/unidad2` y `docs/unidad3`).
+Cada caso se midió en la misma base con `EXPLAIN ANALYZE` (evidencia completa en `11_optimizacion`).
 
-| Consulta | Qué se cambió | Antes | Después | Resultado |
-|---|---|--:|--:|---|
-| Pedidos de un cliente | Índice por cliente | 39,0 ms | 0,15 ms | ✅ 265 veces más rápida |
-| Pedidos donde se vendió un producto | Índice por producto | 43,8 ms | 0,41 ms | ✅ 108 veces más rápida |
-| Ranking de clientes por gasto | Agrupar por pedido antes de unir | 1.682 ms | 1.004 ms | ✅ 40 % menos |
-| Reporte de facturación por categoría y mes | Vista materializada | 870 ms | 0,07 ms | ✅ Casi instantánea, con datos al último refresco |
-| Productos vigentes de una categoría | Índice parcial | 7,6 ms | 8,8 ms | ❌ Sin mejora |
-| Facturación por categoría y mes | Agrupar antes de unir | 1.367 ms | 3.150 ms | ❌ Empeoró, se descartó |
+| Consulta | Sin optimizar | Optimizada | Mejora |
+|---|--:|--:|---|
+| **C2** · Pedidos de un cliente | 16,27 ms · `Parallel Seq Scan` | 0,072 ms · índice por cliente | ✅ 226 veces más rápida |
+| **C3** · Pedidos en los que se vendió un producto | 37,04 ms · `Parallel Seq Scan` | 0,084 ms · índice por producto | ✅ 441 veces más rápida |
+| **C4** · Facturación por categoría y mes | 1.150 ms · calculada en el momento | 0,023 ms · vista materializada | ✅ Casi instantánea, con datos al último refresco |
+| **C1** · Productos vigentes de una categoría | 9,45 ms · `Seq Scan` | 6,56 ms · índice parcial | ⚠️ Solo 31 % |
+| **C5** · 20.000 altas de pedidos con un índice de más | 130 ms | 178 ms | ❌ 37 % más lentas |
 
 **Qué se aprendió:**
 
-- **Un índice sirve cuando la consulta trae pocas filas.** Los dos primeros casos devuelven menos del 0,02 % de la tabla. El de productos vigentes trae el 20 %, y ahí leer por índice cuesta lo mismo que recorrer todo.
-- **No toda reescritura mejora.** Dos consultas se reescribieron con la misma idea: una mejoró y la otra duplicó el tiempo. La decisión la tomó la medición.
-- **Indexar de más tiene costo.** Se evaluaron tres índices compuestos adicionales y se descartaron: no mejoraban ninguna consulta y uno hacía más lentas las inserciones (de 28,7 a 46,7 ms).
+- **Un índice sirve cuando la consulta trae pocas filas.** C2 y C3 devuelven unas pocas filas de cientos de miles, y bajan de decenas de milisegundos a menos de 0,1 ms. C1 trae el 20 % de la tabla: el índice ayuda, pero poco, porque igual hay que leer miles de filas.
+- **Materializar es la mejora más grande, con un costo.** El reporte de C4 pasa de más de un segundo a instantáneo porque ya está calculado, pero muestra los datos del último `REFRESH`, no los de este momento.
+- **Indexar de más tiene costo.** Un índice extra sobre `pedido (id_cliente, fecha)` no aporta a las consultas, porque `id_cliente` ya está indexado, y hace más lentas todas las inserciones: cada alta tiene que actualizar un índice más.
 
 ---
 
@@ -109,7 +108,8 @@ En las unidades se usaron las herramientas de la cátedra, **OpenCode** y **Kiro
 Para esta entrega usé **Claude (Anthropic)** para:
 
 - **Revisar el proyecto contra los nueve objetivos.** Acepté el diagnóstico de lo que faltaba: `HAVING`, un procedimiento con `CALL`, las pruebas de atomicidad y `SAVEPOINT`, un trigger con tablas de transición y la evidencia del borrado lógico.
-- **Generar los scripts 06 a 10 y `ejecutar_todo.sh`.** Tres propuestas se corrigieron al probarlas: el ticket promedio se calculaba por línea en vez de por pedido; el top 3 por categoría devolvía decenas de filas por los empates (se cambió `DENSE_RANK` por `ROW_NUMBER`); y el trigger de auditoría usaba una sintaxis que PostgreSQL no admite con tablas de transición.
+- **Generar los scripts 06 a 11 y `ejecutar_todo.sh`**, incluidas las pruebas automáticas con dos sesiones. Tres propuestas se corrigieron al probarlas: el ticket promedio se calculaba por línea en vez de por pedido; el top 3 por categoría devolvía decenas de filas por los empates (se cambió `DENSE_RANK` por `ROW_NUMBER`); y el trigger de auditoría usaba una sintaxis que PostgreSQL no admite con tablas de transición.
+- **Medir el costo de sobreindexar.** La primera versión medía inserciones en `detalle_pedido`, donde el tiempo de los triggers tapaba el del índice y el resultado se invertía de una corrida a otra; se pasó a `pedido`, que no tiene triggers.
 - **Acelerar la carga masiva.** La primera versión repetía casi siempre los mismos 11 productos; se detectó al revisar la distribución y se reescribió.
 - **Redactar los documentos de la entrega.** Verifiqué cada dato contra los scripts y las evidencias.
 

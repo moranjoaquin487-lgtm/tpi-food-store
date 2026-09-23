@@ -9,14 +9,14 @@ SELECT COUNT(*) AS pedidos_antes FROM pedido;
 SELECT id_producto, stock FROM producto WHERE id_producto IN (20, 21) ORDER BY 1;
  id_producto | stock 
 -------------+-------
-          20 |   195
-          21 |    85
+          20 |   188
+          21 |   182
 (2 rows)
 
 -- (a) Caso válido: dos ítems con stock suficiente -> se registra todo
 CALL sp_registrar_pedido(10, 'TARJETA',
      '[{"id_producto": 20, "cantidad": 2}, {"id_producto": 21, "cantidad": 1}]');
-psql:sql/08_transacciones.sql:9: NOTICE:  Pedido 200006 registrado. Total: 742.39
+psql:sql/08_transacciones.sql:9: NOTICE:  Pedido 200006 registrado. Total: 1585.68
 CALL
 SELECT COUNT(*) AS pedidos_despues_caso_valido FROM pedido;
  pedidos_despues_caso_valido 
@@ -27,14 +27,14 @@ SELECT COUNT(*) AS pedidos_despues_caso_valido FROM pedido;
 SELECT id_producto, stock FROM producto WHERE id_producto IN (20, 21) ORDER BY 1;
  id_producto | stock 
 -------------+-------
-          20 |   193
-          21 |    84
+          20 |   186
+          21 |   181
 (2 rows)
 
 -- (b) Caso inválido: el 1.er ítem es válido, el 2.º pide más stock del que hay.
 CALL sp_registrar_pedido(10, 'EFECTIVO',
      '[{"id_producto": 20, "cantidad": 1}, {"id_producto": 21, "cantidad": 9999}]');
-psql:sql/08_transacciones.sql:16: ERROR:  Stock insuficiente para el producto con id 21: se solicitan 9999 unidades, pero hay 84 en stock
+psql:sql/08_transacciones.sql:16: ERROR:  Stock insuficiente para el producto con id 21: se solicitan 9999 unidades, pero hay 181 en stock
 CONTEXT:  PL/pgSQL function fn_verificar_stock_suficiente() line 10 at RAISE
 SQL statement "INSERT INTO detalle_pedido (cantidad, precio_unitario, id_pedido, id_producto)
         SELECT (v_item->>'cantidad')::INT, pr.precio, v_id_pedido, pr.id_producto
@@ -50,8 +50,8 @@ SELECT COUNT(*) AS pedidos_despues_caso_invalido FROM pedido;
 SELECT id_producto, stock FROM producto WHERE id_producto IN (20, 21) ORDER BY 1;
  id_producto | stock 
 -------------+-------
-          20 |   193
-          21 |    84
+          20 |   186
+          21 |   181
 (2 rows)
 
 -- 8.2 COMMIT y ROLLBACK explícitos
@@ -62,7 +62,7 @@ UPDATE 1
 SELECT id_producto, precio AS precio_dentro_de_la_tx FROM producto WHERE id_producto = 22;
  id_producto | precio_dentro_de_la_tx 
 -------------+------------------------
-          22 |                 205.35
+          22 |                 627.35
 (1 row)
 
 ROLLBACK;
@@ -70,7 +70,7 @@ ROLLBACK
 SELECT id_producto, precio AS precio_tras_rollback FROM producto WHERE id_producto = 22;
  id_producto | precio_tras_rollback 
 -------------+----------------------
-          22 |               186.68
+          22 |               570.32
 (1 row)
 
 BEGIN;
@@ -82,14 +82,14 @@ COMMIT
 SELECT id_producto, stock AS stock_tras_commit FROM producto WHERE id_producto = 22;
  id_producto | stock_tras_commit 
 -------------+-------------------
-          22 |               170
+          22 |                63
 (1 row)
 
 -- 8.3 SAVEPOINT: deshacer solo una parte de la transacción
 SELECT id_producto, stock, precio FROM producto WHERE id_producto = 23;
  id_producto | stock | precio 
 -------------+-------+--------
-          23 |   147 | 511.67
+          23 |    75 | 599.54
 (1 row)
 
 BEGIN;
@@ -100,7 +100,7 @@ SAVEPOINT antes_del_precio;
 SAVEPOINT
 UPDATE producto SET precio = -5 WHERE id_producto = 23;
 psql:sql/08_transacciones.sql:39: ERROR:  new row for relation "producto" violates check constraint "producto_precio_check"
-DETAIL:  Failing row contains (23, Producto 13, null, -5.00, 146, t, 4, 2026-09-22 23:33:03.381794+00).
+DETAIL:  Failing row contains (23, Producto 13, null, -5.00, 74, t, 4, 2026-09-23 14:35:40.593919+00).
 ROLLBACK TO SAVEPOINT antes_del_precio;
 ROLLBACK
 COMMIT;
@@ -108,7 +108,7 @@ COMMIT
 SELECT id_producto, stock, precio FROM producto WHERE id_producto = 23;
  id_producto | stock | precio 
 -------------+-------+--------
-          23 |   146 | 511.67
+          23 |    74 | 599.54
 (1 row)
 
 -- 8.4 Niveles de aislamiento (una sesión)

@@ -1,0 +1,30 @@
+===== Espera por bloqueo con FOR UPDATE =====
+
+----- SESIÓN A -----
+BEGIN; SELECT id_producto, stock FROM producto WHERE id_producto = 20 FOR UPDATE;
+BEGIN
+ id_producto | stock 
+-------------+-------
+          20 |   186
+(1 row)
+
+UPDATE producto SET stock = stock - 1 WHERE id_producto = 20; COMMIT;
+UPDATE 1
+COMMIT
+
+----- SESIÓN B (arranca 1 s después) -----
+\timing on
+Timing is on.
+BEGIN;
+BEGIN
+Time: 0.049 ms
+SELECT id_producto, stock FROM producto WHERE id_producto = 20 FOR UPDATE;
+ id_producto | stock 
+-------------+-------
+          20 |   185
+(1 row)
+
+Time: 973.467 ms
+COMMIT;
+COMMIT
+Time: 0.553 ms

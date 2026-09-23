@@ -1,21 +1,21 @@
-===== SESIÓN A (REPEATABLE READ) =====
-BEGIN ISOLATION LEVEL REPEATABLE READ;
+===== La misma prueba en REPEATABLE READ =====
+
+----- SESIÓN A -----
+BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT COUNT(*) AS pedidos_cliente_10 FROM pedido WHERE id_cliente = 10;
 BEGIN
-SELECT COUNT(*) AS pedidos_cliente_10 FROM pedido WHERE id_cliente = 10;
  pedidos_cliente_10 
 --------------------
-                 15
+                 10
 (1 row)
 
-SELECT COUNT(*) AS pedidos_cliente_10 FROM pedido WHERE id_cliente = 10;
+SELECT COUNT(*) AS pedidos_cliente_10 FROM pedido WHERE id_cliente = 10; COMMIT;
  pedidos_cliente_10 
 --------------------
-                 15
+                 10
 (1 row)
 
-COMMIT;
 COMMIT
 
-===== SESIÓN B (se ejecuta 1 s después, entre las dos lecturas de A; autocommit) =====
+----- SESIÓN B (arranca 1 s después) -----
 INSERT INTO pedido (forma_pago, id_cliente) VALUES ('EFECTIVO', 10);
 INSERT 0 1
