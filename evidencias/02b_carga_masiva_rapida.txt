@@ -12,5 +12,5 @@ ANALYZE
  producto       |  50010
  pedido         | 200005
  detalle_pedido | 399994
-(4 rows)
+(4 filas)
 

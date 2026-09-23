@@ -5,8 +5,8 @@ BEGIN; SELECT id_producto, stock FROM producto WHERE id_producto = 20 FOR UPDATE
 BEGIN
  id_producto | stock 
 -------------+-------
-          20 |   186
-(1 row)
+          20 |   165
+(1 fila)
 
 UPDATE producto SET stock = stock - 1 WHERE id_producto = 20; COMMIT;
 UPDATE 1
@@ -14,17 +14,17 @@ COMMIT
 
 ----- SESIÃ“N B (arranca 1 s despuÃ©s) -----
 \timing on
-Timing is on.
+El despliegue de duración está activado.
 BEGIN;
 BEGIN
-Time: 0.049 ms
+Duración: 0,093 ms
 SELECT id_producto, stock FROM producto WHERE id_producto = 20 FOR UPDATE;
  id_producto | stock 
 -------------+-------
-          20 |   185
-(1 row)
+          20 |   164
+(1 fila)
 
-Time: 973.467 ms
+Duración: 918,565 ms
 COMMIT;
 COMMIT
-Time: 0.553 ms
+Duración: 0,579 ms

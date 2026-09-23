@@ -15,5 +15,5 @@ INSERT 0 3
  pedido         |     5
  detalle_pedido |     9
  usuario        |     3
-(6 rows)
+(6 filas)
 

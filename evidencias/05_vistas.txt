@@ -13,5 +13,5 @@ CREATE VIEW
  vista_pedidos_cliente
  vista_productos_vigentes
  vista_usuario_reportes
-(5 rows)
+(5 filas)
 

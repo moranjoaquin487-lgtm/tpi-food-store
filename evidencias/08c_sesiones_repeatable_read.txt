@@ -6,13 +6,13 @@ BEGIN
  pedidos_cliente_10 
 --------------------
                  10
-(1 row)
+(1 fila)
 
 SELECT COUNT(*) AS pedidos_cliente_10 FROM pedido WHERE id_cliente = 10; COMMIT;
  pedidos_cliente_10 
 --------------------
                  10
-(1 row)
+(1 fila)
 
 COMMIT
 

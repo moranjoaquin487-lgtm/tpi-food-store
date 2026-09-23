@@ -7,7 +7,7 @@ VALUES (1, 9500.00,
     (SELECT id_pedido FROM pedido LIMIT 1),
     (SELECT id_producto FROM producto WHERE nombre = 'Helado 1L'));
 psql:sql/03b_pruebas_restricciones.sql:9: ERROR:  No se puede vender el producto con id 10: está dado de baja (activo = FALSE)
-CONTEXT:  PL/pgSQL function fn_verificar_producto_activo() line 10 at RAISE
+CONTEXTO:  función PL/pgSQL fn_verificar_producto_activo() en la línea 10 en RAISE
 ROLLBACK;
 ROLLBACK
 -- Caso 2 — Producto activo con stock suficiente
@@ -28,7 +28,7 @@ VALUES (50, 3900.00,
     (SELECT id_pedido FROM pedido LIMIT 1),
     (SELECT id_producto FROM producto WHERE nombre = 'Gaseosa cola 2.25L'));
 psql:sql/03b_pruebas_restricciones.sql:29: ERROR:  Stock insuficiente para el producto con id 4: se solicitan 50 unidades, pero hay 1 en stock
-CONTEXT:  PL/pgSQL function fn_verificar_stock_suficiente() line 10 at RAISE
+CONTEXTO:  función PL/pgSQL fn_verificar_stock_suficiente() en la línea 10 en RAISE
 ROLLBACK;
 ROLLBACK
 -- Caso 4 — Límite exacto de stock (cantidad = stock)

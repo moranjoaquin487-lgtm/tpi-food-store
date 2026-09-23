@@ -16,5 +16,5 @@
  producto       | producto_pkey                            | CREATE UNIQUE INDEX producto_pkey ON public.producto USING btree (id_producto)
  usuario        | usuario_mail_key                         | CREATE UNIQUE INDEX usuario_mail_key ON public.usuario USING btree (mail)
  usuario        | usuario_pkey                             | CREATE UNIQUE INDEX usuario_pkey ON public.usuario USING btree (id)
-(13 rows)
+(13 filas)
 

@@ -28,5 +28,5 @@ CREATE TABLE
  pedido         |        4
  producto       |        8
  usuario        |        9
-(6 rows)
+(6 filas)
 

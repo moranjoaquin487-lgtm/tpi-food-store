@@ -11,5 +11,5 @@ CREATE TRIGGER
 ----------------+--------------------------------+---------+----------------
  detalle_pedido | trg_verificar_producto_activo  | BEFORE  | INSERT, UPDATE
  detalle_pedido | trg_verificar_stock_suficiente | BEFORE  | INSERT, UPDATE
-(2 rows)
+(2 filas)
 

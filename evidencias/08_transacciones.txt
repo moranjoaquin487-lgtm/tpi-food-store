@@ -4,55 +4,55 @@ SELECT COUNT(*) AS pedidos_antes FROM pedido;
  pedidos_antes 
 ---------------
         200005
-(1 row)
+(1 fila)
 
 SELECT id_producto, stock FROM producto WHERE id_producto IN (20, 21) ORDER BY 1;
  id_producto | stock 
 -------------+-------
-          20 |   188
-          21 |   182
-(2 rows)
+          20 |   167
+          21 |   149
+(2 filas)
 
 -- (a) Caso válido: dos ítems con stock suficiente -> se registra todo
 CALL sp_registrar_pedido(10, 'TARJETA',
      '[{"id_producto": 20, "cantidad": 2}, {"id_producto": 21, "cantidad": 1}]');
-psql:sql/08_transacciones.sql:9: NOTICE:  Pedido 200006 registrado. Total: 1585.68
+psql:sql/08_transacciones.sql:9: NOTICE:  Pedido 200006 registrado. Total: 1696.58
 CALL
 SELECT COUNT(*) AS pedidos_despues_caso_valido FROM pedido;
  pedidos_despues_caso_valido 
 -----------------------------
                       200006
-(1 row)
+(1 fila)
 
 SELECT id_producto, stock FROM producto WHERE id_producto IN (20, 21) ORDER BY 1;
  id_producto | stock 
 -------------+-------
-          20 |   186
-          21 |   181
-(2 rows)
+          20 |   165
+          21 |   148
+(2 filas)
 
 -- (b) Caso inválido: el 1.er ítem es válido, el 2.º pide más stock del que hay.
 CALL sp_registrar_pedido(10, 'EFECTIVO',
      '[{"id_producto": 20, "cantidad": 1}, {"id_producto": 21, "cantidad": 9999}]');
-psql:sql/08_transacciones.sql:16: ERROR:  Stock insuficiente para el producto con id 21: se solicitan 9999 unidades, pero hay 181 en stock
-CONTEXT:  PL/pgSQL function fn_verificar_stock_suficiente() line 10 at RAISE
-SQL statement "INSERT INTO detalle_pedido (cantidad, precio_unitario, id_pedido, id_producto)
+psql:sql/08_transacciones.sql:16: ERROR:  Stock insuficiente para el producto con id 21: se solicitan 9999 unidades, pero hay 148 en stock
+CONTEXTO:  función PL/pgSQL fn_verificar_stock_suficiente() en la línea 10 en RAISE
+sentencia SQL: «INSERT INTO detalle_pedido (cantidad, precio_unitario, id_pedido, id_producto)
         SELECT (v_item->>'cantidad')::INT, pr.precio, v_id_pedido, pr.id_producto
           FROM producto pr
-         WHERE pr.id_producto = (v_item->>'id_producto')::BIGINT"
-PL/pgSQL function sp_registrar_pedido(bigint,forma_pago_enum,jsonb) line 16 at SQL statement
+         WHERE pr.id_producto = (v_item->>'id_producto')::BIGINT»
+función PL/pgSQL sp_registrar_pedido(bigint,forma_pago_enum,jsonb) en la línea 16 en sentencia SQL
 SELECT COUNT(*) AS pedidos_despues_caso_invalido FROM pedido;
  pedidos_despues_caso_invalido 
 -------------------------------
                         200006
-(1 row)
+(1 fila)
 
 SELECT id_producto, stock FROM producto WHERE id_producto IN (20, 21) ORDER BY 1;
  id_producto | stock 
 -------------+-------
-          20 |   186
-          21 |   181
-(2 rows)
+          20 |   165
+          21 |   148
+(2 filas)
 
 -- 8.2 COMMIT y ROLLBACK explícitos
 BEGIN;
@@ -62,16 +62,16 @@ UPDATE 1
 SELECT id_producto, precio AS precio_dentro_de_la_tx FROM producto WHERE id_producto = 22;
  id_producto | precio_dentro_de_la_tx 
 -------------+------------------------
-          22 |                 627.35
-(1 row)
+          22 |                 481.91
+(1 fila)
 
 ROLLBACK;
 ROLLBACK
 SELECT id_producto, precio AS precio_tras_rollback FROM producto WHERE id_producto = 22;
  id_producto | precio_tras_rollback 
 -------------+----------------------
-          22 |               570.32
-(1 row)
+          22 |               438.10
+(1 fila)
 
 BEGIN;
 BEGIN
@@ -82,15 +82,15 @@ COMMIT
 SELECT id_producto, stock AS stock_tras_commit FROM producto WHERE id_producto = 22;
  id_producto | stock_tras_commit 
 -------------+-------------------
-          22 |                63
-(1 row)
+          22 |               161
+(1 fila)
 
 -- 8.3 SAVEPOINT: deshacer solo una parte de la transacción
 SELECT id_producto, stock, precio FROM producto WHERE id_producto = 23;
  id_producto | stock | precio 
 -------------+-------+--------
-          23 |    75 | 599.54
-(1 row)
+          23 |    79 | 287.95
+(1 fila)
 
 BEGIN;
 BEGIN
@@ -99,8 +99,8 @@ UPDATE 1
 SAVEPOINT antes_del_precio;
 SAVEPOINT
 UPDATE producto SET precio = -5 WHERE id_producto = 23;
-psql:sql/08_transacciones.sql:39: ERROR:  new row for relation "producto" violates check constraint "producto_precio_check"
-DETAIL:  Failing row contains (23, Producto 13, null, -5.00, 74, t, 4, 2026-09-23 14:35:40.593919+00).
+psql:sql/08_transacciones.sql:39: ERROR:  el nuevo registro para la relación «producto» viola la restricción «check» «producto_precio_check»
+DETALLE:  La fila que falla contiene (23, Producto 13, null, -5.00, 78, t, 4, 2026-09-23 12:44:16.672012-03).
 ROLLBACK TO SAVEPOINT antes_del_precio;
 ROLLBACK
 COMMIT;
@@ -108,15 +108,15 @@ COMMIT
 SELECT id_producto, stock, precio FROM producto WHERE id_producto = 23;
  id_producto | stock | precio 
 -------------+-------+--------
-          23 |    74 | 599.54
-(1 row)
+          23 |    78 | 287.95
+(1 fila)
 
 -- 8.4 Niveles de aislamiento (una sesión)
 SHOW default_transaction_isolation;
  default_transaction_isolation 
 -------------------------------
  read committed
-(1 row)
+(1 fila)
 
 -- REPEATABLE READ: la transacción ve siempre la foto de su primera consulta
 BEGIN ISOLATION LEVEL REPEATABLE READ;
@@ -125,20 +125,20 @@ SHOW transaction_isolation;
  transaction_isolation 
 -----------------------
  repeatable read
-(1 row)
+(1 fila)
 
 SELECT COUNT(*) AS pedidos_en_la_foto FROM pedido;
  pedidos_en_la_foto 
 --------------------
              200006
-(1 row)
+(1 fila)
 
 -- (acá, en otra sesión, se confirma un INSERT en pedido: este COUNT no cambia)
 SELECT COUNT(*) AS pedidos_en_la_foto_otra_vez FROM pedido;
  pedidos_en_la_foto_otra_vez 
 -----------------------------
                       200006
-(1 row)
+(1 fila)
 
 COMMIT;
 COMMIT
@@ -149,7 +149,7 @@ SHOW transaction_isolation;
  transaction_isolation 
 -----------------------
  serializable
-(1 row)
+(1 fila)
 
 COMMIT;
 COMMIT

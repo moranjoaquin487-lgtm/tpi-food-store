@@ -7,5 +7,5 @@ CREATE INDEX
   vista_materializada   | con_datos | filas 
 ------------------------+-----------+-------
  mv_facturacion_cat_mes | t         |   100
-(1 row)
+(1 fila)
 

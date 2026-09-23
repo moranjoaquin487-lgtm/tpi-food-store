@@ -18,7 +18,7 @@ ORDER BY productos DESC;
  Lácteos     |      2000
  Almacén     |      2000
  Congelados  |      2000
-(5 rows)
+(5 filas)
 
 -- Control de cobertura: debe dar 10.000
 SELECT COUNT(*) AS total_recientes
@@ -31,7 +31,7 @@ FROM (
  total_recientes 
 -----------------
            10000
-(1 row)
+(1 fila)
 
 -- Distribución de clientes en los pedidos cargados
 SELECT
@@ -45,8 +45,8 @@ FROM (
 ) t;
  pedidos_recientes | clientes_distintos 
 -------------------+--------------------
-             10000 |               7844
-(1 row)
+             10000 |               7921
+(1 fila)
 
 -- Histograma: los clientes con más pedidos.
 SELECT id_cliente, COUNT(*) AS pedidos
@@ -61,15 +61,15 @@ ORDER BY pedidos DESC
 LIMIT 10;
  id_cliente | pedidos 
 ------------+---------
-      10280 |       5
-      16105 |       5
-        710 |       5
-       2059 |       4
-       3961 |       4
-      19467 |       4
-       4830 |       4
-      10802 |       4
-      18456 |       4
-      15385 |       4
-(10 rows)
+       5481 |       6
+       6507 |       5
+      11513 |       5
+      13284 |       5
+      13114 |       4
+       3802 |       4
+      18088 |       4
+       4231 |       4
+       4363 |       4
+       3199 |       4
+(10 filas)
 

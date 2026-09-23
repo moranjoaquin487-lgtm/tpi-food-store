@@ -4,8 +4,8 @@ BEGIN;
 BEGIN
 DELETE FROM producto
 WHERE id_producto = (SELECT id_producto FROM detalle_pedido LIMIT 1);  -- error esperado
-psql:sql/09_soft_delete.sql:6: ERROR:  update or delete on table "producto" violates foreign key constraint "detalle_pedido_id_producto_fkey" on table "detalle_pedido"
-DETAIL:  Key (id_producto)=(1) is still referenced from table "detalle_pedido".
+psql:sql/09_soft_delete.sql:6: ERROR:  update or delete on table "producto" violates RESTRICT setting of foreign key constraint "detalle_pedido_id_producto_fkey" on table "detalle_pedido"
+DETALLE:  Key (id_producto)=(1) is referenced from table "detalle_pedido".
 ROLLBACK;
 ROLLBACK
 -- 9.2 La baja lógica: el historial se conserva
@@ -19,7 +19,7 @@ FROM vista_productos_vigentes WHERE id_producto = 30;
  aparece_en_vigentes 
 ---------------------
                    0
-(1 row)
+(1 fila)
 
 -- ...pero sus ventas siguen existiendo para los reportes históricos
 SELECT COUNT(*) AS lineas_de_venta_conservadas
@@ -27,13 +27,13 @@ FROM detalle_pedido WHERE id_producto = 30;
  lineas_de_venta_conservadas 
 -----------------------------
                            8
-(1 row)
+(1 fila)
 
 -- ...y ya no se puede volver a vender (trigger de 03_restricciones.sql)
 INSERT INTO detalle_pedido (cantidad, precio_unitario, id_pedido, id_producto)
 VALUES (1, 100.00, (SELECT MAX(id_pedido) FROM pedido), 30);  -- error esperado
 psql:sql/09_soft_delete.sql:23: ERROR:  No se puede vender el producto con id 30: está dado de baja (activo = FALSE)
-CONTEXT:  PL/pgSQL function fn_verificar_producto_activo() line 10 at RAISE
+CONTEXTO:  función PL/pgSQL fn_verificar_producto_activo() en la línea 10 en RAISE
 ROLLBACK;
 ROLLBACK
 -- 9.3 Impacto en las consultas: olvidar el filtro da datos incorrectos
@@ -44,7 +44,7 @@ FROM producto;
  productos_vigentes | productos_dados_de_baja | total_sin_filtrar 
 --------------------+-------------------------+-------------------
               50009 |                       1 |             50010
-(1 row)
+(1 fila)
 
 -- 9.4 Impacto en los índices: el índice parcial solo se usa si la consulta filtra activo = TRUE
 SELECT indexrelname AS indice,
@@ -55,33 +55,39 @@ WHERE relname = 'producto';
 -------------------------------+---------
  producto_pkey                 | 1112 kB
  idx_producto_categoria_activo | 336 kB
-(2 rows)
+(2 filas)
 
 -- Con el filtro de vigencia -> usa el índice parcial
 EXPLAIN (ANALYZE, COSTS OFF)
 SELECT id_producto, nombre, precio FROM producto
 WHERE id_categoria = 1 AND activo = TRUE;
-                                               QUERY PLAN                                               
---------------------------------------------------------------------------------------------------------
- Bitmap Heap Scan on producto (actual time=0.267..1.853 rows=10002 loops=1)
+                                                QUERY PLAN                                                 
+-----------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on producto (actual time=0.309..1.748 rows=10002.00 loops=1)
    Recheck Cond: ((id_categoria = 1) AND activo)
    Heap Blocks: exact=516
-   ->  Bitmap Index Scan on idx_producto_categoria_activo (actual time=0.212..0.212 rows=10003 loops=1)
+   Buffers: shared hit=525
+   ->  Bitmap Index Scan on idx_producto_categoria_activo (actual time=0.254..0.255 rows=10003.00 loops=1)
          Index Cond: (id_categoria = 1)
- Planning Time: 0.039 ms
- Execution Time: 2.195 ms
-(7 rows)
+         Index Searches: 1
+         Buffers: shared hit=9
+ Planning:
+   Buffers: shared hit=6
+ Planning Time: 0.070 ms
+ Execution Time: 2.022 ms
+(12 filas)
 
 -- Sin el filtro -> NO puede usarlo y recorre la tabla entera
 EXPLAIN (ANALYZE, COSTS OFF)
 SELECT id_producto, nombre, precio FROM producto
 WHERE id_categoria = 1;
-                             QUERY PLAN                             
---------------------------------------------------------------------
- Seq Scan on producto (actual time=0.004..3.905 rows=10002 loops=1)
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Seq Scan on producto (actual time=0.007..3.190 rows=10002.00 loops=1)
    Filter: (id_categoria = 1)
    Rows Removed by Filter: 40008
- Planning Time: 0.025 ms
- Execution Time: 4.242 ms
-(5 rows)
+   Buffers: shared hit=516
+ Planning Time: 0.030 ms
+ Execution Time: 3.446 ms
+(6 filas)
 

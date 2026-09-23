@@ -7,5 +7,5 @@ CREATE PROCEDURE
 ---------------------+-----------+----------
  fn_total_pedido     | FUNCTION  | PLPGSQL
  sp_registrar_pedido | PROCEDURE | PLPGSQL
-(2 rows)
+(2 filas)
 
