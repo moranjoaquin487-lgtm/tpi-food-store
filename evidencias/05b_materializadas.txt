@@ -1,0 +1,1 @@
+psql:sql/05b_materializadas.sql:3: NOTICE:  materialized view "mv_facturacion_cat_mes" does not exist, skipping

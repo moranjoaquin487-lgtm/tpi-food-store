@@ -1,0 +1,74 @@
+-- 10 — Trigger con tablas de transición + JSONB
+DROP TRIGGER IF EXISTS trg_auditar_precios ON producto;
+psql:sql/10_auditoria_precios.sql:3: NOTICE:  trigger "trg_auditar_precios" for relation "producto" does not exist, skipping
+DROP TRIGGER
+DROP TABLE IF EXISTS auditoria_precio;
+psql:sql/10_auditoria_precios.sql:4: NOTICE:  table "auditoria_precio" does not exist, skipping
+DROP TABLE
+CREATE TABLE auditoria_precio (
+    id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    cambiado_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    usuario_bd   TEXT        NOT NULL DEFAULT current_user,
+    detalle      JSONB       NOT NULL
+);
+CREATE TABLE
+-- Trigger por SENTENCIA con tablas de transición (REFERENCING)
+CREATE OR REPLACE FUNCTION fn_auditar_precios()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    INSERT INTO auditoria_precio (detalle)
+    SELECT jsonb_build_object(
+               'id_producto', n.id_producto,
+               'producto',    n.nombre,
+               'antes',       o.precio,
+               'despues',     n.precio,
+               'variacion_%', ROUND((n.precio - o.precio) / NULLIF(o.precio, 0) * 100, 2))
+    FROM nuevos n
+    JOIN viejos o USING (id_producto)
+    WHERE n.precio IS DISTINCT FROM o.precio;
+    RETURN NULL;
+END;
+$$;
+CREATE FUNCTION
+-- Sin AFTER UPDATE OF precio: PostgreSQL no lo admite con tablas de transición
+CREATE TRIGGER trg_auditar_precios
+    AFTER UPDATE ON producto
+    REFERENCING OLD TABLE AS viejos NEW TABLE AS nuevos
+    FOR EACH STATEMENT
+    EXECUTE FUNCTION fn_auditar_precios();
+CREATE TRIGGER
+-- Prueba: aumento del 5 % a los productos 40 a 44 (un solo UPDATE)
+UPDATE producto SET precio = ROUND(precio * 1.05, 2)
+WHERE id_producto BETWEEN 40 AND 44;
+UPDATE 5
+-- Un UPDATE que no toca el precio no genera auditoría
+UPDATE producto SET stock = stock + 1 WHERE id_producto = 40;
+UPDATE 1
+SELECT id, cambiado_at::timestamp(0) AS cambiado_at, detalle
+FROM auditoria_precio ORDER BY id;
+ id |     cambiado_at     |                                                 detalle                                                 
+----+---------------------+---------------------------------------------------------------------------------------------------------
+  1 | 2026-09-22 23:33:18 | {"antes": 522.49, "despues": 548.61, "producto": "Producto 30", "id_producto": 40, "variacion_%": 5.00}
+  2 | 2026-09-22 23:33:18 | {"antes": 93.50, "despues": 98.18, "producto": "Producto 31", "id_producto": 41, "variacion_%": 5.01}
+  3 | 2026-09-22 23:33:18 | {"antes": 506.46, "despues": 531.78, "producto": "Producto 32", "id_producto": 42, "variacion_%": 5.00}
+  4 | 2026-09-22 23:33:18 | {"antes": 193.51, "despues": 203.19, "producto": "Producto 33", "id_producto": 43, "variacion_%": 5.00}
+  5 | 2026-09-22 23:33:18 | {"antes": 403.08, "despues": 423.23, "producto": "Producto 34", "id_producto": 44, "variacion_%": 5.00}
+(5 rows)
+
+-- Consulta sobre el JSONB: aumentos mayores al 4 %
+SELECT detalle->>'producto' AS producto,
+       (detalle->>'antes')::NUMERIC   AS antes,
+       (detalle->>'despues')::NUMERIC AS despues
+FROM auditoria_precio
+WHERE (detalle->>'variacion_%')::NUMERIC > 4;
+  producto   | antes  | despues 
+-------------+--------+---------
+ Producto 30 | 522.49 |  548.61
+ Producto 31 |  93.50 |   98.18
+ Producto 32 | 506.46 |  531.78
+ Producto 33 | 193.51 |  203.19
+ Producto 34 | 403.08 |  423.23
+(5 rows)
+

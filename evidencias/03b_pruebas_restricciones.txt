@@ -1,0 +1,43 @@
+-- 03b — Pruebas de las reglas de negocio (casos válidos e inválidos)
+-- Caso 1 — Producto inactivo: Helado 1L (activo = FALSE)
+BEGIN;
+BEGIN
+INSERT INTO detalle_pedido (cantidad, precio_unitario, id_pedido, id_producto)
+VALUES (1, 9500.00,
+    (SELECT id_pedido FROM pedido LIMIT 1),
+    (SELECT id_producto FROM producto WHERE nombre = 'Helado 1L'));
+psql:sql/03b_pruebas_restricciones.sql:9: ERROR:  No se puede vender el producto con id 10: está dado de baja (activo = FALSE)
+CONTEXT:  PL/pgSQL function fn_verificar_producto_activo() line 10 at RAISE
+ROLLBACK;
+ROLLBACK
+-- Caso 2 — Producto activo con stock suficiente
+BEGIN;
+BEGIN
+INSERT INTO detalle_pedido (cantidad, precio_unitario, id_pedido, id_producto)
+VALUES (2, 1400.00,
+    (SELECT id_pedido FROM pedido LIMIT 1),
+    (SELECT id_producto FROM producto WHERE nombre = 'Agua mineral 2L'));
+INSERT 0 1
+ROLLBACK;
+ROLLBACK
+-- Caso 3 — Stock insuficiente
+BEGIN;
+BEGIN
+INSERT INTO detalle_pedido (cantidad, precio_unitario, id_pedido, id_producto)
+VALUES (50, 3900.00,
+    (SELECT id_pedido FROM pedido LIMIT 1),
+    (SELECT id_producto FROM producto WHERE nombre = 'Gaseosa cola 2.25L'));
+psql:sql/03b_pruebas_restricciones.sql:29: ERROR:  Stock insuficiente para el producto con id 4: se solicitan 50 unidades, pero hay 1 en stock
+CONTEXT:  PL/pgSQL function fn_verificar_stock_suficiente() line 10 at RAISE
+ROLLBACK;
+ROLLBACK
+-- Caso 4 — Límite exacto de stock (cantidad = stock)
+BEGIN;
+BEGIN
+INSERT INTO detalle_pedido (cantidad, precio_unitario, id_pedido, id_producto)
+VALUES (3, 3200.00,
+    (SELECT id_pedido FROM pedido LIMIT 1),
+    (SELECT id_producto FROM producto WHERE nombre = 'Medialunas x6'));
+INSERT 0 1
+ROLLBACK;
+ROLLBACK

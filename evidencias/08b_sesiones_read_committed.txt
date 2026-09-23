@@ -1,0 +1,21 @@
+===== SESIÓN A (READ COMMITTED) =====
+BEGIN ISOLATION LEVEL READ COMMITTED;
+BEGIN
+SELECT COUNT(*) AS pedidos_cliente_10 FROM pedido WHERE id_cliente = 10;
+ pedidos_cliente_10 
+--------------------
+                 14
+(1 row)
+
+SELECT COUNT(*) AS pedidos_cliente_10 FROM pedido WHERE id_cliente = 10;
+ pedidos_cliente_10 
+--------------------
+                 15
+(1 row)
+
+COMMIT;
+COMMIT
+
+===== SESIÓN B (se ejecuta 1 s después, entre las dos lecturas de A; autocommit) =====
+INSERT INTO pedido (forma_pago, id_cliente) VALUES ('EFECTIVO', 10);
+INSERT 0 1

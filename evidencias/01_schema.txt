@@ -1,0 +1,8 @@
+psql:sql/01_schema.sql:2: NOTICE:  table "detalle_pedido" does not exist, skipping
+psql:sql/01_schema.sql:3: NOTICE:  table "pedido" does not exist, skipping
+psql:sql/01_schema.sql:4: NOTICE:  table "producto" does not exist, skipping
+psql:sql/01_schema.sql:5: NOTICE:  table "categoria" does not exist, skipping
+psql:sql/01_schema.sql:6: NOTICE:  table "cliente" does not exist, skipping
+psql:sql/01_schema.sql:7: NOTICE:  type "forma_pago_enum" does not exist, skipping
+psql:sql/01_schema.sql:79: NOTICE:  table "usuario" does not exist, skipping
+psql:sql/01_schema.sql:80: NOTICE:  type "rol" does not exist, skipping
