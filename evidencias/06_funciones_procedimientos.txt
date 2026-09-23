@@ -1,0 +1,11 @@
+===== Ejecución de sql/06_funciones_procedimientos.sql =====
+CREATE FUNCTION
+CREATE PROCEDURE
+
+===== Verificación: qué quedó creado =====
+       nombre        |   tipo    | lenguaje 
+---------------------+-----------+----------
+ fn_total_pedido     | FUNCTION  | PLPGSQL
+ sp_registrar_pedido | PROCEDURE | PLPGSQL
+(2 rows)
+

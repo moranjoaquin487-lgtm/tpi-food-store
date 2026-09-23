@@ -1,0 +1,16 @@
+===== Ejecución de sql/02b_carga_masiva_rapida.sql =====
+INSERT 0 50000
+INSERT 0 20000
+INSERT 0 200000
+INSERT 0 399985
+ANALYZE
+
+===== Verificación: qué quedó creado =====
+     tabla      | filas  
+----------------+--------
+ cliente        |  20005
+ producto       |  50010
+ pedido         | 200005
+ detalle_pedido | 399994
+(4 rows)
+

@@ -1,0 +1,20 @@
+===== Ejecución de sql/04_indices.sql =====
+
+===== Verificación: qué quedó creado =====
+     tabla      |                  indice                  |                                                         definicion                                                         
+----------------+------------------------------------------+----------------------------------------------------------------------------------------------------------------------------
+ categoria      | categoria_nombre_key                     | CREATE UNIQUE INDEX categoria_nombre_key ON public.categoria USING btree (nombre)
+ categoria      | categoria_pkey                           | CREATE UNIQUE INDEX categoria_pkey ON public.categoria USING btree (id_categoria)
+ cliente        | cliente_email_key                        | CREATE UNIQUE INDEX cliente_email_key ON public.cliente USING btree (email)
+ cliente        | cliente_pkey                             | CREATE UNIQUE INDEX cliente_pkey ON public.cliente USING btree (id_cliente)
+ detalle_pedido | detalle_pedido_id_pedido_id_producto_key | CREATE UNIQUE INDEX detalle_pedido_id_pedido_id_producto_key ON public.detalle_pedido USING btree (id_pedido, id_producto)
+ detalle_pedido | detalle_pedido_pkey                      | CREATE UNIQUE INDEX detalle_pedido_pkey ON public.detalle_pedido USING btree (id_detalle)
+ detalle_pedido | idx_detalle_pedido_id_producto           | CREATE INDEX idx_detalle_pedido_id_producto ON public.detalle_pedido USING btree (id_producto)
+ pedido         | idx_pedido_id_cliente                    | CREATE INDEX idx_pedido_id_cliente ON public.pedido USING btree (id_cliente)
+ pedido         | pedido_pkey                              | CREATE UNIQUE INDEX pedido_pkey ON public.pedido USING btree (id_pedido)
+ producto       | idx_producto_categoria_activo            | CREATE INDEX idx_producto_categoria_activo ON public.producto USING btree (id_categoria) WHERE (activo = true)
+ producto       | producto_pkey                            | CREATE UNIQUE INDEX producto_pkey ON public.producto USING btree (id_producto)
+ usuario        | usuario_mail_key                         | CREATE UNIQUE INDEX usuario_mail_key ON public.usuario USING btree (mail)
+ usuario        | usuario_pkey                             | CREATE UNIQUE INDEX usuario_pkey ON public.usuario USING btree (id)
+(13 rows)
+

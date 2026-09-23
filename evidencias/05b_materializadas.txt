@@ -1,1 +1,11 @@
-psql:sql/05b_materializadas.sql:3: NOTICE:  materialized view "mv_facturacion_cat_mes" does not exist, skipping
+===== Ejecución de sql/05b_materializadas.sql =====
+DROP MATERIALIZED VIEW
+SELECT 100
+CREATE INDEX
+
+===== Verificación: qué quedó creado =====
+  vista_materializada   | con_datos | filas 
+------------------------+-----------+-------
+ mv_facturacion_cat_mes | t         |   100
+(1 row)
+

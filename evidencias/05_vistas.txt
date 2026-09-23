@@ -1,0 +1,17 @@
+===== Ejecución de sql/05_vistas.sql =====
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+
+===== Verificación: qué quedó creado =====
+             vista             
+-------------------------------
+ vista_cliente_completo
+ vista_detalle_pedido_producto
+ vista_pedidos_cliente
+ vista_productos_vigentes
+ vista_usuario_reportes
+(5 rows)
+

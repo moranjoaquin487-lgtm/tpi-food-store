@@ -9,12 +9,25 @@ mkdir -p evidencias
 echo ">> Recreando la base $DB"
 dropdb --if-exists "$DB" && createdb "$DB" || exit 1
 
-# Construcción: sin errores y en una sola transacción.
+# Construcción: sin errores y en una sola transacción. Cada evidencia muestra qué ejecutó y qué quedó creado.
+declare -A verificar=(
+  [01_schema]="SELECT table_name AS tabla, COUNT(*) AS columnas FROM information_schema.columns WHERE table_schema = 'public' GROUP BY table_name ORDER BY table_name;"
+  [02_data]="SELECT 'categoria' AS tabla, COUNT(*) AS filas FROM categoria UNION ALL SELECT 'producto', COUNT(*) FROM producto UNION ALL SELECT 'cliente', COUNT(*) FROM cliente UNION ALL SELECT 'pedido', COUNT(*) FROM pedido UNION ALL SELECT 'detalle_pedido', COUNT(*) FROM detalle_pedido UNION ALL SELECT 'usuario', COUNT(*) FROM usuario;"
+  [02b_carga_masiva_rapida]="SELECT 'producto' AS tabla, COUNT(*) AS filas FROM producto UNION ALL SELECT 'cliente', COUNT(*) FROM cliente UNION ALL SELECT 'pedido', COUNT(*) FROM pedido UNION ALL SELECT 'detalle_pedido', COUNT(*) FROM detalle_pedido;"
+  [03_restricciones]="SELECT event_object_table AS tabla, trigger_name AS trigger, action_timing AS momento, string_agg(event_manipulation, ', ') AS eventos FROM information_schema.triggers WHERE trigger_schema = 'public' GROUP BY 1, 2, 3 ORDER BY 1, 2;"
+  [04_indices]="SELECT tablename AS tabla, indexname AS indice, indexdef AS definicion FROM pg_indexes WHERE schemaname = 'public' ORDER BY 1, 2;"
+  [05_vistas]="SELECT table_name AS vista FROM information_schema.views WHERE table_schema = 'public' ORDER BY 1;"
+  [05b_materializadas]="SELECT matviewname AS vista_materializada, ispopulated AS con_datos, (SELECT COUNT(*) FROM mv_facturacion_cat_mes) AS filas FROM pg_matviews;"
+  [06_funciones_procedimientos]="SELECT routine_name AS nombre, routine_type AS tipo, external_language AS lenguaje FROM information_schema.routines WHERE routine_schema = 'public' AND routine_name IN ('fn_total_pedido', 'sp_registrar_pedido') ORDER BY 1;"
+)
 estrictos=(01_schema 02_data 02b_carga_masiva_rapida 03_restricciones 04_indices 05_vistas 05b_materializadas 06_funciones_procedimientos)
 for s in "${estrictos[@]}"; do
   echo ">> $s"
-  psql -d "$DB" -q -v ON_ERROR_STOP=1 --single-transaction -f "sql/$s.sql" \
-       > "evidencias/$s.txt" 2>&1 || { echo "   ERROR en $s (ver evidencias/$s.txt)"; exit 1; }
+  out="evidencias/$s.txt"
+  echo "===== Ejecución de sql/$s.sql =====" > "$out"
+  PGOPTIONS="-c client_min_messages=warning" psql -d "$DB" -v ON_ERROR_STOP=1 --single-transaction -f "sql/$s.sql" >> "$out" 2>&1 \
+       || { echo "   ERROR en $s (ver $out)"; exit 1; }
+  { echo; echo "===== Verificación: qué quedó creado ====="; psql -d "$DB" -c "${verificar[$s]}"; } >> "$out" 2>&1
 done
 
 # Pruebas: incluyen errores esperados, se muestran con eco (-a).

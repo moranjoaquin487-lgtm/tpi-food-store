@@ -1,2 +1,15 @@
-psql:sql/03_restricciones.sql:23: NOTICE:  trigger "trg_verificar_producto_activo" for relation "detalle_pedido" does not exist, skipping
-psql:sql/03_restricciones.sql:51: NOTICE:  trigger "trg_verificar_stock_suficiente" for relation "detalle_pedido" does not exist, skipping
+===== Ejecución de sql/03_restricciones.sql =====
+CREATE FUNCTION
+DROP TRIGGER
+CREATE TRIGGER
+CREATE FUNCTION
+DROP TRIGGER
+CREATE TRIGGER
+
+===== Verificación: qué quedó creado =====
+     tabla      |            trigger             | momento |    eventos     
+----------------+--------------------------------+---------+----------------
+ detalle_pedido | trg_verificar_producto_activo  | BEFORE  | INSERT, UPDATE
+ detalle_pedido | trg_verificar_stock_suficiente | BEFORE  | INSERT, UPDATE
+(2 rows)
+

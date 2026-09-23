@@ -1,0 +1,19 @@
+===== Ejecución de sql/02_data.sql =====
+INSERT 0 5
+INSERT 0 5
+INSERT 0 10
+INSERT 0 5
+INSERT 0 9
+INSERT 0 3
+
+===== Verificación: qué quedó creado =====
+     tabla      | filas 
+----------------+-------
+ categoria      |     5
+ producto       |    10
+ cliente        |     5
+ pedido         |     5
+ detalle_pedido |     9
+ usuario        |     3
+(6 rows)
+
