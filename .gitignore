@@ -1,0 +1,4 @@
+# Respaldos y secretos: nunca se versionan
+*.dump
+*.backup
+.env

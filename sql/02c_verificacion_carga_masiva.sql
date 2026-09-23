@@ -1,0 +1,46 @@
+-- 02c — Verificación de la carga masiva (solo lectura)
+
+-- Distribución de categorías en los productos cargados
+WITH recientes AS (
+    SELECT id_categoria
+    FROM producto
+    ORDER BY id_producto DESC
+    LIMIT 10000
+)
+SELECT c.nombre, COUNT(*) AS productos
+FROM recientes r
+JOIN categoria c USING (id_categoria)
+GROUP BY c.nombre
+ORDER BY productos DESC;
+
+-- Control de cobertura: debe dar 10.000
+SELECT COUNT(*) AS total_recientes
+FROM (
+    SELECT id_producto
+    FROM producto
+    ORDER BY id_producto DESC
+    LIMIT 10000
+) t;
+
+-- Distribución de clientes en los pedidos cargados
+SELECT
+    COUNT(*) AS pedidos_recientes,
+    COUNT(DISTINCT id_cliente) AS clientes_distintos
+FROM (
+    SELECT id_cliente
+    FROM pedido
+    ORDER BY id_pedido DESC
+    LIMIT 10000
+) t;
+
+-- Histograma: los clientes con más pedidos.
+SELECT id_cliente, COUNT(*) AS pedidos
+FROM (
+    SELECT id_cliente
+    FROM pedido
+    ORDER BY id_pedido DESC
+    LIMIT 10000
+) t
+GROUP BY id_cliente
+ORDER BY pedidos DESC
+LIMIT 10;

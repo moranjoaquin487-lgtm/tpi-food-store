@@ -1,0 +1,1 @@
+-- 04 — Índices: se conservan los de 01_schema.sql; los candidatos de la Unidad 3 se descartaron por no mejorar el plan
