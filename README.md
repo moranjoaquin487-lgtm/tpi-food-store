@@ -54,6 +54,8 @@ Las evidencias de prueba incluyen **errores a propósito**: son los casos invál
 | `10_auditoria_precios.sql` | Auditoría de precios con tablas de transición y JSONB | 7 |
 | `11_optimizacion.sql` | Mediciones antes y después de cada optimización | 5 |
 
+La carpeta `sql/extra/` guarda la primera versión de la carga masiva. Se reemplazó por `02b` porque elegía cada cliente y cada producto con `ORDER BY random()` fila por fila y tardaba demasiado; `ejecutar_todo.sh` no la usa.
+
 Las pruebas con **dos sesiones a la vez** (lectura fantasma y espera por bloqueo) las corre `ejecutar_todo.sh` al final, y quedan en `evidencias/08b`, `08c` y `08d`.
 
 ## Objetivos de la entrega
@@ -69,5 +71,3 @@ Las pruebas con **dos sesiones a la vez** (lectura fantasma y espera por bloqueo
 | 7 | Reglas de negocio | `01`, `03`, `10` |
 | 8 | Transacciones y concurrencia | `08` y evidencias `08b`, `08c`, `08d` |
 | 9 | Borrado lógico | `09` |
-
-

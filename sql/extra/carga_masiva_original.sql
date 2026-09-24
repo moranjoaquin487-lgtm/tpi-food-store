@@ -1,4 +1,4 @@
--- Carga masiva de datos — TP3 (Unidad 2)
+-- Carga masiva original: reemplazada por 02b_carga_masiva_rapida.sql por lenta; no la ejecuta ejecutar_todo.sh
 
 -- CONFIG: ajustar los tres generate_series para cada escenario.
 

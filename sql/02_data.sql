@@ -86,7 +86,7 @@ INSERT INTO detalle_pedido (cantidad, precio_unitario, id_pedido, id_producto) V
         (SELECT id_pedido FROM pedido WHERE fecha = '2026-08-18 12:00:00-03'),
         (SELECT id_producto FROM producto WHERE nombre = 'Gaseosa cola 2.25L'));
 
--- USUARIO (datos de prueba — TP5 Parte B)
+-- USUARIO (datos de prueba)
 INSERT INTO usuario (nombre, apellido, mail, celular, contrasena, rol, eliminado)
 VALUES
     ('Nicole', 'González', 'n.gonzalez@foodstore.com', '+54 9 11 5555-0101',
