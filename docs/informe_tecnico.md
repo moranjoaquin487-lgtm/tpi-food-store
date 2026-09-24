@@ -113,4 +113,4 @@ Para esta entrega usé **Claude (Anthropic)** para:
 - **Acelerar la carga masiva.** La primera versión repetía casi siempre los mismos 11 productos; se detectó al revisar la distribución y se reescribió.
 - **Redactar los documentos de la entrega.** Verifiqué cada dato contra los scripts y las evidencias.
 
-Ningún script se aplicó sin probarlo antes en una base de prueba, según `protocolo_seguridad.md`.
+Ningún script se aplicó sin probarlo antes en una base de prueba, siempre dentro de una transacción o sobre una base nueva creada con `ejecutar_todo.sh`.

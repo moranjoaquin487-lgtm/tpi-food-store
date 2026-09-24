@@ -16,7 +16,6 @@ Food Store es un sistema de pedidos para un negocio de comidas: categorías, pro
 | [Informe técnico](docs/informe_tecnico.md) | Qué se implementó, cómo se probó, resultados y optimizaciones |
 | [Modelo ER y normalización](docs/modelo_ER_relacional_normalizacion.md) | Diagrama, diccionario de datos, paso a modelo relacional y normalización hasta BCNF |
 | [Declaración de uso de IA](docs/duia/DUIA_resumen.md) | Qué herramientas se usaron, para qué y qué se aceptó o descartó |
-| [Protocolo de seguridad](protocolo_seguridad.md) | Copia, transacción y respaldo antes de tocar la base |
 
 ## Cómo ejecutarlo
 
