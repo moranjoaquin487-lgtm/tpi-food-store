@@ -1,0 +1,3 @@
+# Respaldos de pg_dump (protocolo_seguridad.md, paso 3): son binarios y se regeneran.
+backups/
+*.dump

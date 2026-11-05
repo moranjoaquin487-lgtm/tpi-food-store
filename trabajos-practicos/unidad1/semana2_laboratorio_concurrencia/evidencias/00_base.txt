@@ -1,0 +1,17 @@
+===== Plantilla: foodstore_plantilla (esquema + datos iniciales; no se modifica) =====
+
+===== Copia de trabajo: createdb -T foodstore_plantilla foodstore_trabajo =====
+ current_database  
+-------------------
+ foodstore_trabajo
+(1 fila)
+
+     tabla      | filas 
+----------------+-------
+ categoria      |     6
+ producto       |    12
+ cliente        |     6
+ pedido         |     7
+ detalle_pedido |    12
+(5 filas)
+
