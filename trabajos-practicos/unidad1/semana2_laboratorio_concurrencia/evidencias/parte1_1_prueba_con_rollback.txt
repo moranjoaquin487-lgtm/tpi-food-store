@@ -1,0 +1,230 @@
+SELECT current_database();
+ current_database  
+-------------------
+ foodstore_trabajo
+(1 fila)
+
+BEGIN;
+BEGIN
+\i food-store/restricciones.sql
+-- Food Store — restricciones.sql (Semana 2, Parte 1)
+-- Garantiza por el motor las reglas A, B y C de specs/spec_restricciones.md.
+-- Se puede ejecutar más de una vez: los triggers se eliminan con DROP ... IF EXISTS
+-- y las funciones se reemplazan con CREATE OR REPLACE.
+-- No incluye control transaccional (BEGIN/COMMIT/ROLLBACK): la transacción la abre
+-- scripts/aplicar_restricciones.sh. Los BEGIN ... END de las funciones son sintaxis de PL/pgSQL.
+-- ============================================================================
+-- Regla A — Precio congelado al vender
+-- Al insertar una línea, precio_unitario debe coincidir con producto.precio.
+-- Una vez registrada la línea, precio_unitario no se puede modificar.
+-- No alcanza un CHECK declarativo porque hay que comparar con otra tabla.
+-- ============================================================================
+CREATE OR REPLACE FUNCTION fn_regla_a_precio_congelado()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_precio_actual NUMERIC(10,2);
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        SELECT precio
+          INTO v_precio_actual
+          FROM producto
+         WHERE id = NEW.producto_id;
+
+        -- Si el producto no existe, la FK de detalle_pedido se encarga del error.
+        IF NOT FOUND THEN
+            RETURN NEW;
+        END IF;
+
+        IF NEW.precio_unitario IS DISTINCT FROM v_precio_actual THEN
+            RAISE EXCEPTION
+                'Regla A violada: el precio unitario (%) no coincide con el precio actual del producto (%).',
+                NEW.precio_unitario, v_precio_actual;
+        END IF;
+    ELSIF TG_OP = 'UPDATE' THEN
+        IF NEW.precio_unitario IS DISTINCT FROM OLD.precio_unitario THEN
+            RAISE EXCEPTION
+                'Regla A violada: no se puede modificar el precio unitario de una línea ya vendida.';
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+CREATE FUNCTION
+DROP TRIGGER IF EXISTS trg_regla_a_precio_congelado ON detalle_pedido;
+DROP TRIGGER
+CREATE TRIGGER trg_regla_a_precio_congelado
+    BEFORE INSERT OR UPDATE ON detalle_pedido
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_regla_a_precio_congelado();
+CREATE TRIGGER
+-- ============================================================================
+-- Regla B — Baja de una categoría
+-- categoria.activo no puede pasar de TRUE a FALSE si la categoría tiene al
+-- menos un producto con producto.activo = TRUE.
+-- No alcanza un CHECK declarativo porque hay que consultar otra tabla.
+-- ============================================================================
+CREATE OR REPLACE FUNCTION fn_regla_b_baja_categoria()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF OLD.activo IS TRUE AND NEW.activo IS FALSE THEN
+        IF EXISTS (
+            SELECT 1
+              FROM producto
+             WHERE categoria_id = NEW.id
+               AND activo IS TRUE
+        ) THEN
+            RAISE EXCEPTION
+                'Regla B violada: no se puede dar de baja la categoría "%" porque tiene productos activos.',
+                OLD.nombre;
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+CREATE FUNCTION
+DROP TRIGGER IF EXISTS trg_regla_b_baja_categoria ON categoria;
+DROP TRIGGER
+CREATE TRIGGER trg_regla_b_baja_categoria
+    BEFORE UPDATE OF activo ON categoria
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_regla_b_baja_categoria();
+CREATE TRIGGER
+-- ============================================================================
+-- Regla C — Fecha de un pedido
+-- pedido.fecha no puede ser posterior al momento en que se inserta o modifica
+-- la fila. Se usa clock_timestamp() para tomar el momento de la sentencia.
+-- ============================================================================
+CREATE OR REPLACE FUNCTION fn_regla_c_fecha_pedido()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF NEW.fecha > clock_timestamp() THEN
+        RAISE EXCEPTION
+            'Regla C violada: la fecha del pedido no puede ser posterior al momento actual.';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+CREATE FUNCTION
+DROP TRIGGER IF EXISTS trg_regla_c_fecha_pedido ON pedido;
+DROP TRIGGER
+CREATE TRIGGER trg_regla_c_fecha_pedido
+    BEFORE INSERT OR UPDATE ON pedido
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_regla_c_fecha_pedido();
+CREATE TRIGGER
+\i food-store/pruebas_restricciones.sql
+-- Food Store — pruebas_restricciones.sql (Semana 2, Parte 1)
+-- Casos de la tabla de specs/spec_restricciones.md, en el mismo orden.
+-- Cada caso es una sentencia suelta: los inválidos muestran el error del motor.
+-- No incluye BEGIN, COMMIT ni ROLLBACK: la transacción la abre scripts/aplicar_restricciones.sh.
+-- Las filas se buscan por nombre de producto/categoría o por email de cliente, nunca por id.
+-- Caso 1 (Regla A) — Resultado esperado: se inserta.
+-- Agrega la Napolitana al pedido de Jorge Díaz con el precio actual del producto.
+WITH pedido_jorge AS (
+    SELECT pe.id
+      FROM pedido pe
+      JOIN cliente c ON c.id = pe.cliente_id
+     WHERE c.email = 'jorge.diaz@mail.com'
+     ORDER BY pe.fecha DESC, pe.id DESC
+     LIMIT 1
+)
+INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio_unitario)
+SELECT pj.id, pr.id, 1, pr.precio
+  FROM pedido_jorge pj
+ CROSS JOIN producto pr
+ WHERE pr.nombre = 'Napolitana';
+INSERT 0 1
+-- Caso 2 (Regla A) — Resultado esperado: error.
+-- Agrega la Cerveza 1L al pedido de Jorge Díaz con un precio distinto del actual.
+WITH pedido_jorge AS (
+    SELECT pe.id
+      FROM pedido pe
+      JOIN cliente c ON c.id = pe.cliente_id
+     WHERE c.email = 'jorge.diaz@mail.com'
+     ORDER BY pe.fecha DESC, pe.id DESC
+     LIMIT 1
+)
+INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio_unitario)
+SELECT pj.id, pr.id, 1, pr.precio + 1
+  FROM pedido_jorge pj
+ CROSS JOIN producto pr
+ WHERE pr.nombre = 'Cerveza 1L';
+psql:food-store/pruebas_restricciones.sql:37: ERROR:  Regla A violada: el precio unitario (1201.00) no coincide con el precio actual del producto (1200.00).
+CONTEXTO:  función PL/pgSQL fn_regla_a_precio_congelado() en la línea 17 en RAISE
+-- Caso 3 (Regla A) — Resultado esperado: error.
+-- Cambia el precio_unitario de una línea ya registrada (Fugazzeta del pedido de Jorge Díaz).
+UPDATE detalle_pedido d
+   SET precio_unitario = d.precio_unitario + 1
+  FROM producto pr,
+       pedido pe,
+       cliente c
+ WHERE d.producto_id = pr.id
+   AND d.pedido_id = pe.id
+   AND pe.cliente_id = c.id
+   AND pr.nombre = 'Fugazzeta'
+   AND c.email = 'jorge.diaz@mail.com';
+psql:food-store/pruebas_restricciones.sql:50: ERROR:  Regla A violada: no se puede modificar el precio unitario de una línea ya vendida.
+CONTEXTO:  función PL/pgSQL fn_regla_a_precio_congelado() en la línea 23 en RAISE
+-- Caso 4 (Regla A) — Resultado esperado: se acepta y las líneas vendidas conservan su precio.
+-- Cambia el precio de lista de la Muzzarella, que ya tiene ventas.
+UPDATE producto
+   SET precio = precio + 50
+ WHERE nombre = 'Muzzarella';
+UPDATE 1
+-- Muestra que las líneas ya vendidas de la Muzzarella conservan su precio original.
+SELECT c.email,
+       pe.fecha,
+       d.precio_unitario,
+       pr.precio AS precio_actual
+  FROM detalle_pedido d
+  JOIN producto pr ON pr.id = d.producto_id
+  JOIN pedido pe ON pe.id = d.pedido_id
+  JOIN cliente c ON c.id = pe.cliente_id
+ WHERE pr.nombre = 'Muzzarella'
+ ORDER BY pe.fecha, c.email;
+       email        |         fecha          | precio_unitario | precio_actual 
+--------------------+------------------------+-----------------+---------------
+ ana.gomez@mail.com | 2026-03-01 12:10:00-03 |         1000.00 |       1100.00
+ ana.gomez@mail.com | 2026-03-05 21:00:00-03 |         1050.00 |       1100.00
+ luis.paz@mail.com  | 2026-03-07 22:40:00-03 |         1050.00 |       1100.00
+(3 filas)
+
+-- Caso 5 (Regla B) — Resultado esperado: se acepta.
+-- Da de baja la categoría Promociones, que no tiene productos.
+UPDATE categoria
+   SET activo = FALSE
+ WHERE nombre = 'Promociones';
+UPDATE 1
+-- Caso 6 (Regla B) — Resultado esperado: error.
+-- Intenta dar de baja la categoría Pizzas, que tiene productos activos.
+UPDATE categoria
+   SET activo = FALSE
+ WHERE nombre = 'Pizzas';
+psql:food-store/pruebas_restricciones.sql:80: ERROR:  Regla B violada: no se puede dar de baja la categoría "Pizzas" porque tiene productos activos.
+CONTEXTO:  función PL/pgSQL fn_regla_b_baja_categoria() en la línea 10 en RAISE
+-- Caso 7 (Regla C) — Resultado esperado: se inserta.
+-- Registra un pedido con la fecha de este momento para Carla Ortiz.
+INSERT INTO pedido (fecha, forma_pago, cliente_id)
+SELECT now(), 'EFECTIVO', id
+  FROM cliente
+ WHERE email = 'carla.ortiz@mail.com';
+INSERT 0 1
+-- Caso 8 (Regla C) — Resultado esperado: error.
+-- Intenta registrar un pedido con fecha de mañana para Pablo Rivas.
+INSERT INTO pedido (fecha, forma_pago, cliente_id)
+SELECT now() + INTERVAL '1 day', 'EFECTIVO', id
+  FROM cliente
+ WHERE email = 'pablo.rivas@mail.com';
+psql:food-store/pruebas_restricciones.sql:94: ERROR:  Regla C violada: la fecha del pedido no puede ser posterior al momento actual.
+CONTEXTO:  función PL/pgSQL fn_regla_c_fecha_pedido() en la línea 4 en RAISE
+ROLLBACK;
+ROLLBACK
