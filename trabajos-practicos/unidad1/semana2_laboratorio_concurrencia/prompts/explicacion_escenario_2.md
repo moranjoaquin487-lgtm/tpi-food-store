@@ -1,0 +1,50 @@
+Hice este experimento en PostgreSQL 18 con dos sesiones concurrentes sobre mi base Food Store.
+La sesión B arrancó medio segundo después que la A. Abajo están los comandos exactos de cada sesión y lo que devolvió cada uno.
+
+Explicame qué pasó y qué nivel de aislamiento o qué mecanismo de bloqueo evitaría este comportamiento.
+Respondé solo con la explicación: no crees ni modifiques archivos.
+
+```
+----- SESIÓN A -----
+\set nivel 'READ COMMITTED'
+\i food-store/concurrencia/e2_A.sql
+-- Escenario 2 · Sesión A: cuenta dos veces los pedidos de Ana Gómez dentro de la misma transacción.
+BEGIN;
+BEGIN
+SET TRANSACTION ISOLATION LEVEL :nivel;
+SET
+SHOW transaction_isolation;
+ transaction_isolation 
+-----------------------
+ read committed
+(1 fila)
+
+SELECT COUNT(*) AS primer_conteo FROM pedido p JOIN cliente c ON c.id = p.cliente_id WHERE c.email = 'ana.gomez@mail.com';
+ primer_conteo 
+---------------
+             2
+(1 fila)
+
+SELECT pg_sleep(1.5);  -- mientras tanto, la sesión B registra un pedido nuevo de Ana
+ pg_sleep 
+----------
+ 
+(1 fila)
+
+SELECT COUNT(*) AS segundo_conteo FROM pedido p JOIN cliente c ON c.id = p.cliente_id WHERE c.email = 'ana.gomez@mail.com';
+ segundo_conteo 
+----------------
+              3
+(1 fila)
+
+COMMIT;
+COMMIT
+
+----- SESIÓN B (arranca 0,5 s después) -----
+\set nivel 'READ COMMITTED'
+\i food-store/concurrencia/e2_B.sql
+-- Escenario 2 · Sesión B: registra un pedido nuevo de Ana Gómez; sin BEGIN, se confirma solo.
+INSERT INTO pedido (forma_pago, cliente_id)
+SELECT 'EFECTIVO', id FROM cliente WHERE email = 'ana.gomez@mail.com';
+INSERT 0 1
+```
