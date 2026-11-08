@@ -1,0 +1,57 @@
+===== Escenario 4 · Mismo orden en las dos sesiones (Napolitana → Fugazzeta) =====
+
+----- SESIÓN A -----
+\set primero 'Napolitana'
+\set segundo 'Fugazzeta'
+\i food-store/concurrencia/e4_A.sql
+-- Escenario 4 · Sesión A: toma la Napolitana y, un segundo después, pide la Fugazzeta.
+\set VERBOSITY verbose
+\set SHOW_CONTEXT never
+BEGIN;
+BEGIN
+UPDATE producto SET stock = stock WHERE nombre = 'Napolitana';  -- bloquea la fila sin cambiar el valor
+UPDATE 1
+SELECT pg_sleep(1);
+ pg_sleep 
+----------
+ 
+(1 fila)
+
+UPDATE producto SET stock = stock WHERE nombre = 'Fugazzeta';
+UPDATE 1
+SELECT round(extract(epoch FROM clock_timestamp() - now())::numeric, 2) AS segundos_desde_begin;
+ segundos_desde_begin 
+----------------------
+                 1.01
+(1 fila)
+
+COMMIT;
+COMMIT
+
+----- SESIÓN B (arranca 0,5 s después) -----
+\set primero 'Napolitana'
+\set segundo 'Fugazzeta'
+\i food-store/concurrencia/e4_B.sql
+-- Escenario 4 · Sesión B: toma una fila y, un segundo después, pide la otra (el orden lo decide el laboratorio).
+\set VERBOSITY verbose
+\set SHOW_CONTEXT never
+BEGIN;
+BEGIN
+UPDATE producto SET stock = stock WHERE nombre = :'primero';
+UPDATE 1
+SELECT pg_sleep(1);
+ pg_sleep 
+----------
+ 
+(1 fila)
+
+UPDATE producto SET stock = stock WHERE nombre = :'segundo';
+UPDATE 1
+SELECT round(extract(epoch FROM clock_timestamp() - now())::numeric, 2) AS segundos_desde_begin;
+ segundos_desde_begin 
+----------------------
+                 1.41
+(1 fila)
+
+COMMIT;
+COMMIT

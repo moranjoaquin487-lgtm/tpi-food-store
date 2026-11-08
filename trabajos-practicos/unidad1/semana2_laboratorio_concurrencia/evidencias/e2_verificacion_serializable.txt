@@ -1,0 +1,45 @@
+===== Escenario 2 · Lectura fantasma · SERIALIZABLE =====
+
+----- SESIÓN A -----
+\set nivel 'SERIALIZABLE'
+\i food-store/concurrencia/e2_A.sql
+-- Escenario 2 · Sesión A: cuenta dos veces los pedidos de Ana Gómez dentro de la misma transacción.
+BEGIN;
+BEGIN
+SET TRANSACTION ISOLATION LEVEL :nivel;
+SET
+SHOW transaction_isolation;
+ transaction_isolation 
+-----------------------
+ serializable
+(1 fila)
+
+SELECT COUNT(*) AS primer_conteo FROM pedido p JOIN cliente c ON c.id = p.cliente_id WHERE c.email = 'ana.gomez@mail.com';
+ primer_conteo 
+---------------
+             2
+(1 fila)
+
+SELECT pg_sleep(1.5);  -- mientras tanto, la sesión B registra un pedido nuevo de Ana
+ pg_sleep 
+----------
+ 
+(1 fila)
+
+SELECT COUNT(*) AS segundo_conteo FROM pedido p JOIN cliente c ON c.id = p.cliente_id WHERE c.email = 'ana.gomez@mail.com';
+ segundo_conteo 
+----------------
+              2
+(1 fila)
+
+COMMIT;
+COMMIT
+
+----- SESIÓN B (arranca 0,5 s después) -----
+\set nivel 'SERIALIZABLE'
+\i food-store/concurrencia/e2_B.sql
+-- Escenario 2 · Sesión B: registra un pedido nuevo de Ana Gómez; sin BEGIN, se confirma solo.
+INSERT INTO pedido (forma_pago, cliente_id)
+SELECT 'EFECTIVO', id FROM cliente WHERE email = 'ana.gomez@mail.com';
+INSERT 0 1
+(Después del escenario se borró el pedido que agregó la sesión B)

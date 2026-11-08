@@ -1,0 +1,51 @@
+===== Escenario 3 · FOR UPDATE SKIP LOCKED =====
+
+----- SESIÓN A -----
+\set modo 'SKIP LOCKED'
+\set ON_ERROR_ROLLBACK on
+\i food-store/concurrencia/e3_A.sql
+-- Escenario 3 · Sesión A: bloquea la fila de la Coca 1.5L y la mantiene tomada 2 segundos.
+\set VERBOSITY verbose
+\set SHOW_CONTEXT never
+BEGIN;
+BEGIN
+SELECT id, stock FROM producto WHERE nombre = 'Coca 1.5L' FOR UPDATE;
+ id | stock 
+----+-------
+  9 |    60
+(1 fila)
+
+SELECT pg_sleep(2);  -- mientras tanto, la sesión B pide la misma fila
+ pg_sleep 
+----------
+ 
+(1 fila)
+
+UPDATE producto SET stock = stock - 1 WHERE nombre = 'Coca 1.5L';
+UPDATE 1
+COMMIT;
+COMMIT
+
+----- SESIÓN B (arranca 0,5 s después) -----
+\set modo 'SKIP LOCKED'
+\set ON_ERROR_ROLLBACK on
+\i food-store/concurrencia/e3_B.sql
+-- Escenario 3 · Sesión B: pide la misma fila con FOR UPDATE y mide cuánto tardó en obtenerla.
+\set VERBOSITY verbose
+\set SHOW_CONTEXT never
+BEGIN;
+BEGIN
+SELECT id, stock FROM producto WHERE nombre = 'Coca 1.5L' FOR UPDATE :modo;
+ id | stock 
+----+-------
+(0 filas)
+
+SELECT round(extract(epoch FROM clock_timestamp() - now())::numeric, 2) AS segundos_desde_begin;
+ segundos_desde_begin 
+----------------------
+                 0.00
+(1 fila)
+
+COMMIT;
+COMMIT
+(Después del escenario se restauró el stock original: 60)
