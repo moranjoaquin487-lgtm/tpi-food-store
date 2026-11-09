@@ -19,7 +19,7 @@ No cambies nada más del archivo.
 
 ## Kiro
 
-**1. Steering base.** Panel de Kiro → sección *Steering* → **Generate Steering Docs**. Crea `product.md`, `tech.md` y `structure.md` en `.kiro/steering/`.
+**1. Steering base.** En la versión de Kiro que usé: panel de Kiro → sección *Agent Steering & Skills* → **+** → *Project steering files*. Crea `product.md`, `tech.md` y `structure.md` en `.kiro/steering/`.
 
 **2. Convenciones del esquema** (chat de Kiro):
 
@@ -30,4 +30,13 @@ Creá el archivo .kiro/steering/esquema.md con las convenciones del esquema, sac
 - El tipo ENUM tipo_forma_pago y sus tres valores.
 - Lo que explican los comentarios de cada tabla (reglas R1 a R7).
 Solo lo que está en el archivo: no agregues convenciones que el esquema no tenga.
+```
+
+**3. Corrección** (chat de Kiro, después de comparar los cuatro archivos con `schema.sql`, `data.sql` y el README):
+
+```text
+Corregí tres errores en los steering docs, sin cambiar nada más:
+1. En product.md, la Parte 3 no es sobre concurrencia: es la lectura crítica de dos scripts peligrosos (docs/ejercicio_lectura_critica.md y food-store/lectura_critica_demo.sql). Corregí esa línea.
+2. En structure.md, data.sql no tiene 5 pedidos: tiene 7. Los pedidos 1 a 5 son la planilla del TP1. Corregí esa línea.
+3. En esquema.md falta R3: según el comentario de schema.sql, detalle_pedido es la entidad asociativa de la relación N:M entre pedido y producto (R3). Agregalo en la sección de detalle_pedido.
 ```

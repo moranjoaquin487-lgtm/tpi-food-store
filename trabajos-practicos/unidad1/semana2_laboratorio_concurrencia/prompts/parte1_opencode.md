@@ -19,8 +19,10 @@ Todavía no escribas ningún archivo: mostrame solo el plan.
 ## 2. Escritura (modo Build, después de revisar el plan)
 
 ```text
-El plan está bien. Escribí los dos archivos.
+El plan está bien. Para la Regla C dejá el trigger, no el CHECK con now(). Escribí los dos archivos.
 ```
+
+En el plan, OpenCode preguntó si la Regla C iba con trigger o con `CHECK (fecha <= now())`; la respuesta va en este mismo pedido.
 
 ## 3. Si hace falta
 

@@ -17,11 +17,11 @@ Esta carpeta es la raíz del trabajo: los scripts se corren y los agentes se abr
 | Parte 1 — Spec | [`specs/spec_restricciones.md`](specs/spec_restricciones.md), commiteada antes de generar el código |
 | Parte 1 — Restricciones | `food-store/restricciones.sql` y `food-store/pruebas_restricciones.sql`, generados con OpenCode; pedidos en [`prompts/parte1_opencode.md`](prompts/parte1_opencode.md) y plan en `docs/plan_opencode_parte1.md` |
 | Parte 1 — Prueba y aplicación | [`scripts/aplicar_restricciones.sh`](scripts/aplicar_restricciones.sh) y las evidencias `parte1_1` a `parte1_3` |
-| Parte 2 — Laboratorio | [`food-store/concurrencia/`](food-store/concurrencia/), [`scripts/laboratorio_concurrencia.sh`](scripts/laboratorio_concurrencia.sh) y las evidencias `e1` a `e4` |
+| Parte 2 — Laboratorio | [`food-store/concurrencia/`](food-store/concurrencia/), [`scripts/laboratorio_concurrencia.sh`](scripts/laboratorio_concurrencia.sh), [`scripts/verificar_lock_table.sh`](scripts/verificar_lock_table.sh) y las evidencias `e1` a `e4` |
 | Parte 2 — Explicaciones de la IA | Pedidos en `prompts/explicacion_escenario_1.md` a `4`, respuestas tal cual en [`docs/explicaciones_ia/`](docs/explicaciones_ia/) |
-| Parte 2 — Informe | `docs/informe_concurrencia.md` |
+| Parte 2 — Informe | [`docs/informe_concurrencia.md`](docs/informe_concurrencia.md) |
 | Parte 3 — Lectura crítica | [`docs/ejercicio_lectura_critica.md`](docs/ejercicio_lectura_critica.md), con la demostración en [`food-store/lectura_critica_demo.sql`](food-store/lectura_critica_demo.sql) |
-| DUIA | `docs/duia/duia_parte1.md`, `duia_parte2.md` y `duia_parte3.md` |
+| DUIA | [`docs/duia/duia_parte1.md`](docs/duia/duia_parte1.md) (incluye la Parte 0), [`duia_parte2.md`](docs/duia/duia_parte2.md) y [`duia_parte3.md`](docs/duia/duia_parte3.md) |
 
 La defensa oral es presencial y no forma parte de esta carpeta.
 
@@ -36,6 +36,7 @@ bash scripts/aplicar_restricciones.sh               # Parte 1: prueba que termin
 bash scripts/aplicar_restricciones.sh --confirmar   # Parte 1: respaldo, COMMIT y casos de prueba
 bash scripts/laboratorio_concurrencia.sh reproducir # Parte 2: los cuatro escenarios
 bash scripts/laboratorio_concurrencia.sh verificar  # Parte 2: cada escenario con el nivel o mecanismo que lo evita
+bash scripts/verificar_lock_table.sh                # Parte 2: la alternativa LOCK TABLE que propuso la IA para el escenario 2
 bash scripts/lectura_critica.sh                     # Parte 3
 ```
 
@@ -43,4 +44,4 @@ bash scripts/lectura_critica.sh                     # Parte 3
 
 Cada script guarda su salida en `evidencias/`. Las evidencias incluyen errores a propósito: son los casos que el motor tiene que rechazar. Otro usuario de PostgreSQL: `PGUSER=mi_usuario bash scripts/...`.
 
-`food-store/schema.sql` es una copia del [`schema.sql` del TP1](../semana1_modelo_er_normalizacion_ddl/schema.sql). `food-store/data.sql` carga los datos iniciales, con los cinco pedidos de la planilla del TP1.
+`food-store/schema.sql` es una copia del [`schema.sql` del TP1](../semana1_modelo_er_normalizacion_ddl/schema.sql). `food-store/data.sql` carga los datos iniciales, con siete pedidos: del 1 al 5 son los de la planilla del TP1.
