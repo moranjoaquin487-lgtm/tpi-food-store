@@ -3,7 +3,6 @@
 | | |
 |---|---|
 | Herramienta y modelo | Kiro (modelo Auto) |
-| Fecha | 08/11/2026 |
 | Pedido | [`prompts/explicacion_escenario_4.md`](../../prompts/explicacion_escenario_4.md), pegado completo en un chat nuevo |
 
 ## Respuesta, copiada tal cual
