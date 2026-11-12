@@ -1,0 +1,32 @@
+-- U5 Â· Parte B â€” Secuencia de prueba para la auditorÃ­a
+-- Se ejecuta conectado como app_web (lo hace scripts/correr_auditoria_test.sh).
+-- El intento de inicio de sesiÃ³n fallido lo provoca el script de shell, porque ocurre
+-- antes de que exista una sesiÃ³n.
+\echo '-- 1. Lectura: catÃ¡logo vigente'
+-- 1. Lectura: catÃ¡logo vigente
+SELECT id_producto, nombre, precio FROM vista_productos_vigentes ORDER BY id_producto LIMIT 3;
+ id_producto |      nombre      | precio  
+-------------+------------------+---------
+           1 | Pan de campo 1kg | 2500.00
+           2 | Medialunas x6    | 3200.00
+           3 | Agua mineral 2L  | 1400.00
+(3 filas)
+
+\echo '-- 2. InserciÃ³n: un pedido de prueba con una lÃ­nea'
+-- 2. InserciÃ³n: un pedido de prueba con una lÃ­nea
+INSERT INTO pedido (forma_pago, id_cliente) VALUES ('EFECTIVO', 1) RETURNING id_pedido AS pedido_prueba \gset
+INSERT 0 1
+INSERT INTO detalle_pedido (cantidad, precio_unitario, id_pedido, id_producto)
+SELECT 1, precio, :pedido_prueba, id_producto FROM producto WHERE nombre = 'Agua mineral 2L';
+INSERT 0 1
+\echo '-- 3. ActualizaciÃ³n: se descuenta el stock vendido'
+-- 3. ActualizaciÃ³n: se descuenta el stock vendido
+UPDATE producto SET stock = stock - 1 WHERE nombre = 'Agua mineral 2L';
+UPDATE 1
+SELECT current_user AS conectado_como, :pedido_prueba AS pedido_creado;
+ conectado_como | pedido_creado 
+----------------+---------------
+ app_web        |        260013
+(1 fila)
+
+psql: error: falló la conexión al servidor en «localhost» (::1), puerto 5432: FATAL:  la autentificación password falló para el usuario «app_web»

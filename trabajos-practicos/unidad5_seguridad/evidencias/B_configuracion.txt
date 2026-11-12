@@ -1,0 +1,73 @@
+-- U5 · Parte B — Activación de la auditoría nativa del servidor
+-- Se ejecuta como postgres. ALTER SYSTEM escribe en postgresql.auto.conf y no se puede
+-- correr dentro de una transacción.
+\echo '== Valores ANTES del cambio'
+== Valores ANTES del cambio
+SELECT name, setting, context FROM pg_settings
+ WHERE name IN ('logging_collector', 'log_destination', 'log_directory', 'log_connections',
+                'log_disconnections', 'log_statement', 'log_line_prefix', 'log_min_error_statement',
+                'log_file_mode')
+ ORDER BY name;
+          name           |          setting           |      context      
+-------------------------+----------------------------+-------------------
+ log_connections         | on                         | superuser-backend
+ log_destination         | stderr                     | sighup
+ log_directory           | log                        | sighup
+ log_disconnections      | on                         | superuser-backend
+ log_file_mode           | 0640                       | sighup
+ log_line_prefix         | %m [%p] %q%u@%d %r app=%a  | sighup
+ log_min_error_statement | error                      | superuser
+ log_statement           | mod                        | superuser
+ logging_collector       | on                         | postmaster
+(9 filas)
+
+ALTER SYSTEM SET log_connections         = 'on';      -- quién se conecta, desde dónde y si se autentica
+ALTER SYSTEM
+ALTER SYSTEM SET log_disconnections      = 'on';      -- cuándo termina cada sesión y cuánto duró
+ALTER SYSTEM
+ALTER SYSTEM SET log_statement           = 'mod';     -- DDL e INSERT/UPDATE/DELETE/TRUNCATE/COPY FROM
+ALTER SYSTEM
+ALTER SYSTEM SET log_min_error_statement = 'error';   -- texto de toda sentencia que falla
+ALTER SYSTEM
+-- Prefijo: hora con milisegundos, PID, usuario@base, origen (IP y puerto) y aplicación.
+ALTER SYSTEM SET log_line_prefix         = '%m [%p] %q%u@%d %r app=%a ';
+ALTER SYSTEM
+SELECT pg_reload_conf();
+ pg_reload_conf 
+----------------
+ t
+(1 fila)
+
+SELECT pg_sleep(1);
+ pg_sleep 
+----------
+ 
+(1 fila)
+
+-- log_connections y log_disconnections rigen para las sesiones nuevas: se abre una.
+\c
+Ahora est� conectado a la base de datos �foodstore� con el usuario �postgres�.
+\echo '== Valores DESPUÉS del cambio (en una sesión nueva)'
+== Valores DESPUÉS del cambio (en una sesión nueva)
+SELECT name, setting FROM pg_settings
+ WHERE name IN ('logging_collector', 'log_connections', 'log_disconnections', 'log_statement',
+                'log_line_prefix', 'log_min_error_statement')
+ ORDER BY name;
+          name           |          setting           
+-------------------------+----------------------------
+ log_connections         | on
+ log_disconnections      | on
+ log_line_prefix         | %m [%p] %q%u@%d %r app=%a 
+ log_min_error_statement | error
+ log_statement           | mod
+ logging_collector       | on
+(6 filas)
+
+\echo '== Archivo de log actual (si sale vacío, logging_collector está apagado: ver PASOS.md)'
+== Archivo de log actual (si sale vacío, logging_collector está apagado: ver PASOS.md)
+SELECT pg_current_logfile() AS archivo_de_log;
+            archivo_de_log            
+--------------------------------------
+ log/postgresql-2026-11-12_101256.log
+(1 fila)
+

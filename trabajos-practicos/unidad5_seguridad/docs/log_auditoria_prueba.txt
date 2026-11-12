@@ -1,0 +1,19 @@
+2026-11-12 11:14:32.106 -03 [24200] postgres@foodstore ::1(57547) app=psql LOG:  MARCA INICIO auditoria_test_20261112_111431
+2026-11-12 11:14:32.106 -03 [24200] postgres@foodstore ::1(57547) app=psql CONTEXTO:  funciÃ³n PL/pgSQL inline_code_block en la lÃ­nea 1 en RAISE
+2026-11-12 11:14:32.106 -03 [24200] postgres@foodstore ::1(57547) app=psql SENTENCIA:  DO $$ BEGIN RAISE LOG 'MARCA INICIO auditoria_test_20261112_111431'; END $$;
+2026-11-12 11:14:32.106 -03 [24200] postgres@foodstore ::1(57547) app=psql LOG:  desconexiÃ³n: duraciÃ³n de sesiÃ³n: 0:00:00.056 usuario=postgres base=foodstore host=::1 port=57547
+2026-11-12 11:14:32.332 -03 [19268] [desconocido]@[desconocido] ::1(57548) app=[desconocido] LOG:  conexión recibida: host=::1 port=57548
+2026-11-12 11:14:32.355 -03 [19268] app_web@foodstore ::1(57548) app=[desconocido] LOG:  conexión autenticada: identidad=«app_web» método=scram-sha-256 (C:/Program Files/PostgreSQL/18/data/pg_hba.conf:117)
+2026-11-12 11:14:32.355 -03 [19268] app_web@foodstore ::1(57548) app=[desconocido] LOG:  conexión autorizada: usuario=app_web base_de_datos=foodstore nombre_de_aplicación=psql
+2026-11-12 11:14:32.365 -03 [19268] app_web@foodstore ::1(57548) app=psql LOG:  sentencia: INSERT INTO pedido (forma_pago, id_cliente) VALUES ('EFECTIVO', 1) RETURNING id_pedido AS pedido_prueba 
+2026-11-12 11:14:32.370 -03 [19268] app_web@foodstore ::1(57548) app=psql LOG:  sentencia: INSERT INTO detalle_pedido (cantidad, precio_unitario, id_pedido, id_producto)
+	SELECT 1, precio, 260013, id_producto FROM producto WHERE nombre = 'Agua mineral 2L';
+2026-11-12 11:14:32.387 -03 [19268] app_web@foodstore ::1(57548) app=psql LOG:  sentencia: UPDATE producto SET stock = stock - 1 WHERE nombre = 'Agua mineral 2L';
+2026-11-12 11:14:32.395 -03 [19268] app_web@foodstore ::1(57548) app=psql LOG:  desconexiÃ³n: duraciÃ³n de sesiÃ³n: 0:00:00.086 usuario=app_web base=foodstore host=::1 port=57548
+2026-11-12 11:14:32.628 -03 [27380] [desconocido]@[desconocido] ::1(57549) app=[desconocido] LOG:  conexión recibida: host=::1 port=57549
+2026-11-12 11:14:32.652 -03 [27380] app_web@foodstore ::1(57549) app=[desconocido] FATAL:  la autentificación password falló para el usuario «app_web»
+2026-11-12 11:14:32.652 -03 [27380] app_web@foodstore ::1(57549) app=[desconocido] DETALLE:  La conexión coincidió con el archivo «C:/Program Files/PostgreSQL/18/data/pg_hba.conf» línea 117: «host    all             all             ::1/128                 scram-sha-256»
+2026-11-12 11:14:33.975 -03 [3384] [desconocido]@[desconocido] ::1(57550) app=[desconocido] LOG:  conexión recibida: host=::1 port=57550
+2026-11-12 11:14:33.999 -03 [3384] postgres@foodstore ::1(57550) app=[desconocido] LOG:  conexión autenticada: identidad=«postgres» método=scram-sha-256 (C:/Program Files/PostgreSQL/18/data/pg_hba.conf:117)
+2026-11-12 11:14:33.999 -03 [3384] postgres@foodstore ::1(57550) app=[desconocido] LOG:  conexión autorizada: usuario=postgres base_de_datos=foodstore nombre_de_aplicación=psql
+2026-11-12 11:14:34.007 -03 [3384] postgres@foodstore ::1(57550) app=psql LOG:  MARCA FIN auditoria_test_20261112_111431
