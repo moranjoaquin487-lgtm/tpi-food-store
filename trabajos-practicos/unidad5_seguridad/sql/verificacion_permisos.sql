@@ -1,0 +1,207 @@
+-- U5 · Verificación de permisos: cada rol tiene exactamente lo previsto, ni más ni menos.
+-- Se ejecuta como postgres después de roles.sql.
+
+\echo '== \du: atributos de los roles'
+\du rol_*|app_web|admin_datos|usr_*
+
+\echo '== \drg: membresías (PostgreSQL 16+)'
+\drg rol_*|app_web|admin_datos|usr_*
+
+\echo '== information_schema.role_table_grants (sin admin_datos, que se verifica aparte)'
+SELECT grantee, table_name, privilege_type
+  FROM information_schema.role_table_grants
+ WHERE grantee IN ('rol_app_lectura', 'rol_app_escritura', 'rol_soporte', 'rol_reportes', 'rol_auditor',
+                   'app_web', 'usr_soporte', 'usr_reportes', 'usr_auditor')
+ ORDER BY 1, 2, 3;
+\echo '   Ojo: information_schema no lista las vistas materializadas; por eso la comparación de abajo usa pg_catalog.'
+
+\echo '== Comparación contra la especificación (pg_catalog: tablas, vistas, vistas materializadas, columnas y funciones)'
+CREATE TEMP TABLE esperado (grantee TEXT, objeto TEXT, privilegio TEXT);
+INSERT INTO esperado VALUES
+  ('rol_app_lectura',   'categoria',                     'SELECT'),
+  ('rol_app_lectura',   'producto',                      'SELECT'),
+  ('rol_app_lectura',   'pedido',                        'SELECT'),
+  ('rol_app_lectura',   'detalle_pedido',                'SELECT'),
+  ('rol_app_lectura',   'vista_productos_vigentes',      'SELECT'),
+  ('rol_app_escritura', 'pedido',                        'INSERT'),
+  ('rol_app_escritura', 'detalle_pedido',                'INSERT'),
+  ('rol_app_escritura', 'producto.stock',                'UPDATE'),
+  ('rol_app_escritura', 'sp_registrar_pedido()',         'EXECUTE'),
+  ('rol_app_escritura', 'fn_total_pedido()',             'EXECUTE'),
+  ('rol_soporte',       'cliente',                       'SELECT'),
+  ('rol_soporte',       'usuario.id',                    'SELECT'),
+  ('rol_soporte',       'usuario.nombre',                'SELECT'),
+  ('rol_soporte',       'usuario.apellido',              'SELECT'),
+  ('rol_soporte',       'usuario.mail',                  'SELECT'),
+  ('rol_soporte',       'usuario.celular',               'SELECT'),
+  ('rol_soporte',       'usuario.rol',                   'SELECT'),
+  ('rol_soporte',       'usuario.eliminado',             'SELECT'),
+  ('rol_soporte',       'usuario.created_at',            'SELECT'),
+  ('rol_soporte',       'usuario.celular',               'UPDATE'),
+  ('rol_soporte',       'usuario.eliminado',             'UPDATE'),
+  ('rol_soporte',       'fn_resetear_password()',        'EXECUTE'),
+  ('rol_reportes',      'mv_facturacion_cat_mes',        'SELECT'),
+  ('rol_reportes',      'v_top5_categorias',             'SELECT'),
+  ('rol_reportes',      'vista_productos_vigentes',      'SELECT'),
+  ('rol_reportes',      'vista_detalle_pedido_producto', 'SELECT'),
+  ('rol_auditor',       'auditoria_seguridad',           'SELECT'),
+  ('rol_auditor',       'auditoria_precio',              'SELECT'),
+  ('app_web',           'fn_autenticar()',               'EXECUTE');
+-- usuario_anon se agrega en la Parte D; si ya existe, también se espera para rol_reportes.
+INSERT INTO esperado SELECT 'rol_reportes', 'usuario_anon', 'SELECT' WHERE to_regclass('public.usuario_anon') IS NOT NULL;
+
+CREATE TEMP VIEW real AS
+WITH roles AS (
+    SELECT oid, rolname FROM pg_roles
+     WHERE rolname IN ('rol_app_lectura', 'rol_app_escritura', 'rol_soporte', 'rol_reportes', 'rol_auditor',
+                       'app_web', 'usr_soporte', 'usr_reportes', 'usr_auditor')
+), tablas AS (
+    SELECT c.relname AS objeto, (aclexplode(c.relacl)).*
+      FROM pg_class c
+     WHERE c.relnamespace = 'public'::regnamespace AND c.relkind IN ('r', 'v', 'm', 'p') AND c.relacl IS NOT NULL
+), columnas AS (
+    SELECT c.relname || '.' || a.attname AS objeto, (aclexplode(a.attacl)).*
+      FROM pg_attribute a JOIN pg_class c ON c.oid = a.attrelid
+     WHERE c.relnamespace = 'public'::regnamespace AND a.attacl IS NOT NULL
+), rutinas AS (
+    SELECT p.proname || '()' AS objeto, (aclexplode(p.proacl)).*
+      FROM pg_proc p
+     WHERE p.pronamespace = 'public'::regnamespace AND p.proacl IS NOT NULL
+)
+SELECT r.rolname AS grantee, x.objeto, x.privilege_type AS privilegio
+  FROM (SELECT * FROM tablas UNION ALL SELECT * FROM columnas UNION ALL SELECT * FROM rutinas) x
+  JOIN roles r ON r.oid = x.grantee;
+
+\echo '   Privilegios DE MÁS (otorgados y no previstos; se esperan 0 filas):'
+SELECT * FROM real EXCEPT SELECT * FROM esperado ORDER BY 1, 2, 3;
+\echo '   Privilegios DE MENOS (previstos y no otorgados; se esperan 0 filas):'
+SELECT * FROM esperado EXCEPT SELECT * FROM real ORDER BY 1, 2, 3;
+
+\echo '   Privilegios para PUBLIC (se esperan 0 filas). La comparación de arriba solo mira los roles con'
+\echo '   nombre, así que un GRANT ... TO PUBLIC no aparecía (code review U4-U7, hallazgo #10).'
+\echo '   Una función con proacl NULL tiene el EXECUTE por defecto para PUBLIC.'
+SELECT 'base de datos' AS tipo, current_database() AS objeto, a.privilege_type AS privilegio
+  FROM pg_database d CROSS JOIN LATERAL aclexplode(d.datacl) a
+ WHERE d.datname = current_database() AND a.grantee = 0
+UNION ALL
+SELECT 'esquema', n.nspname, a.privilege_type
+  FROM pg_namespace n CROSS JOIN LATERAL aclexplode(n.nspacl) a
+ WHERE n.nspname = 'public' AND a.grantee = 0
+UNION ALL
+SELECT 'relación', c.relname, a.privilege_type
+  FROM pg_class c CROSS JOIN LATERAL aclexplode(c.relacl) a
+ WHERE c.relnamespace = 'public'::regnamespace AND a.grantee = 0
+UNION ALL
+SELECT 'columna', c.relname || '.' || at.attname, a.privilege_type
+  FROM pg_attribute at JOIN pg_class c ON c.oid = at.attrelid CROSS JOIN LATERAL aclexplode(at.attacl) a
+ WHERE c.relnamespace = 'public'::regnamespace AND a.grantee = 0
+UNION ALL
+SELECT 'función', p.proname || '()', a.privilege_type
+  FROM pg_proc p CROSS JOIN LATERAL aclexplode(p.proacl) a
+ WHERE p.pronamespace = 'public'::regnamespace AND a.grantee = 0
+UNION ALL
+SELECT 'función', p.proname || '()', 'EXECUTE (por defecto)'
+  FROM pg_proc p
+ WHERE p.pronamespace = 'public'::regnamespace AND p.proacl IS NULL
+ ORDER BY 1, 2, 3;
+
+\echo '== admin_datos: S/I/U/D sobre todas las relaciones del esquema salvo la auditoría, y nada más'
+SELECT COUNT(*) FILTER (WHERE NOT (has_table_privilege('admin_datos', c.oid, 'SELECT')
+                               AND has_table_privilege('admin_datos', c.oid, 'INSERT')
+                               AND has_table_privilege('admin_datos', c.oid, 'UPDATE')
+                               AND has_table_privilege('admin_datos', c.oid, 'DELETE'))) AS relaciones_sin_dml_completo,
+       COUNT(*) FILTER (WHERE has_table_privilege('admin_datos', c.oid, 'TRUNCATE')
+                           OR has_table_privilege('admin_datos', c.oid, 'REFERENCES')
+                           OR has_table_privilege('admin_datos', c.oid, 'TRIGGER'))       AS relaciones_con_privilegios_extra,
+       COUNT(*) AS relaciones
+  FROM pg_class c
+ WHERE c.relnamespace = 'public'::regnamespace AND c.relkind IN ('r', 'v', 'm', 'p')
+   AND c.relname NOT IN ('auditoria_seguridad', 'auditoria_precio');
+
+\echo '== admin_datos sobre la auditoría: solo lectura (se espera t, f, f, f en las dos tablas)'
+SELECT t AS tabla,
+       has_table_privilege('admin_datos', t, 'SELECT') AS lee,
+       has_table_privilege('admin_datos', t, 'INSERT') AS inserta,
+       has_table_privilege('admin_datos', t, 'UPDATE') AS modifica,
+       has_table_privilege('admin_datos', t, 'DELETE') AS borra
+  FROM unnest(ARRAY['auditoria_seguridad', 'auditoria_precio']) AS t;
+
+\echo '== Membresías esperadas (se esperan 0 diferencias)'
+WITH esperado_m (miembro, grupo) AS (VALUES
+    ('app_web', 'rol_app_lectura'), ('app_web', 'rol_app_escritura'),
+    ('usr_soporte', 'rol_soporte'), ('usr_reportes', 'rol_reportes'), ('usr_auditor', 'rol_auditor')),
+real_m AS (
+    SELECT m.rolname AS miembro, g.rolname AS grupo
+      FROM pg_auth_members am
+      JOIN pg_roles m ON m.oid = am.member
+      JOIN pg_roles g ON g.oid = am.roleid
+     WHERE m.rolname IN ('app_web', 'admin_datos', 'usr_soporte', 'usr_reportes', 'usr_auditor')
+        OR g.rolname IN ('admin_datos', 'rol_app_lectura', 'rol_app_escritura', 'rol_soporte', 'rol_reportes', 'rol_auditor'))
+SELECT 'de más' AS tipo, * FROM (SELECT * FROM real_m EXCEPT SELECT * FROM esperado_m) a
+UNION ALL
+SELECT 'de menos', * FROM (SELECT * FROM esperado_m EXCEPT SELECT * FROM real_m) b;
+
+\echo '== Pruebas funcionales con SET ROLE (todo dentro de BEGIN ... ROLLBACK)'
+\set ON_ERROR_STOP off
+
+\echo '-- app_web registra un pedido completo con CALL (debe funcionar)'
+SELECT MIN(id_cliente) AS cli FROM cliente \gset
+SELECT id_producto AS prod FROM producto WHERE nombre = 'Agua mineral 2L' \gset
+BEGIN;
+SET ROLE app_web;
+CALL sp_registrar_pedido(:cli, 'TARJETA', jsonb_build_array(jsonb_build_object('id_producto', :prod, 'cantidad', 1)));
+SELECT current_user AS como, stock FROM producto WHERE id_producto = :prod;
+ROLLBACK;
+
+\echo '-- app_web intenta cambiar un precio (se espera: permission denied)'
+BEGIN; SET ROLE app_web;
+UPDATE producto SET precio = 1 WHERE id_producto = :prod;
+ROLLBACK;
+
+\echo '-- app_web intenta leer clientes (se espera: permission denied)'
+BEGIN; SET ROLE app_web;
+SELECT COUNT(*) FROM cliente;
+ROLLBACK;
+
+\echo '-- usr_soporte lee mails de usuarios (debe funcionar)'
+BEGIN; SET ROLE usr_soporte;
+SELECT COUNT(*) AS usuarios_visibles FROM (SELECT id, mail FROM usuario) u;
+ROLLBACK;
+
+\echo '-- usr_soporte intenta leer la contraseña (se espera: permission denied)'
+BEGIN; SET ROLE usr_soporte;
+SELECT contrasena FROM usuario LIMIT 1;
+ROLLBACK;
+
+\echo '-- usr_soporte resetea una contraseña con la función (debe funcionar)'
+BEGIN; SET ROLE usr_soporte;
+SELECT fn_resetear_password('usuario001@foodstore.test', 'Temporal-12345') AS reseteada;
+ROLLBACK;
+
+\echo '-- usr_reportes lee el top 5 (debe funcionar) y no lee pedidos de clientes (permission denied)'
+BEGIN; SET ROLE usr_reportes;
+SELECT COUNT(*) AS filas_top5 FROM v_top5_categorias;
+ROLLBACK;
+BEGIN; SET ROLE usr_reportes;
+SELECT COUNT(*) FROM vista_pedidos_cliente;
+ROLLBACK;
+
+\echo '-- admin_datos intenta borrar la auditoría (se espera: permission denied)'
+BEGIN; SET ROLE admin_datos;
+DELETE FROM auditoria_seguridad;
+ROLLBACK;
+
+\echo '-- admin_datos cambia un precio: funciona y el trigger igual registra el cambio en auditoria_precio'
+BEGIN;
+SELECT COUNT(*) AS auditoria_precio_antes FROM auditoria_precio;
+SET ROLE admin_datos;
+UPDATE producto SET precio = precio + 1 WHERE id_producto = 1;
+RESET ROLE;
+SELECT COUNT(*) AS auditoria_precio_despues FROM auditoria_precio;
+ROLLBACK;
+
+\echo '-- admin_datos intenta crear un rol (se espera: permission denied)'
+BEGIN; SET ROLE admin_datos;
+CREATE ROLE intruso;
+ROLLBACK;
+\set ON_ERROR_STOP on

@@ -1,0 +1,152 @@
+-- U5 · Parte A.4 — Comprobación en la base de los hallazgos de OpenCode sobre roles.sql
+-- (respuesta completa en docs/respuestas_ia/A_auditoria_roles.md; decisiones en BITACORA.md).
+-- Se ejecuta como postgres. TODO corre dentro de BEGIN ... ROLLBACK: no cambia nada.
+-- ON_ERROR_ROLLBACK hace que un error esperado no corte el resto de las pruebas.
+\set ON_ERROR_ROLLBACK on
+BEGIN;
+BEGIN
+\echo '== #1 admin_datos puede borrar la auditoría (se espera que el DELETE funcione: el hallazgo es real)'
+== #1 admin_datos puede borrar la auditoría (se espera que el DELETE funcione: el hallazgo es real)
+SET ROLE admin_datos;
+SET
+SELECT COUNT(*) AS filas_auditoria_seguridad_antes FROM auditoria_seguridad;
+ filas_auditoria_seguridad_antes 
+---------------------------------
+                               6
+(1 fila)
+
+DELETE FROM auditoria_seguridad;
+DELETE 6
+SELECT COUNT(*) AS filas_auditoria_seguridad_despues FROM auditoria_seguridad;
+ filas_auditoria_seguridad_despues 
+-----------------------------------
+                                 0
+(1 fila)
+
+RESET ROLE;
+RESET
+\echo '== #1 (segunda parte) La corrección de OpenCode para la contraseña: REVOKE de columna'
+== #1 (segunda parte) La corrección de OpenCode para la contraseña: REVOKE de columna
+\echo '   Con un GRANT de tabla, revocar una columna no tiene efecto: admin_datos sigue leyendo contrasena'
+   Con un GRANT de tabla, revocar una columna no tiene efecto: admin_datos sigue leyendo contrasena
+REVOKE SELECT (contrasena), UPDATE (contrasena) ON usuario FROM admin_datos;
+REVOKE
+SELECT has_column_privilege('admin_datos', 'usuario', 'contrasena', 'SELECT') AS admin_datos_puede_leer_contrasena;
+ admin_datos_puede_leer_contrasena 
+-----------------------------------
+ t
+(1 fila)
+
+SET ROLE admin_datos;
+SET
+SELECT COUNT(contrasena) AS contrasenas_que_lee_admin_datos FROM usuario;
+ contrasenas_que_lee_admin_datos 
+---------------------------------
+                             147
+(1 fila)
+
+RESET ROLE;
+RESET
+\echo '== #2 usuario_anon para rol_reportes: lo otorga usuario_anon.sql, que corre después de roles.sql'
+== #2 usuario_anon para rol_reportes: lo otorga usuario_anon.sql, que corre después de roles.sql
+SELECT has_table_privilege('rol_reportes', 'usuario_anon', 'SELECT') AS rol_reportes_lee_usuario_anon;
+ rol_reportes_lee_usuario_anon 
+-------------------------------
+ t
+(1 fila)
+
+\echo '== #3 app_web lee los pedidos de todos los clientes (el hallazgo es real; ver la decisión en la bitácora)'
+== #3 app_web lee los pedidos de todos los clientes (el hallazgo es real; ver la decisión en la bitácora)
+SET ROLE app_web;
+SET
+SELECT COUNT(*) AS pedidos_visibles, COUNT(DISTINCT id_cliente) AS clientes_distintos FROM pedido;
+ pedidos_visibles | clientes_distintos 
+------------------+--------------------
+           200009 |              19998
+(1 fila)
+
+RESET ROLE;
+RESET
+\echo '== #4 Secuencias: las claves son GENERATED ALWAYS AS IDENTITY'
+== #4 Secuencias: las claves son GENERATED ALWAYS AS IDENTITY
+SELECT attrelid::regclass AS tabla, attname AS columna, attidentity AS identity
+  FROM pg_attribute
+ WHERE attrelid IN ('pedido'::regclass, 'detalle_pedido'::regclass) AND attidentity <> '';
+     tabla      |  columna   | identity 
+----------------+------------+----------
+ pedido         | id_pedido  | a
+ detalle_pedido | id_detalle | a
+(2 filas)
+
+SELECT has_sequence_privilege('app_web', pg_get_serial_sequence('pedido', 'id_pedido'), 'USAGE') AS app_web_tiene_usage_en_la_secuencia;
+ app_web_tiene_usage_en_la_secuencia 
+-------------------------------------
+ f
+(1 fila)
+
+\echo '   app_web inserta igual, sin permiso sobre la secuencia:'
+   app_web inserta igual, sin permiso sobre la secuencia:
+SET ROLE app_web;
+SET
+INSERT INTO pedido (forma_pago, id_cliente) VALUES ('EFECTIVO', 1) RETURNING id_pedido AS pedido_insertado_por_app_web;
+ pedido_insertado_por_app_web 
+------------------------------
+                       260015
+(1 fila)
+
+INSERT 0 1
+RESET ROLE;
+RESET
+\echo '   Lo que otorgaría GRANT USAGE, SELECT ON ALL SEQUENCES: todas las secuencias del esquema'
+   Lo que otorgaría GRANT USAGE, SELECT ON ALL SEQUENCES: todas las secuencias del esquema
+SELECT COUNT(*) AS secuencias_en_public FROM pg_sequences WHERE schemaname = 'public';
+ secuencias_en_public 
+----------------------
+                   11
+(1 fila)
+
+\echo '== #5 rol_soporte puede dar de baja una cuenta ADMIN (el hallazgo es real)'
+== #5 rol_soporte puede dar de baja una cuenta ADMIN (el hallazgo es real)
+SET ROLE usr_soporte;
+SET
+UPDATE usuario SET eliminado = true WHERE rol = 'ADMIN' AND NOT eliminado;
+UPDATE 9
+RESET ROLE;
+RESET
+SELECT COUNT(*) AS admins_dados_de_baja_por_soporte FROM usuario WHERE rol = 'ADMIN' AND eliminado;
+ admins_dados_de_baja_por_soporte 
+----------------------------------
+                               13
+(1 fila)
+
+\echo '== #6 ALTER DEFAULT PRIVILEGES ... REVOKE ALL ON TABLES/SEQUENCES FROM PUBLIC'
+== #6 ALTER DEFAULT PRIVILEGES ... REVOKE ALL ON TABLES/SEQUENCES FROM PUBLIC
+\echo '   Una tabla y una secuencia nuevas no le dan nada a PUBLIC: el REVOKE propuesto no cambia nada'
+   Una tabla y una secuencia nuevas no le dan nada a PUBLIC: el REVOKE propuesto no cambia nada
+CREATE TABLE prueba_privilegios_por_defecto (x INT);
+CREATE TABLE
+CREATE SEQUENCE prueba_secuencia_por_defecto;
+CREATE SEQUENCE
+CREATE FUNCTION prueba_funcion_por_defecto() RETURNS INT LANGUAGE sql AS 'SELECT 1';
+CREATE FUNCTION
+SELECT c.relname AS objeto, COUNT(*) FILTER (WHERE a.grantee = 0) AS permisos_para_public,
+       string_agg(DISTINCT pg_get_userbyid(a.grantee), ', ') FILTER (WHERE a.grantee <> 0) AS reciben_permisos
+  FROM pg_class c CROSS JOIN LATERAL aclexplode(c.relacl) a
+ WHERE c.relname IN ('prueba_privilegios_por_defecto', 'prueba_secuencia_por_defecto')
+ GROUP BY c.relname;
+             objeto             | permisos_para_public |   reciben_permisos    
+--------------------------------+----------------------+-----------------------
+ prueba_privilegios_por_defecto |                    0 | admin_datos, postgres
+ prueba_secuencia_por_defecto   |                    0 | admin_datos, postgres
+(2 filas)
+
+SELECT has_function_privilege('usr_reportes', 'prueba_funcion_por_defecto()', 'EXECUTE') AS una_funcion_nueva_queda_abierta;
+ una_funcion_nueva_queda_abierta 
+---------------------------------
+ f
+(1 fila)
+
+ROLLBACK;
+ROLLBACK
+\echo '== Fin: todo se deshizo con ROLLBACK'
+== Fin: todo se deshizo con ROLLBACK

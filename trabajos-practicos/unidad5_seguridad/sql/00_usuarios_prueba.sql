@@ -1,0 +1,23 @@
+-- U5 · 00 — Usuarios de prueba (datos inventados)
+-- La base tenía 3 usuarios. Para el simulacro y la anonimización hacen falta más,
+-- repartidos entre roles y meses de alta. Las contraseñas son de prueba y se guardan
+-- como hash bcrypt (pgcrypto); ninguna corresponde a una persona real.
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+DELETE FROM usuario WHERE mail LIKE 'usuario___@foodstore.test';
+
+-- 120 usuarios: 1 de cada 10 es ADMIN, 1 de cada 15 está dado de baja,
+-- altas repartidas de enero a octubre de 2026. Contraseña de prueba: Prueba-NNN.
+INSERT INTO usuario (nombre, apellido, mail, celular, contrasena, rol, eliminado, created_at)
+SELECT 'Nombre' || lpad(i::TEXT, 3, '0'),
+       'Apellido' || lpad(i::TEXT, 3, '0'),
+       'usuario' || lpad(i::TEXT, 3, '0') || '@foodstore.test',
+       '+54 9 261 000-' || lpad(i::TEXT, 4, '0'),
+       crypt('Prueba-' || lpad(i::TEXT, 3, '0'), gen_salt('bf', 8)),
+       CASE WHEN i % 10 = 0 THEN 'ADMIN' ELSE 'USUARIO' END::rol,
+       (i % 15 = 0),
+       TIMESTAMPTZ '2026-01-05 10:00:00-03' + ((i * 61 % 300) || ' days')::INTERVAL
+FROM generate_series(1, 120) AS s(i);
+
+SELECT rol, eliminado, COUNT(*) FROM usuario GROUP BY 1, 2 ORDER BY 1, 2;
