@@ -1,0 +1,41 @@
+
+Carpeta: FoodStore
+Nombre de host:                                        JOAQUIN
+Nombre de tarea:                                       FoodStore\Respaldo
+Hora próxima ejecución:                                13/11/2026 02:00:00
+Estado:                                                Listo
+Modo de inicio de sesión:                              Solo interactivo
+Último tiempo de ejecución:                            12/11/2026 12:09:37
+Último resultado:                                      0
+Autor:                                                 JOAQUIN\moran
+Tarea que se ejecutará:                                "C:\Users\moran\BD2\tpi-food-store\trabajos-practicos\unidad6_mantenimiento\respaldo_tarea.cmd" 
+Iniciar en:                                            N/A
+Comentario:                                            N/A
+Estado de tarea programada:                            Habilitado
+Tiempo de inactividad:                                 Deshabilitado
+Administración de energía:                             
+Ejecutar como usuario:                                 moran
+Eliminar tarea si no se vuelve a programar:            Deshabilitado
+Eliminar tarea si ejecuta durante X horas y X minutos: 72:00:00
+Programación:                                          Datos de programación no disponibles en este formato.
+Tipo de programación:                                  Diariamente
+Hora de inicio:                                        02:00:00
+Fecha de inicio:                                       12/11/2026
+Fecha final:                                           N/A
+Días:                                                  Cada 1 día(s)
+Meses:                                                 N/A
+Repetir: cada:                                         Deshabilitado
+Repetir: hasta: hora:                                  Deshabilitado
+Repetir: hasta: duración:                              Deshabilitado
+Repetir: detener si aún se ejecuta:                    Deshabilitado
+
+==== jue 12/11/2026 12:09:38,32 
+2026-11-12 12:09:39 INICIO respaldo de foodstore en localhost:5432 -> backups/foodstore_20261112_120939.dump
+2026-11-12 12:09:43 OK backups/foodstore_20261112_120939.dump  tamaño=7,9M  objetos=232  duración=3s
+codigo de salida: 0 
+
+==== Segunda ejecución, con la ruta entre comillas simples en respaldo_tarea.cmd (code review U4-U7, #11)
+==== jue 12/11/2026 18:48:31,05 
+2026-11-12 18:48:31 INICIO respaldo de foodstore en localhost:5432 -> backups/foodstore_20261112_184831.dump
+2026-11-12 18:48:34 OK backups/foodstore_20261112_184831.dump  tamaño=7,9M  objetos=232  duración=2s
+codigo de salida: 0 

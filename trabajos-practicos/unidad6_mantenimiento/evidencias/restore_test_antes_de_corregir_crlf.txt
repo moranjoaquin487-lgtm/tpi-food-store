@@ -1,0 +1,29 @@
+Simulacro de restauración de foodstore
+Respaldo usado:        backups/foodstore_20261112_111453.dump
+Fecha del respaldo:    2026-11-12 11:14:53
+Tamaño del respaldo:   7.9M
+Restauración en paralelo: no (1 proceso)
+
+NOTICE:  no existe la base de datos «foodstore_restore_test», omitiendo
+== Cronómetro: INICIO 2026-11-12 11:14:59
+
+== Validación 1: filas por tabla (respaldo vs restaurada)
+tabla                respaldo   restaurada coincide
+categoria                  5            5 NO
+cliente                20005        20005 NO
+producto               50010        50010 NO
+detalle_pedido        399997       399997 NO
+pedido                200009       200009 NO
+
+== Validación 2: restricciones lógicas (se espera 0 y 0)
+productos_invalidos detalles_invalidos
+0 0
+
+== Cronómetro: FIN 2026-11-12 11:15:05
+
+== Resultado
+RTO observado (createdb + pg_restore + validaciones): 5,927 s
+   de los cuales createdb + pg_restore:               4,807 s
+RPO observado (antigüedad del respaldo al restaurar):  0 h 0 min 12 s
+Validaciones: FALLARON
+La base foodstore no se modificó durante el simulacro.

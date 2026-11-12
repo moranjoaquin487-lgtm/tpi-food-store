@@ -1,0 +1,8 @@
+== Respaldos
+total 8053
+-rw-r--r-- 1 moran 197611      82 Nov 12 11:14 foodstore_20261112_111453.conteos.txt
+-rw-r--r-- 1 moran 197611 8243372 Nov 12 11:14 foodstore_20261112_111453.dump
+
+== logs/backup.log
+2026-11-12 11:14:53 INICIO respaldo de foodstore en localhost:5432 -> backups/foodstore_20261112_111453.dump
+2026-11-12 11:14:56 OK backups/foodstore_20261112_111453.dump  tamaño=7.9M  objetos=230  duración=2s

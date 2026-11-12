@@ -1,0 +1,99 @@
+== 1. Configuración de autovacuum
+              name               | setting | unit 
+---------------------------------+---------+------
+ autovacuum                      | on      | 
+ autovacuum_analyze_scale_factor | 0.1     | 
+ autovacuum_analyze_threshold    | 50      | 
+ autovacuum_naptime              | 60      | s
+ autovacuum_vacuum_scale_factor  | 0.2     | 
+ autovacuum_vacuum_threshold     | 50      | 
+(6 filas)
+
+== 2. Observación previa: estado de cada tabla
+             tabla             | vivas  | muertas | muertas_pct | modificadas_desde_analyze | ultimo_vacuum |        ultimo_analyze         
+-------------------------------+--------+---------+-------------+---------------------------+---------------+-------------------------------
+ pedido                        | 200009 |  260014 |      130.00 |                    400013 |               | 2026-11-12 11:14:04.505082-03
+ detalle_pedido                | 399997 |    2010 |        0.50 |                         1 |               | 2026-11-12 11:14:24.792327-03
+ resumen_ventas_categoria      |      5 |      20 |      400.00 |                         1 |               | 2026-11-12 11:14:25.030726-03
+ producto                      |  50010 |      10 |        0.02 |                         1 |               | 2026-11-12 11:14:25.028191-03
+ control_lote                  |    600 |       2 |        0.33 |                       600 |               | 
+ usuario                       |    147 |       2 |        1.36 |                       144 |               | 2026-11-12 11:14:04.564771-03
+ responsable_deposito          |     24 |       2 |        8.33 |                        24 |               | 
+ control_lote_almacen_respaldo |    600 |       1 |        0.17 |                       600 |               | 
+ auditoria_seguridad           |      6 |       1 |       16.67 |                         6 |               | 
+ mv_facturacion_cat_mes        |    100 |       0 |        0.00 |                       100 |               | 
+ usuario_anon                  |    147 |       0 |        0.00 |                       147 |               | 
+ categoria                     |      5 |       0 |        0.00 |                         0 |               | 2026-11-12 11:14:03.919583-03
+ cliente                       |  20005 |       0 |        0.00 |                     20000 |               | 2026-11-12 11:14:04.466735-03
+ auditoria_precio              |      5 |       0 |        0.00 |                         5 |               | 
+ lote                          |    300 |       0 |        0.00 |                       300 |               | 
+ deposito                      |      8 |       0 |        0.00 |                         8 |               | 
+(16 filas)
+
+== 3. Decisión: tablas que cumplen el criterio de SPEC_U6.md
+SELECT 16
+             tabla             |      accion      | muertas | vivas  | modificadas 
+-------------------------------+------------------+---------+--------+-------------
+ cliente                       | ANALYZE          |       0 |  20005 |       20000
+ control_lote                  | ANALYZE          |       2 |    600 |         600
+ control_lote_almacen_respaldo | ANALYZE          |       1 |    600 |         600
+ lote                          | ANALYZE          |       0 |    300 |         300
+ mv_facturacion_cat_mes        | ANALYZE          |       0 |    100 |         100
+ pedido                        | VACUUM (ANALYZE) |  260014 | 200009 |      400013
+ usuario                       | ANALYZE          |       2 |    147 |         144
+ usuario_anon                  | ANALYZE          |       0 |    147 |         147
+(8 filas)
+
+            resultado            
+---------------------------------
+ 8 tabla(s) cumplen el criterio.
+(1 fila)
+
+== 4. Acción (solo sobre las tablas elegidas en el paso 3)
+ANALYZE
+ANALYZE
+ANALYZE
+ANALYZE
+ANALYZE
+VACUUM
+ANALYZE
+ANALYZE
+== 5. Después de la acción
+             tabla             | muertas | modificadas_desde_analyze |          last_vacuum          |         last_analyze          
+-------------------------------+---------+---------------------------+-------------------------------+-------------------------------
+ cliente                       |       0 |                         0 |                               | 2026-11-12 11:14:57.081684-03
+ control_lote                  |       2 |                         0 |                               | 2026-11-12 11:14:57.08521-03
+ control_lote_almacen_respaldo |       1 |                         0 |                               | 2026-11-12 11:14:57.086611-03
+ lote                          |       0 |                         0 |                               | 2026-11-12 11:14:57.08833-03
+ mv_facturacion_cat_mes        |       0 |                         0 |                               | 2026-11-12 11:14:57.089603-03
+ pedido                        |       0 |                         0 | 2026-11-12 11:14:57.655196-03 | 2026-11-12 11:14:57.71208-03
+ usuario                       |       2 |                         0 |                               | 2026-11-12 11:14:57.716719-03
+ usuario_anon                  |       0 |                         0 |                               | 2026-11-12 11:14:57.718903-03
+(8 filas)
+
+== 6. Vista materializada de facturación (U3): se refresca con el mantenimiento semanal
+REFRESH MATERIALIZED VIEW
+ filas_mv_facturacion 
+----------------------
+                  100
+(1 fila)
+
+== 7. Verificación de integridad
+   7.a Índices B-tree con amcheck (se espera 0 errores; si hay uno, bt_index_check lo informa con un ERROR)
+CREATE EXTENSION
+ indices_verificados 
+---------------------
+                  28
+(1 fila)
+
+   7.b Resumen desnormalizado de la U4 contra el cálculo real (se esperan 0 filas)
+ id_categoria | unidades_resumen | unidades_real | facturacion_resumen | facturacion_real 
+--------------+------------------+---------------+---------------------+------------------
+(0 filas)
+
+   7.c Reglas lógicas (se espera 0 en las dos)
+ productos_invalidos | detalles_invalidos 
+---------------------+--------------------
+                   0 |                  0
+(1 fila)
+
