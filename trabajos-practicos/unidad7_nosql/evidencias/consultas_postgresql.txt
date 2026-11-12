@@ -1,0 +1,151 @@
+-- U7 · Consultas equivalentes en PostgreSQL, sobre los mismos pedidos migrados
+-- (v_pedidos_migrados_mongo, definida en 02_exportar_pedidos.sql)
+\echo '== a) Pedidos migrados, con su identificador y estado'
+== a) Pedidos migrados, con su identificador y estado
+SELECT p.id_pedido, p.estado
+  FROM pedido p
+ WHERE p.id_pedido IN (SELECT id_pedido FROM v_pedidos_migrados_mongo)
+ ORDER BY p.id_pedido;
+ id_pedido |   estado   
+-----------+------------
+         1 | ENTREGADO
+         2 | ENTREGADO
+         3 | CANCELADO
+         4 | CONFIRMADO
+         5 | PENDIENTE
+      2083 | CANCELADO
+     11780 | ENTREGADO
+     12734 | CONFIRMADO
+     16725 | PENDIENTE
+     19762 | ENTREGADO
+     27376 | ENTREGADO
+     29459 | ENTREGADO
+     30413 | CANCELADO
+     31367 | ENTREGADO
+     34404 | CONFIRMADO
+     37441 | ENTREGADO
+     38027 | ENTREGADO
+     46009 | ENTREGADO
+     48092 | ENTREGADO
+     52083 | CANCELADO
+     62734 | CONFIRMADO
+     65771 | ENTREGADO
+     66725 | PENDIENTE
+     69762 | ENTREGADO
+     73385 | PENDIENTE
+     80413 | CANCELADO
+     81367 | ENTREGADO
+     83450 | ENTREGADO
+     84404 | CONFIRMADO
+     87441 | ENTREGADO
+     92018 | ENTREGADO
+     96009 | ENTREGADO
+     98092 | ENTREGADO
+    102083 | CANCELADO
+    108743 | CANCELADO
+    115771 | ENTREGADO
+    116725 | PENDIENTE
+    119762 | ENTREGADO
+    126422 | ENTREGADO
+    127376 | ENTREGADO
+    131367 | ENTREGADO
+    133450 | ENTREGADO
+    134404 | CONFIRMADO
+    137441 | ENTREGADO
+    142018 | ENTREGADO
+    144101 | ENTREGADO
+    146009 | ENTREGADO
+    152083 | CANCELADO
+    161780 | ENTREGADO
+    162734 | CONFIRMADO
+    166725 | PENDIENTE
+    169762 | ENTREGADO
+    177376 | ENTREGADO
+    179459 | ENTREGADO
+    180413 | CANCELADO
+    181367 | ENTREGADO
+    184404 | CONFIRMADO
+    187441 | ENTREGADO
+    188027 | ENTREGADO
+    196009 | ENTREGADO
+    198092 | ENTREGADO
+    260013 | CANCELADO
+(62 filas)
+
+\echo '== b) Pedidos en estado CANCELADO'
+== b) Pedidos en estado CANCELADO
+SELECT p.id_pedido, p.estado, p.fecha
+  FROM pedido p
+ WHERE p.id_pedido IN (SELECT id_pedido FROM v_pedidos_migrados_mongo)
+   AND p.estado = 'CANCELADO'
+ ORDER BY p.id_pedido;
+ id_pedido |  estado   |             fecha             
+-----------+-----------+-------------------------------
+         3 | CANCELADO | 2026-08-07 09:05:00-03
+      2083 | CANCELADO | 2025-04-02 00:12:49.767455-03
+     30413 | CANCELADO | 2025-11-15 08:44:46.349855-03
+     52083 | CANCELADO | 2026-08-28 21:56:28.033055-03
+     80413 | CANCELADO | 2024-12-07 12:27:58.868255-03
+    102083 | CANCELADO | 2025-09-14 06:35:24.778655-03
+    108743 | CANCELADO | 2025-09-16 17:13:57.649055-03
+    152083 | CANCELADO | 2025-12-01 13:14:22.330655-03
+    180413 | CANCELADO | 2025-02-14 12:02:07.210655-03
+    260013 | CANCELADO | 2026-11-12 11:14:32.365433-03
+(10 filas)
+
+SELECT COUNT(*) AS cantidad, array_agg(id_pedido ORDER BY id_pedido) AS ids
+  FROM pedido
+ WHERE id_pedido IN (SELECT id_pedido FROM v_pedidos_migrados_mongo) AND estado = 'CANCELADO';
+ cantidad |                              ids                              
+----------+---------------------------------------------------------------
+       10 | {3,2083,30413,52083,80413,102083,108743,152083,180413,260013}
+(1 fila)
+
+\echo '== c) Pedidos que contienen el producto "Yerba mate 1kg"'
+== c) Pedidos que contienen el producto "Yerba mate 1kg"
+SELECT p.id_pedido, p.estado, dp.cantidad, dp.precio_unitario
+  FROM pedido p
+  JOIN detalle_pedido dp ON dp.id_pedido = p.id_pedido
+  JOIN producto pr       ON pr.id_producto = dp.id_producto
+ WHERE p.id_pedido IN (SELECT id_pedido FROM v_pedidos_migrados_mongo)
+   AND pr.nombre = 'Yerba mate 1kg'
+ ORDER BY p.id_pedido;
+ id_pedido |  estado   | cantidad | precio_unitario 
+-----------+-----------+----------+-----------------
+         2 | ENTREGADO |        1 |         6800.00
+      2083 | CANCELADO |        1 |         6800.00
+     48092 | ENTREGADO |        3 |         6800.00
+     52083 | CANCELADO |        1 |         6800.00
+     98092 | ENTREGADO |        3 |         6800.00
+    102083 | CANCELADO |        1 |         6800.00
+    144101 | ENTREGADO |        1 |         6800.00
+    152083 | CANCELADO |        1 |         6800.00
+    198092 | ENTREGADO |        3 |         6800.00
+(9 filas)
+
+SELECT COUNT(*) AS cantidad, array_agg(p.id_pedido ORDER BY p.id_pedido) AS ids
+  FROM pedido p
+ WHERE p.id_pedido IN (SELECT id_pedido FROM v_pedidos_migrados_mongo)
+   AND EXISTS (SELECT 1 FROM detalle_pedido dp JOIN producto pr ON pr.id_producto = dp.id_producto
+                WHERE dp.id_pedido = p.id_pedido AND pr.nombre = 'Yerba mate 1kg');
+ cantidad |                          ids                           
+----------+--------------------------------------------------------
+        9 | {2,2083,48092,52083,98092,102083,144101,152083,198092}
+(1 fila)
+
+\echo '== d) Pedidos con total superior al ticket promedio del subconjunto'
+== d) Pedidos con total superior al ticket promedio del subconjunto
+WITH totales AS (
+    SELECT dp.id_pedido, SUM(dp.cantidad * dp.precio_unitario) AS total
+      FROM detalle_pedido dp
+     WHERE dp.id_pedido IN (SELECT id_pedido FROM v_pedidos_migrados_mongo)
+     GROUP BY dp.id_pedido)
+SELECT ROUND(AVG(total), 2) AS umbral,
+       COUNT(*) FILTER (WHERE total > (SELECT ROUND(AVG(total), 2) FROM totales)) AS cantidad,
+       array_agg(id_pedido ORDER BY id_pedido) FILTER (WHERE total > (SELECT ROUND(AVG(total), 2) FROM totales)) AS ids
+  FROM totales;
+  umbral  | cantidad |                                                              ids                                                              
+----------+----------+-------------------------------------------------------------------------------------------------------------------------------
+ 10928.97 |       21 | {2,3,4,11780,30413,34404,48092,65771,80413,84404,98092,102083,115771,119762,126422,134404,144101,161780,180413,184404,198092}
+(1 fila)
+

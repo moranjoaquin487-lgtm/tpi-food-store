@@ -1,0 +1,2238 @@
+[
+    {
+        "_id": 1,
+        "fecha": "2026-08-01T13:15:00.000Z",
+        "total": "6851.78",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 2,
+                "producto": "Pan de campo 1kg",
+                "subtotal": "4400.00",
+                "categoria": "Panificados",
+                "id_detalle": 1,
+                "id_producto": 1,
+                "precio_unitario": "2200.00"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Leche entera 1L",
+                "subtotal": "1650.00",
+                "categoria": "Lácteos",
+                "id_detalle": 2,
+                "id_producto": 5,
+                "precio_unitario": "1650.00"
+            },
+            {
+                "cantidad": 3,
+                "producto": "Producto 12639",
+                "subtotal": "74.58",
+                "categoria": "Congelados",
+                "id_detalle": 10,
+                "id_producto": 12649,
+                "precio_unitario": "24.86"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 17368",
+                "subtotal": "727.20",
+                "categoria": "Almacén",
+                "id_detalle": 11,
+                "id_producto": 17378,
+                "precio_unitario": "363.60"
+            }
+        ],
+        "cliente": {
+            "nombre": "Ana",
+            "apellido": "Gutiérrez",
+            "id_cliente": 1
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 2,
+        "fecha": "2026-08-03T21:40:00.000Z",
+        "total": "14694.34",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Agua mineral 2L",
+                "subtotal": "4200.00",
+                "categoria": "Bebidas",
+                "id_detalle": 3,
+                "id_producto": 3,
+                "precio_unitario": "1400.00"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Yerba mate 1kg",
+                "subtotal": "6800.00",
+                "categoria": "Almacén",
+                "id_detalle": 4,
+                "id_producto": 7,
+                "precio_unitario": "6800.00"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 20558",
+                "subtotal": "660.18",
+                "categoria": "Almacén",
+                "id_detalle": 12,
+                "id_producto": 20568,
+                "precio_unitario": "330.09"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 25287",
+                "subtotal": "910.04",
+                "categoria": "Lácteos",
+                "id_detalle": 13,
+                "id_producto": 25297,
+                "precio_unitario": "910.04"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 30016",
+                "subtotal": "2124.12",
+                "categoria": "Bebidas",
+                "id_detalle": 14,
+                "id_producto": 30026,
+                "precio_unitario": "531.03"
+            }
+        ],
+        "cliente": {
+            "nombre": "Bruno",
+            "apellido": "Salinas",
+            "id_cliente": 2
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 3,
+        "fecha": "2026-08-07T12:05:00.000Z",
+        "total": "14628.13",
+        "estado": "CANCELADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Queso cremoso 500g",
+                "subtotal": "7600.00",
+                "categoria": "Lácteos",
+                "id_detalle": 5,
+                "id_producto": 6,
+                "precio_unitario": "7600.00"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Medialunas x6",
+                "subtotal": "6400.00",
+                "categoria": "Panificados",
+                "id_detalle": 6,
+                "id_producto": 2,
+                "precio_unitario": "3200.00"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 28477",
+                "subtotal": "628.13",
+                "categoria": "Lácteos",
+                "id_detalle": 15,
+                "id_producto": 28487,
+                "precio_unitario": "628.13"
+            }
+        ],
+        "cliente": {
+            "nombre": "Ana",
+            "apellido": "Gutiérrez",
+            "id_cliente": 1
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 4,
+        "fecha": "2026-08-12T23:30:00.000Z",
+        "total": "16101.14",
+        "estado": "CONFIRMADO",
+        "lineas": [
+            {
+                "cantidad": 4,
+                "producto": "Fideos secos 500g",
+                "subtotal": "7800.00",
+                "categoria": "Almacén",
+                "id_detalle": 7,
+                "id_producto": 9,
+                "precio_unitario": "1950.00"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Aceite girasol 900ml",
+                "subtotal": "4100.00",
+                "categoria": "Almacén",
+                "id_detalle": 8,
+                "id_producto": 8,
+                "precio_unitario": "4100.00"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 36396",
+                "subtotal": "2571.00",
+                "categoria": "Bebidas",
+                "id_detalle": 16,
+                "id_producto": 36406,
+                "precio_unitario": "642.75"
+            },
+            {
+                "cantidad": 3,
+                "producto": "Producto 41125",
+                "subtotal": "1630.14",
+                "categoria": "Panificados",
+                "id_detalle": 17,
+                "id_producto": 41135,
+                "precio_unitario": "543.38"
+            }
+        ],
+        "cliente": {
+            "nombre": "Carla",
+            "apellido": "Medina",
+            "id_cliente": 3
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 5,
+        "fecha": "2026-08-18T15:00:00.000Z",
+        "total": "6178.17",
+        "estado": "PENDIENTE",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Gaseosa cola 2.25L",
+                "subtotal": "3900.00",
+                "categoria": "Bebidas",
+                "id_detalle": 9,
+                "id_producto": 4,
+                "precio_unitario": "3900.00"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 3773",
+                "subtotal": "758.22",
+                "categoria": "Almacén",
+                "id_detalle": 18,
+                "id_producto": 3783,
+                "precio_unitario": "758.22"
+            },
+            {
+                "cantidad": 3,
+                "producto": "Producto 44315",
+                "subtotal": "618.87",
+                "categoria": "Panificados",
+                "id_detalle": 19,
+                "id_producto": 44325,
+                "precio_unitario": "206.29"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 49044",
+                "subtotal": "901.08",
+                "categoria": "Congelados",
+                "id_detalle": 20,
+                "id_producto": 49054,
+                "precio_unitario": "450.54"
+            }
+        ],
+        "cliente": {
+            "nombre": "Diego",
+            "apellido": "Ferrari",
+            "id_cliente": 4
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 2083,
+        "fecha": "2025-04-02T03:12:49.767Z",
+        "total": "10478.36",
+        "estado": "CANCELADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Yerba mate 1kg",
+                "subtotal": "6800.00",
+                "categoria": "Almacén",
+                "id_detalle": 4173,
+                "id_producto": 7,
+                "precio_unitario": "6800.00"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 4726",
+                "subtotal": "3678.36",
+                "categoria": "Bebidas",
+                "id_detalle": 4174,
+                "id_producto": 4736,
+                "precio_unitario": "919.59"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre7936",
+            "apellido": "Apellido7936",
+            "id_cliente": 7941
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 11780,
+        "fecha": "2025-05-17T03:50:48.308Z",
+        "total": "11329.66",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 2,
+                "producto": "Aceite girasol 900ml",
+                "subtotal": "8200.00",
+                "categoria": "Almacén",
+                "id_detalle": 23565,
+                "id_producto": 8,
+                "precio_unitario": "4100.00"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 40540",
+                "subtotal": "1814.16",
+                "categoria": "Panificados",
+                "id_detalle": 23566,
+                "id_producto": 40550,
+                "precio_unitario": "453.54"
+            },
+            {
+                "cantidad": 3,
+                "producto": "Producto 45269",
+                "subtotal": "1315.50",
+                "categoria": "Congelados",
+                "id_detalle": 23567,
+                "id_producto": 45279,
+                "precio_unitario": "438.50"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre9577",
+            "apellido": "Apellido9577",
+            "id_cliente": 9582
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 12734,
+        "fecha": "2026-02-11T19:37:03.649Z",
+        "total": "3981.32",
+        "estado": "CONFIRMADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Leche entera 1L",
+                "subtotal": "1800.00",
+                "categoria": "Lácteos",
+                "id_detalle": 25473,
+                "id_producto": 5,
+                "precio_unitario": "1800.00"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 4724",
+                "subtotal": "1171.60",
+                "categoria": "Congelados",
+                "id_detalle": 25474,
+                "id_producto": 4734,
+                "precio_unitario": "292.90"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 45266",
+                "subtotal": "1009.72",
+                "categoria": "Bebidas",
+                "id_detalle": 25475,
+                "id_producto": 45276,
+                "precio_unitario": "504.86"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre4443",
+            "apellido": "Apellido4443",
+            "id_cliente": 4448
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 16725,
+        "fecha": "2025-10-29T11:38:53.837Z",
+        "total": "5400.00",
+        "estado": "PENDIENTE",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Leche entera 1L",
+                "subtotal": "5400.00",
+                "categoria": "Lácteos",
+                "id_detalle": 33455,
+                "id_producto": 5,
+                "precio_unitario": "1800.00"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre9738",
+            "apellido": "Apellido9738",
+            "id_cliente": 9743
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 19762,
+        "fecha": "2025-10-10T17:11:00.615Z",
+        "total": "8724.54",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 2,
+                "producto": "Aceite girasol 900ml",
+                "subtotal": "8200.00",
+                "categoria": "Almacén",
+                "id_detalle": 39528,
+                "id_producto": 8,
+                "precio_unitario": "4100.00"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 4727",
+                "subtotal": "524.54",
+                "categoria": "Lácteos",
+                "id_detalle": 39529,
+                "id_producto": 4737,
+                "precio_unitario": "524.54"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre4429",
+            "apellido": "Apellido4429",
+            "id_cliente": 4434
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 27376,
+        "fecha": "2026-10-29T18:55:12.433Z",
+        "total": "6663.96",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Agua mineral 2L",
+                "subtotal": "4200.00",
+                "categoria": "Bebidas",
+                "id_detalle": 54756,
+                "id_producto": 3,
+                "precio_unitario": "1400.00"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 45264",
+                "subtotal": "2463.96",
+                "categoria": "Congelados",
+                "id_detalle": 54757,
+                "id_producto": 45274,
+                "precio_unitario": "615.99"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre10287",
+            "apellido": "Apellido10287",
+            "id_cliente": 10292
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 29459,
+        "fecha": "2025-06-28T10:20:59.165Z",
+        "total": "8165.06",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Fideos secos 500g",
+                "subtotal": "5850.00",
+                "categoria": "Almacén",
+                "id_detalle": 58922,
+                "id_producto": 9,
+                "precio_unitario": "1950.00"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 40541",
+                "subtotal": "226.74",
+                "categoria": "Bebidas",
+                "id_detalle": 58923,
+                "id_producto": 40551,
+                "precio_unitario": "226.74"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 45270",
+                "subtotal": "2088.32",
+                "categoria": "Panificados",
+                "id_detalle": 58924,
+                "id_producto": 45280,
+                "precio_unitario": "522.08"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre6373",
+            "apellido": "Apellido6373",
+            "id_cliente": 6378
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 30413,
+        "fecha": "2025-11-15T11:44:46.349Z",
+        "total": "18154.14",
+        "estado": "CANCELADO",
+        "lineas": [
+            {
+                "cantidad": 2,
+                "producto": "Queso cremoso 500g",
+                "subtotal": "15200.00",
+                "categoria": "Lácteos",
+                "id_detalle": 60830,
+                "id_producto": 6,
+                "precio_unitario": "7600.00"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 4725",
+                "subtotal": "60.88",
+                "categoria": "Panificados",
+                "id_detalle": 60831,
+                "id_producto": 4735,
+                "precio_unitario": "60.88"
+            },
+            {
+                "cantidad": 3,
+                "producto": "Producto 45267",
+                "subtotal": "2893.26",
+                "categoria": "Lácteos",
+                "id_detalle": 60832,
+                "id_producto": 45277,
+                "precio_unitario": "964.42"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre13585",
+            "apellido": "Apellido13585",
+            "id_cliente": 13590
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 31367,
+        "fecha": "2025-08-19T12:31:02.986Z",
+        "total": "4197.13",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Agua mineral 2L",
+                "subtotal": "1400.00",
+                "categoria": "Bebidas",
+                "id_detalle": 62738,
+                "id_producto": 3,
+                "precio_unitario": "1400.00"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 4722",
+                "subtotal": "1851.32",
+                "categoria": "Lácteos",
+                "id_detalle": 62739,
+                "id_producto": 4732,
+                "precio_unitario": "462.83"
+            },
+            {
+                "cantidad": 3,
+                "producto": "Producto 9451",
+                "subtotal": "945.81",
+                "categoria": "Bebidas",
+                "id_detalle": 62740,
+                "id_producto": 9461,
+                "precio_unitario": "315.27"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre7471",
+            "apellido": "Apellido7471",
+            "id_cliente": 7476
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 34404,
+        "fecha": "2025-11-28T14:09:30.673Z",
+        "total": "30400.00",
+        "estado": "CONFIRMADO",
+        "lineas": [
+            {
+                "cantidad": 4,
+                "producto": "Queso cremoso 500g",
+                "subtotal": "30400.00",
+                "categoria": "Lácteos",
+                "id_detalle": 68813,
+                "id_producto": 6,
+                "precio_unitario": "7600.00"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre14538",
+            "apellido": "Apellido14538",
+            "id_cliente": 14543
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 37441,
+        "fecha": "2024-11-22T09:01:07.421Z",
+        "total": "6112.52",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Fideos secos 500g",
+                "subtotal": "5850.00",
+                "categoria": "Almacén",
+                "id_detalle": 74886,
+                "id_producto": 9,
+                "precio_unitario": "1950.00"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 4728",
+                "subtotal": "262.52",
+                "categoria": "Almacén",
+                "id_detalle": 74887,
+                "id_producto": 4738,
+                "precio_unitario": "131.26"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre2258",
+            "apellido": "Apellido2258",
+            "id_cliente": 2263
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 38027,
+        "fecha": "2025-02-02T04:24:32.228Z",
+        "total": "10839.66",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Pan de campo 1kg",
+                "subtotal": "7500.00",
+                "categoria": "Panificados",
+                "id_detalle": 76058,
+                "id_producto": 1,
+                "precio_unitario": "2500.00"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 40533",
+                "subtotal": "199.26",
+                "categoria": "Almacén",
+                "id_detalle": 76059,
+                "id_producto": 40543,
+                "precio_unitario": "199.26"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 45262",
+                "subtotal": "3140.40",
+                "categoria": "Lácteos",
+                "id_detalle": 76060,
+                "id_producto": 45272,
+                "precio_unitario": "785.10"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre18120",
+            "apellido": "Apellido18120",
+            "id_cliente": 18125
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 46009,
+        "fecha": "2026-04-26T21:43:07.882Z",
+        "total": "7764.74",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Pan de campo 1kg",
+                "subtotal": "7500.00",
+                "categoria": "Panificados",
+                "id_detalle": 92021,
+                "id_producto": 1,
+                "precio_unitario": "2500.00"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 4720",
+                "subtotal": "264.74",
+                "categoria": "Panificados",
+                "id_detalle": 92022,
+                "id_producto": 4730,
+                "precio_unitario": "132.37"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre7130",
+            "apellido": "Apellido7130",
+            "id_cliente": 7135
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 48092,
+        "fecha": "2026-11-10T14:53:13.863Z",
+        "total": "24994.38",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Yerba mate 1kg",
+                "subtotal": "20400.00",
+                "categoria": "Almacén",
+                "id_detalle": 96186,
+                "id_producto": 7,
+                "precio_unitario": "6800.00"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 4726",
+                "subtotal": "1839.18",
+                "categoria": "Bebidas",
+                "id_detalle": 96187,
+                "id_producto": 4736,
+                "precio_unitario": "919.59"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 45268",
+                "subtotal": "2755.20",
+                "categoria": "Almacén",
+                "id_detalle": 96188,
+                "id_producto": 45278,
+                "precio_unitario": "688.80"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre5262",
+            "apellido": "Apellido5262",
+            "id_cliente": 5267
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 52083,
+        "fecha": "2026-08-29T00:56:28.033Z",
+        "total": "6800.00",
+        "estado": "CANCELADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Yerba mate 1kg",
+                "subtotal": "6800.00",
+                "categoria": "Almacén",
+                "id_detalle": 104168,
+                "id_producto": 7,
+                "precio_unitario": "6800.00"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre17627",
+            "apellido": "Apellido17627",
+            "id_cliente": 17632
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 62734,
+        "fecha": "2025-05-25T19:02:06.634Z",
+        "total": "2809.72",
+        "estado": "CONFIRMADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Leche entera 1L",
+                "subtotal": "1800.00",
+                "categoria": "Lácteos",
+                "id_detalle": 125467,
+                "id_producto": 5,
+                "precio_unitario": "1800.00"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 45266",
+                "subtotal": "1009.72",
+                "categoria": "Bebidas",
+                "id_detalle": 125468,
+                "id_producto": 45276,
+                "precio_unitario": "504.86"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre10759",
+            "apellido": "Apellido10759",
+            "id_cliente": 10764
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 65771,
+        "fecha": "2025-04-16T00:17:21.754Z",
+        "total": "18412.12",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 4,
+                "producto": "Aceite girasol 900ml",
+                "subtotal": "16400.00",
+                "categoria": "Almacén",
+                "id_detalle": 131540,
+                "id_producto": 8,
+                "precio_unitario": "4100.00"
+            },
+            {
+                "cantidad": 3,
+                "producto": "Producto 4727",
+                "subtotal": "1573.62",
+                "categoria": "Lácteos",
+                "id_detalle": 131541,
+                "id_producto": 4737,
+                "precio_unitario": "524.54"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 45269",
+                "subtotal": "438.50",
+                "categoria": "Congelados",
+                "id_detalle": 131542,
+                "id_producto": 45279,
+                "precio_unitario": "438.50"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre17587",
+            "apellido": "Apellido17587",
+            "id_cliente": 17592
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 66725,
+        "fecha": "2025-06-04T14:21:13.623Z",
+        "total": "6686.88",
+        "estado": "PENDIENTE",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Leche entera 1L",
+                "subtotal": "5400.00",
+                "categoria": "Lácteos",
+                "id_detalle": 133448,
+                "id_producto": 5,
+                "precio_unitario": "1800.00"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 4724",
+                "subtotal": "585.80",
+                "categoria": "Congelados",
+                "id_detalle": 133449,
+                "id_producto": 4734,
+                "precio_unitario": "292.90"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 9453",
+                "subtotal": "701.08",
+                "categoria": "Almacén",
+                "id_detalle": 133450,
+                "id_producto": 9463,
+                "precio_unitario": "701.08"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre6497",
+            "apellido": "Apellido6497",
+            "id_cliente": 6502
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 69762,
+        "fecha": "2026-04-21T18:45:07.633Z",
+        "total": "8200.00",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 2,
+                "producto": "Aceite girasol 900ml",
+                "subtotal": "8200.00",
+                "categoria": "Almacén",
+                "id_detalle": 139523,
+                "id_producto": 8,
+                "precio_unitario": "4100.00"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre15927",
+            "apellido": "Apellido15927",
+            "id_cliente": 15932
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 73385,
+        "fecha": "2025-07-01T20:22:20.669Z",
+        "total": "2788.46",
+        "estado": "PENDIENTE",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Agua mineral 2L",
+                "subtotal": "1400.00",
+                "categoria": "Bebidas",
+                "id_detalle": 146768,
+                "id_producto": 3,
+                "precio_unitario": "1400.00"
+            },
+            {
+                "cantidad": 3,
+                "producto": "Producto 40535",
+                "subtotal": "156.48",
+                "categoria": "Panificados",
+                "id_detalle": 146769,
+                "id_producto": 40545,
+                "precio_unitario": "52.16"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 45264",
+                "subtotal": "1231.98",
+                "categoria": "Congelados",
+                "id_detalle": 146770,
+                "id_producto": 45274,
+                "precio_unitario": "615.99"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre7452",
+            "apellido": "Apellido7452",
+            "id_cliente": 7457
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 80413,
+        "fecha": "2024-12-07T15:27:58.868Z",
+        "total": "18093.26",
+        "estado": "CANCELADO",
+        "lineas": [
+            {
+                "cantidad": 2,
+                "producto": "Queso cremoso 500g",
+                "subtotal": "15200.00",
+                "categoria": "Lácteos",
+                "id_detalle": 160824,
+                "id_producto": 6,
+                "precio_unitario": "7600.00"
+            },
+            {
+                "cantidad": 3,
+                "producto": "Producto 45267",
+                "subtotal": "2893.26",
+                "categoria": "Lácteos",
+                "id_detalle": 160825,
+                "id_producto": 45277,
+                "precio_unitario": "964.42"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre7129",
+            "apellido": "Apellido7129",
+            "id_cliente": 7134
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 81367,
+        "fecha": "2025-05-16T07:44:22.906Z",
+        "total": "3251.32",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Agua mineral 2L",
+                "subtotal": "1400.00",
+                "categoria": "Bebidas",
+                "id_detalle": 162732,
+                "id_producto": 3,
+                "precio_unitario": "1400.00"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 4722",
+                "subtotal": "1851.32",
+                "categoria": "Lácteos",
+                "id_detalle": 162733,
+                "id_producto": 4732,
+                "precio_unitario": "462.83"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre17429",
+            "apellido": "Apellido17429",
+            "id_cliente": 17434
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 83450,
+        "fecha": "2025-06-28T20:24:38.477Z",
+        "total": "3519.20",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Fideos secos 500g",
+                "subtotal": "1950.00",
+                "categoria": "Almacén",
+                "id_detalle": 166898,
+                "id_producto": 9,
+                "precio_unitario": "1950.00"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 4728",
+                "subtotal": "525.04",
+                "categoria": "Almacén",
+                "id_detalle": 166899,
+                "id_producto": 4738,
+                "precio_unitario": "131.26"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 45270",
+                "subtotal": "1044.16",
+                "categoria": "Panificados",
+                "id_detalle": 166900,
+                "id_producto": 45280,
+                "precio_unitario": "522.08"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre5264",
+            "apellido": "Apellido5264",
+            "id_cliente": 5269
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 84404,
+        "fecha": "2026-01-01T02:09:02.161Z",
+        "total": "32180.04",
+        "estado": "CONFIRMADO",
+        "lineas": [
+            {
+                "cantidad": 4,
+                "producto": "Queso cremoso 500g",
+                "subtotal": "30400.00",
+                "categoria": "Lácteos",
+                "id_detalle": 168806,
+                "id_producto": 6,
+                "precio_unitario": "7600.00"
+            },
+            {
+                "cantidad": 3,
+                "producto": "Producto 4725",
+                "subtotal": "182.64",
+                "categoria": "Panificados",
+                "id_detalle": 168807,
+                "id_producto": 4735,
+                "precio_unitario": "60.88"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 9454",
+                "subtotal": "1597.40",
+                "categoria": "Congelados",
+                "id_detalle": 168808,
+                "id_producto": 9464,
+                "precio_unitario": "798.70"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre10142",
+            "apellido": "Apellido10142",
+            "id_cliente": 10147
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 87441,
+        "fecha": "2026-06-23T14:32:56.660Z",
+        "total": "5850.00",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Fideos secos 500g",
+                "subtotal": "5850.00",
+                "categoria": "Almacén",
+                "id_detalle": 174881,
+                "id_producto": 9,
+                "precio_unitario": "1950.00"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre7389",
+            "apellido": "Apellido7389",
+            "id_cliente": 7394
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 92018,
+        "fecha": "2025-02-02T16:59:59.914Z",
+        "total": "4599.68",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Pan de campo 1kg",
+                "subtotal": "2500.00",
+                "categoria": "Panificados",
+                "id_detalle": 184033,
+                "id_producto": 1,
+                "precio_unitario": "2500.00"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 4720",
+                "subtotal": "529.48",
+                "categoria": "Panificados",
+                "id_detalle": 184034,
+                "id_producto": 4730,
+                "precio_unitario": "132.37"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 45262",
+                "subtotal": "1570.20",
+                "categoria": "Lácteos",
+                "id_detalle": 184035,
+                "id_producto": 45272,
+                "precio_unitario": "785.10"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre13579",
+            "apellido": "Apellido13579",
+            "id_cliente": 13584
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 96009,
+        "fecha": "2026-09-02T17:23:01.796Z",
+        "total": "7500.00",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Pan de campo 1kg",
+                "subtotal": "7500.00",
+                "categoria": "Panificados",
+                "id_detalle": 192016,
+                "id_producto": 1,
+                "precio_unitario": "2500.00"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre6921",
+            "apellido": "Apellido6921",
+            "id_cliente": 6926
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 98092,
+        "fecha": "2025-10-25T16:24:54.951Z",
+        "total": "23155.20",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Yerba mate 1kg",
+                "subtotal": "20400.00",
+                "categoria": "Almacén",
+                "id_detalle": 196181,
+                "id_producto": 7,
+                "precio_unitario": "6800.00"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 45268",
+                "subtotal": "2755.20",
+                "categoria": "Almacén",
+                "id_detalle": 196182,
+                "id_producto": 45278,
+                "precio_unitario": "688.80"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre18392",
+            "apellido": "Apellido18392",
+            "id_cliente": 18397
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 102083,
+        "fecha": "2025-09-14T09:35:24.778Z",
+        "total": "11289.53",
+        "estado": "CANCELADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Yerba mate 1kg",
+                "subtotal": "6800.00",
+                "categoria": "Almacén",
+                "id_detalle": 204161,
+                "id_producto": 7,
+                "precio_unitario": "6800.00"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 4726",
+                "subtotal": "3678.36",
+                "categoria": "Bebidas",
+                "id_detalle": 204162,
+                "id_producto": 4736,
+                "precio_unitario": "919.59"
+            },
+            {
+                "cantidad": 3,
+                "producto": "Producto 9455",
+                "subtotal": "811.17",
+                "categoria": "Panificados",
+                "id_detalle": 204163,
+                "id_producto": 9465,
+                "precio_unitario": "270.39"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre1744",
+            "apellido": "Apellido1744",
+            "id_cliente": 1749
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 108743,
+        "fecha": "2025-09-16T20:13:57.649Z",
+        "total": "8138.93",
+        "estado": "CANCELADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Leche entera 1L",
+                "subtotal": "5400.00",
+                "categoria": "Lácteos",
+                "id_detalle": 217480,
+                "id_producto": 5,
+                "precio_unitario": "1800.00"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 40537",
+                "subtotal": "719.49",
+                "categoria": "Lácteos",
+                "id_detalle": 217481,
+                "id_producto": 40547,
+                "precio_unitario": "719.49"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 45266",
+                "subtotal": "2019.44",
+                "categoria": "Bebidas",
+                "id_detalle": 217482,
+                "id_producto": 45276,
+                "precio_unitario": "504.86"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre10711",
+            "apellido": "Apellido10711",
+            "id_cliente": 10716
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 115771,
+        "fecha": "2025-11-27T07:03:23.789Z",
+        "total": "16838.50",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 4,
+                "producto": "Aceite girasol 900ml",
+                "subtotal": "16400.00",
+                "categoria": "Almacén",
+                "id_detalle": 231534,
+                "id_producto": 8,
+                "precio_unitario": "4100.00"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 45269",
+                "subtotal": "438.50",
+                "categoria": "Congelados",
+                "id_detalle": 231535,
+                "id_producto": 45279,
+                "precio_unitario": "438.50"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre1843",
+            "apellido": "Apellido1843",
+            "id_cliente": 1848
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 116725,
+        "fecha": "2025-11-22T22:25:43.162Z",
+        "total": "5985.80",
+        "estado": "PENDIENTE",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Leche entera 1L",
+                "subtotal": "5400.00",
+                "categoria": "Lácteos",
+                "id_detalle": 233442,
+                "id_producto": 5,
+                "precio_unitario": "1800.00"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 4724",
+                "subtotal": "585.80",
+                "categoria": "Congelados",
+                "id_detalle": 233443,
+                "id_producto": 4734,
+                "precio_unitario": "292.90"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre7916",
+            "apellido": "Apellido7916",
+            "id_cliente": 7921
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 119762,
+        "fecha": "2025-08-21T21:43:48.490Z",
+        "total": "11960.90",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 2,
+                "producto": "Aceite girasol 900ml",
+                "subtotal": "8200.00",
+                "categoria": "Almacén",
+                "id_detalle": 239516,
+                "id_producto": 8,
+                "precio_unitario": "4100.00"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 4727",
+                "subtotal": "524.54",
+                "categoria": "Lácteos",
+                "id_detalle": 239517,
+                "id_producto": 4737,
+                "precio_unitario": "524.54"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 9456",
+                "subtotal": "3236.36",
+                "categoria": "Bebidas",
+                "id_detalle": 239518,
+                "id_producto": 9466,
+                "precio_unitario": "809.09"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre8751",
+            "apellido": "Apellido8751",
+            "id_cliente": 8756
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 126422,
+        "fecha": "2026-11-04T21:38:07.556Z",
+        "total": "32594.90",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 4,
+                "producto": "Queso cremoso 500g",
+                "subtotal": "30400.00",
+                "categoria": "Lácteos",
+                "id_detalle": 252836,
+                "id_producto": 6,
+                "precio_unitario": "7600.00"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 40538",
+                "subtotal": "1230.48",
+                "categoria": "Almacén",
+                "id_detalle": 252837,
+                "id_producto": 40548,
+                "precio_unitario": "615.24"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 45267",
+                "subtotal": "964.42",
+                "categoria": "Lácteos",
+                "id_detalle": 252838,
+                "id_producto": 45277,
+                "precio_unitario": "964.42"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre8122",
+            "apellido": "Apellido8122",
+            "id_cliente": 8127
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 127376,
+        "fecha": "2025-05-24T11:08:25.095Z",
+        "total": "7589.62",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Agua mineral 2L",
+                "subtotal": "4200.00",
+                "categoria": "Bebidas",
+                "id_detalle": 254744,
+                "id_producto": 3,
+                "precio_unitario": "1400.00"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 4722",
+                "subtotal": "925.66",
+                "categoria": "Lácteos",
+                "id_detalle": 254745,
+                "id_producto": 4732,
+                "precio_unitario": "462.83"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 45264",
+                "subtotal": "2463.96",
+                "categoria": "Congelados",
+                "id_detalle": 254746,
+                "id_producto": 45274,
+                "precio_unitario": "615.99"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre15580",
+            "apellido": "Apellido15580",
+            "id_cliente": 15585
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 131367,
+        "fecha": "2026-04-24T09:15:52.503Z",
+        "total": "1400.00",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Agua mineral 2L",
+                "subtotal": "1400.00",
+                "categoria": "Bebidas",
+                "id_detalle": 262727,
+                "id_producto": 3,
+                "precio_unitario": "1400.00"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre16877",
+            "apellido": "Apellido16877",
+            "id_cliente": 16882
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 133450,
+        "fecha": "2026-08-07T14:45:06.653Z",
+        "total": "2994.16",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Fideos secos 500g",
+                "subtotal": "1950.00",
+                "categoria": "Almacén",
+                "id_detalle": 266892,
+                "id_producto": 9,
+                "precio_unitario": "1950.00"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 45270",
+                "subtotal": "1044.16",
+                "categoria": "Panificados",
+                "id_detalle": 266893,
+                "id_producto": 45280,
+                "precio_unitario": "522.08"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre6501",
+            "apellido": "Apellido6501",
+            "id_cliente": 6506
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 134404,
+        "fecha": "2026-10-03T06:33:50.948Z",
+        "total": "30582.64",
+        "estado": "CONFIRMADO",
+        "lineas": [
+            {
+                "cantidad": 4,
+                "producto": "Queso cremoso 500g",
+                "subtotal": "30400.00",
+                "categoria": "Lácteos",
+                "id_detalle": 268800,
+                "id_producto": 6,
+                "precio_unitario": "7600.00"
+            },
+            {
+                "cantidad": 3,
+                "producto": "Producto 4725",
+                "subtotal": "182.64",
+                "categoria": "Panificados",
+                "id_detalle": 268801,
+                "id_producto": 4735,
+                "precio_unitario": "60.88"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre4749",
+            "apellido": "Apellido4749",
+            "id_cliente": 4754
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 137441,
+        "fecha": "2025-06-26T21:39:45.879Z",
+        "total": "6779.13",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Fideos secos 500g",
+                "subtotal": "5850.00",
+                "categoria": "Almacén",
+                "id_detalle": 274874,
+                "id_producto": 9,
+                "precio_unitario": "1950.00"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 4728",
+                "subtotal": "262.52",
+                "categoria": "Almacén",
+                "id_detalle": 274875,
+                "id_producto": 4738,
+                "precio_unitario": "131.26"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 9457",
+                "subtotal": "666.61",
+                "categoria": "Lácteos",
+                "id_detalle": 274876,
+                "id_producto": 9467,
+                "precio_unitario": "666.61"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre728",
+            "apellido": "Apellido728",
+            "id_cliente": 733
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 142018,
+        "fecha": "2026-06-04T20:17:16.801Z",
+        "total": "4070.20",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Pan de campo 1kg",
+                "subtotal": "2500.00",
+                "categoria": "Panificados",
+                "id_detalle": 284028,
+                "id_producto": 1,
+                "precio_unitario": "2500.00"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 45262",
+                "subtotal": "1570.20",
+                "categoria": "Lácteos",
+                "id_detalle": 284029,
+                "id_producto": 45272,
+                "precio_unitario": "785.10"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre1302",
+            "apellido": "Apellido1302",
+            "id_cliente": 1307
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 144101,
+        "fecha": "2025-02-05T11:58:18.509Z",
+        "total": "11123.75",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Yerba mate 1kg",
+                "subtotal": "6800.00",
+                "categoria": "Almacén",
+                "id_detalle": 288194,
+                "id_producto": 7,
+                "precio_unitario": "6800.00"
+            },
+            {
+                "cantidad": 3,
+                "producto": "Producto 40539",
+                "subtotal": "2946.15",
+                "categoria": "Congelados",
+                "id_detalle": 288195,
+                "id_producto": 40549,
+                "precio_unitario": "982.05"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 45268",
+                "subtotal": "1377.60",
+                "categoria": "Almacén",
+                "id_detalle": 288196,
+                "id_producto": 45278,
+                "precio_unitario": "688.80"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre10424",
+            "apellido": "Apellido10424",
+            "id_cliente": 10429
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 146009,
+        "fecha": "2024-12-05T01:26:50.381Z",
+        "total": "8137.90",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Pan de campo 1kg",
+                "subtotal": "7500.00",
+                "categoria": "Panificados",
+                "id_detalle": 292009,
+                "id_producto": 1,
+                "precio_unitario": "2500.00"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 4720",
+                "subtotal": "264.74",
+                "categoria": "Panificados",
+                "id_detalle": 292010,
+                "id_producto": 4730,
+                "precio_unitario": "132.37"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 9449",
+                "subtotal": "373.16",
+                "categoria": "Congelados",
+                "id_detalle": 292011,
+                "id_producto": 9459,
+                "precio_unitario": "373.16"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre2645",
+            "apellido": "Apellido2645",
+            "id_cliente": 2650
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 152083,
+        "fecha": "2025-12-01T16:14:22.330Z",
+        "total": "10478.36",
+        "estado": "CANCELADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Yerba mate 1kg",
+                "subtotal": "6800.00",
+                "categoria": "Almacén",
+                "id_detalle": 304155,
+                "id_producto": 7,
+                "precio_unitario": "6800.00"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 4726",
+                "subtotal": "3678.36",
+                "categoria": "Bebidas",
+                "id_detalle": 304156,
+                "id_producto": 4736,
+                "precio_unitario": "919.59"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre17813",
+            "apellido": "Apellido17813",
+            "id_cliente": 17818
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 161780,
+        "fecha": "2025-04-23T14:27:42.164Z",
+        "total": "11329.66",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 2,
+                "producto": "Aceite girasol 900ml",
+                "subtotal": "8200.00",
+                "categoria": "Almacén",
+                "id_detalle": 323547,
+                "id_producto": 8,
+                "precio_unitario": "4100.00"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 40540",
+                "subtotal": "1814.16",
+                "categoria": "Panificados",
+                "id_detalle": 323548,
+                "id_producto": 40550,
+                "precio_unitario": "453.54"
+            },
+            {
+                "cantidad": 3,
+                "producto": "Producto 45269",
+                "subtotal": "1315.50",
+                "categoria": "Congelados",
+                "id_detalle": 323549,
+                "id_producto": 45279,
+                "precio_unitario": "438.50"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre7963",
+            "apellido": "Apellido7963",
+            "id_cliente": 7968
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 162734,
+        "fecha": "2026-10-14T01:20:33.677Z",
+        "total": "3981.32",
+        "estado": "CONFIRMADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Leche entera 1L",
+                "subtotal": "1800.00",
+                "categoria": "Lácteos",
+                "id_detalle": 325455,
+                "id_producto": 5,
+                "precio_unitario": "1800.00"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 4724",
+                "subtotal": "1171.60",
+                "categoria": "Congelados",
+                "id_detalle": 325456,
+                "id_producto": 4734,
+                "precio_unitario": "292.90"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 45266",
+                "subtotal": "1009.72",
+                "categoria": "Bebidas",
+                "id_detalle": 325457,
+                "id_producto": 45276,
+                "precio_unitario": "504.86"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre17226",
+            "apellido": "Apellido17226",
+            "id_cliente": 17231
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 166725,
+        "fecha": "2025-11-13T13:32:24.145Z",
+        "total": "5400.00",
+        "estado": "PENDIENTE",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Leche entera 1L",
+                "subtotal": "5400.00",
+                "categoria": "Lácteos",
+                "id_detalle": 333437,
+                "id_producto": 5,
+                "precio_unitario": "1800.00"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre3307",
+            "apellido": "Apellido3307",
+            "id_cliente": 3312
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 169762,
+        "fecha": "2026-02-26T07:17:05.194Z",
+        "total": "8724.54",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 2,
+                "producto": "Aceite girasol 900ml",
+                "subtotal": "8200.00",
+                "categoria": "Almacén",
+                "id_detalle": 339510,
+                "id_producto": 8,
+                "precio_unitario": "4100.00"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 4727",
+                "subtotal": "524.54",
+                "categoria": "Lácteos",
+                "id_detalle": 339511,
+                "id_producto": 4737,
+                "precio_unitario": "524.54"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre19338",
+            "apellido": "Apellido19338",
+            "id_cliente": 19343
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 177376,
+        "fecha": "2026-05-15T15:53:27.370Z",
+        "total": "6663.96",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Agua mineral 2L",
+                "subtotal": "4200.00",
+                "categoria": "Bebidas",
+                "id_detalle": 354738,
+                "id_producto": 3,
+                "precio_unitario": "1400.00"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 45264",
+                "subtotal": "2463.96",
+                "categoria": "Congelados",
+                "id_detalle": 354739,
+                "id_producto": 45274,
+                "precio_unitario": "615.99"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre7762",
+            "apellido": "Apellido7762",
+            "id_cliente": 7767
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 179459,
+        "fecha": "2026-06-01T21:31:14.305Z",
+        "total": "8165.06",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Fideos secos 500g",
+                "subtotal": "5850.00",
+                "categoria": "Almacén",
+                "id_detalle": 358904,
+                "id_producto": 9,
+                "precio_unitario": "1950.00"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 40541",
+                "subtotal": "226.74",
+                "categoria": "Bebidas",
+                "id_detalle": 358905,
+                "id_producto": 40551,
+                "precio_unitario": "226.74"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 45270",
+                "subtotal": "2088.32",
+                "categoria": "Panificados",
+                "id_detalle": 358906,
+                "id_producto": 45280,
+                "precio_unitario": "522.08"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre14906",
+            "apellido": "Apellido14906",
+            "id_cliente": 14911
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 180413,
+        "fecha": "2025-02-14T15:02:07.210Z",
+        "total": "18154.14",
+        "estado": "CANCELADO",
+        "lineas": [
+            {
+                "cantidad": 2,
+                "producto": "Queso cremoso 500g",
+                "subtotal": "15200.00",
+                "categoria": "Lácteos",
+                "id_detalle": 360812,
+                "id_producto": 6,
+                "precio_unitario": "7600.00"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 4725",
+                "subtotal": "60.88",
+                "categoria": "Panificados",
+                "id_detalle": 360813,
+                "id_producto": 4735,
+                "precio_unitario": "60.88"
+            },
+            {
+                "cantidad": 3,
+                "producto": "Producto 45267",
+                "subtotal": "2893.26",
+                "categoria": "Lácteos",
+                "id_detalle": 360814,
+                "id_producto": 45277,
+                "precio_unitario": "964.42"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre904",
+            "apellido": "Apellido904",
+            "id_cliente": 909
+        },
+        "forma_pago": "TRANSFERENCIA"
+    },
+    {
+        "_id": 181367,
+        "fecha": "2026-07-09T11:33:04.177Z",
+        "total": "4197.13",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Agua mineral 2L",
+                "subtotal": "1400.00",
+                "categoria": "Bebidas",
+                "id_detalle": 362720,
+                "id_producto": 3,
+                "precio_unitario": "1400.00"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 4722",
+                "subtotal": "1851.32",
+                "categoria": "Lácteos",
+                "id_detalle": 362721,
+                "id_producto": 4732,
+                "precio_unitario": "462.83"
+            },
+            {
+                "cantidad": 3,
+                "producto": "Producto 9451",
+                "subtotal": "945.81",
+                "categoria": "Bebidas",
+                "id_detalle": 362722,
+                "id_producto": 9461,
+                "precio_unitario": "315.27"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre4115",
+            "apellido": "Apellido4115",
+            "id_cliente": 4120
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 184404,
+        "fecha": "2026-04-14T17:55:46.791Z",
+        "total": "30400.00",
+        "estado": "CONFIRMADO",
+        "lineas": [
+            {
+                "cantidad": 4,
+                "producto": "Queso cremoso 500g",
+                "subtotal": "30400.00",
+                "categoria": "Lácteos",
+                "id_detalle": 368795,
+                "id_producto": 6,
+                "precio_unitario": "7600.00"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre13265",
+            "apellido": "Apellido13265",
+            "id_cliente": 13270
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 187441,
+        "fecha": "2026-06-15T23:13:49.181Z",
+        "total": "6112.52",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Fideos secos 500g",
+                "subtotal": "5850.00",
+                "categoria": "Almacén",
+                "id_detalle": 374868,
+                "id_producto": 9,
+                "precio_unitario": "1950.00"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 4728",
+                "subtotal": "262.52",
+                "categoria": "Almacén",
+                "id_detalle": 374869,
+                "id_producto": 4738,
+                "precio_unitario": "131.26"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre737",
+            "apellido": "Apellido737",
+            "id_cliente": 742
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 188027,
+        "fecha": "2025-12-21T01:46:15.485Z",
+        "total": "10839.66",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Pan de campo 1kg",
+                "subtotal": "7500.00",
+                "categoria": "Panificados",
+                "id_detalle": 376040,
+                "id_producto": 1,
+                "precio_unitario": "2500.00"
+            },
+            {
+                "cantidad": 1,
+                "producto": "Producto 40533",
+                "subtotal": "199.26",
+                "categoria": "Almacén",
+                "id_detalle": 376041,
+                "id_producto": 40543,
+                "precio_unitario": "199.26"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 45262",
+                "subtotal": "3140.40",
+                "categoria": "Lácteos",
+                "id_detalle": 376042,
+                "id_producto": 45272,
+                "precio_unitario": "785.10"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre13702",
+            "apellido": "Apellido13702",
+            "id_cliente": 13707
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 196009,
+        "fecha": "2025-10-10T00:12:06.481Z",
+        "total": "7764.74",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Pan de campo 1kg",
+                "subtotal": "7500.00",
+                "categoria": "Panificados",
+                "id_detalle": 392003,
+                "id_producto": 1,
+                "precio_unitario": "2500.00"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 4720",
+                "subtotal": "264.74",
+                "categoria": "Panificados",
+                "id_detalle": 392004,
+                "id_producto": 4730,
+                "precio_unitario": "132.37"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre4618",
+            "apellido": "Apellido4618",
+            "id_cliente": 4623
+        },
+        "forma_pago": "EFECTIVO"
+    },
+    {
+        "_id": 198092,
+        "fecha": "2025-03-11T00:38:57.581Z",
+        "total": "24994.38",
+        "estado": "ENTREGADO",
+        "lineas": [
+            {
+                "cantidad": 3,
+                "producto": "Yerba mate 1kg",
+                "subtotal": "20400.00",
+                "categoria": "Almacén",
+                "id_detalle": 396168,
+                "id_producto": 7,
+                "precio_unitario": "6800.00"
+            },
+            {
+                "cantidad": 2,
+                "producto": "Producto 4726",
+                "subtotal": "1839.18",
+                "categoria": "Bebidas",
+                "id_detalle": 396169,
+                "id_producto": 4736,
+                "precio_unitario": "919.59"
+            },
+            {
+                "cantidad": 4,
+                "producto": "Producto 45268",
+                "subtotal": "2755.20",
+                "categoria": "Almacén",
+                "id_detalle": 396170,
+                "id_producto": 45278,
+                "precio_unitario": "688.80"
+            }
+        ],
+        "cliente": {
+            "nombre": "Nombre180",
+            "apellido": "Apellido180",
+            "id_cliente": 185
+        },
+        "forma_pago": "TARJETA"
+    },
+    {
+        "_id": 260013,
+        "fecha": "2026-11-12T14:14:32.365Z",
+        "total": "1400.00",
+        "estado": "CANCELADO",
+        "lineas": [
+            {
+                "cantidad": 1,
+                "producto": "Agua mineral 2L",
+                "subtotal": "1400.00",
+                "categoria": "Bebidas",
+                "id_detalle": 402006,
+                "id_producto": 3,
+                "precio_unitario": "1400.00"
+            }
+        ],
+        "cliente": {
+            "nombre": "Ana",
+            "apellido": "Gutiérrez",
+            "id_cliente": 1
+        },
+        "forma_pago": "EFECTIVO"
+    }
+]

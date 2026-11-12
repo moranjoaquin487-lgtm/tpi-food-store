@@ -1,0 +1,9 @@
+== Afirmación 1: «las transacciones multi-documento son posibles, pero requieren replica set»
+  Este servidor: standalone (sin replica set)
+  La transacción falló:  — This MongoDB deployment does not support retryable writes. Please add retryWrites=false to your connection string.
+== Afirmación 2: «$jsonSchema no puede expresar que el total sea la suma de las líneas: queda a cargo de la aplicación»
+   Un validador con $expr (operadores de consulta) sí puede comparar campos:
+  Pedido de ejemplo: 4 líneas, total 6851.78
+  Con el total correcto: aceptado
+  Con total = 1.00: rechazado (Document failed validation)
+Colecciones de prueba borradas.

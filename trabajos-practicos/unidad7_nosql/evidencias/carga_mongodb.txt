@@ -1,0 +1,47 @@
+Documentos leídos de pedidos_export.json: 62
+Documentos insertados: 62
+Validador: un documento con cantidad 0 tiene que ser rechazado
+  Rechazado como se esperaba: Document failed validation
+Total en la colección: 62
+{
+  _id: 1,
+  fecha: ISODate('2026-08-01T13:15:00.000Z'),
+  estado: 'ENTREGADO',
+  forma_pago: 'EFECTIVO',
+  cliente: {
+    nombre: 'Ana',
+    apellido: 'Gutiérrez',
+    id_cliente: 1
+  },
+  lineas: [
+    {
+      id_detalle: 1,
+      id_producto: 1,
+      producto: 'Pan de campo 1kg',
+      categoria: 'Panificados',
+      cantidad: 2,
+      precio_unitario: Decimal128('2200.00'),
+      subtotal: Decimal128('4400.00')
+    },
+    {
+      id_detalle: 2,
+      id_producto: 5,
+      producto: 'Leche entera 1L',
+      categoria: 'Lácteos',
+      cantidad: 1,
+      precio_unitario: Decimal128('1650.00'),
+      subtotal: Decimal128('1650.00')
+    }
+  ],
+  total: Decimal128('6851.78'),
+  origen: {
+    motor: 'postgresql',
+    tablas: [
+      'pedido',
+      'detalle_pedido',
+      'cliente',
+      'producto',
+      'categoria'
+    ]
+  }
+}

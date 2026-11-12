@@ -1,0 +1,9 @@
+== 1. ¿Hay integridad referencial? Línea con un id_producto que no existe en ningún lado
+  ACEPTADO: MongoDB no verifica que id_producto exista (no hay claves foráneas)
+== 2. ¿El validador controla la regla R1 (total = suma de las líneas)?
+  ACEPTADO: $jsonSchema valida tipos y rangos de cada campo, no relaciones entre campos
+== 3. ¿El validador controla la regla R2 (cantidad > 0)?
+  Rechazado: Document failed validation
+== 4. Leer un pedido completo: una sola operación, sin joins
+  200 lecturas de un pedido completo con findOne: 240 ms en total
+Documentos de prueba borrados. Total en la colección: 62
