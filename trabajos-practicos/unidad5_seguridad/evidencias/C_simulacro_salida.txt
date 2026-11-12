@@ -1,0 +1,70 @@
+-- U5 · Parte C — Simulacro de incidente de acceso indebido (SOLO sobre la base propia de desarrollo)
+--
+-- Escenario: alguien obtuvo la contraseña de app_web (por ejemplo, de un archivo de
+-- configuración del servidor web) y se conecta directamente a la base.
+-- Lo ejecuta scripts/simulacro_incidente.sh, conectado como app_web.
+-- No se corta ante errores: los rechazos son parte de lo que se quiere registrar.
+\set ON_ERROR_STOP off
+\echo '-- 1. Intentos fallidos de inicio de sesión contra fn_autenticar (fuerza bruta sobre una cuenta)'
+-- 1. Intentos fallidos de inicio de sesión contra fn_autenticar (fuerza bruta sobre una cuenta)
+SELECT * FROM fn_autenticar('usuario007@foodstore.test', '123456');
+ usuario_id | nombre | rol 
+------------+--------+-----
+(0 filas)
+
+SELECT * FROM fn_autenticar('usuario007@foodstore.test', 'password');
+ usuario_id | nombre | rol 
+------------+--------+-----
+(0 filas)
+
+SELECT * FROM fn_autenticar('usuario007@foodstore.test', 'foodstore');
+ usuario_id | nombre | rol 
+------------+--------+-----
+(0 filas)
+
+SELECT * FROM fn_autenticar('usuario007@foodstore.test', 'Prueba-000');
+ usuario_id | nombre | rol 
+------------+--------+-----
+(0 filas)
+
+SELECT * FROM fn_autenticar('usuario007@foodstore.test', 'Prueba-006');
+ usuario_id | nombre | rol 
+------------+--------+-----
+(0 filas)
+
+\echo '-- 2. Inicio de sesión exitoso'
+-- 2. Inicio de sesión exitoso
+SELECT * FROM fn_autenticar('usuario007@foodstore.test', 'Prueba-007');
+ usuario_id |  nombre   |   rol   
+------------+-----------+---------
+         35 | Nombre007 | USUARIO
+(1 fila)
+
+\echo '-- 3. Lectura masiva de la tabla usuario'
+-- 3. Lectura masiva de la tabla usuario
+SELECT * FROM usuario;
+psql:sql/simulacro_incidente.sql:21: ERROR:  permiso denegado a la tabla usuario
+SELECT id, nombre, apellido, mail FROM usuario;
+psql:sql/simulacro_incidente.sql:22: ERROR:  permiso denegado a la tabla usuario
+SELECT * FROM vista_usuario_reportes;
+psql:sql/simulacro_incidente.sql:23: ERROR:  permiso denegado a la vista vista_usuario_reportes
+\echo '-- 4. Intento de escalamiento de privilegios'
+-- 4. Intento de escalamiento de privilegios
+GRANT admin_datos TO rol_app_lectura;
+psql:sql/simulacro_incidente.sql:26: ERROR:  se ha denegado el permiso para otorgar el rol «admin_datos»
+DETALLE:  Sólo los roles con la opción ADMIN en el rol «admin_datos» pueden otorgar este rol.
+GRANT admin_datos TO app_web;
+psql:sql/simulacro_incidente.sql:27: ERROR:  se ha denegado el permiso para otorgar el rol «admin_datos»
+DETALLE:  Sólo los roles con la opción ADMIN en el rol «admin_datos» pueden otorgar este rol.
+SET ROLE admin_datos;
+psql:sql/simulacro_incidente.sql:28: ERROR:  se ha denegado el permiso para definir el rol «admin_datos»
+SELECT fn_resetear_password('usuario007@foodstore.test', 'Tomada-por-el-atacante');
+psql:sql/simulacro_incidente.sql:29: ERROR:  permiso denegado a la función fn_resetear_password
+\echo '-- Fin de la secuencia'
+-- Fin de la secuencia
+SELECT current_user AS sigue_siendo, session_user AS sesion;
+ sigue_siendo | sesion  
+--------------+---------
+ app_web      | app_web
+(1 fila)
+

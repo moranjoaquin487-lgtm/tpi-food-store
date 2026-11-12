@@ -1,0 +1,20 @@
+===== Antes del simulacro =====
+ app_web_es_admin | rol_app_lectura_es_admin | miembros_de_admin_datos 
+------------------+--------------------------+-------------------------
+ f                | f                        |                       0
+(1 fila)
+
+
+===== Después del simulacro =====
+ app_web_es_admin | rol_app_lectura_es_admin | miembros_de_admin_datos 
+------------------+--------------------------+-------------------------
+ f                | f                        |                       0
+(1 fila)
+
+===== Intentos registrados en auditoria_seguridad durante el simulacro =====
+ evento | exito | rol_bd  | intentos 
+--------+-------+---------+----------
+ LOGIN  | f     | app_web |        5
+ LOGIN  | t     | app_web |        1
+(2 filas)
+

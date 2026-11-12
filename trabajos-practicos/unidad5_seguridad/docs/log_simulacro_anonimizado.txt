@@ -1,0 +1,42 @@
+2026-11-12 11:14:37.048 -03 [9512] postgres@foodstore ip_origen_1(puerto) app=psql LOG:  MARCA INICIO simulacro_20261112_111436
+2026-11-12 11:14:37.048 -03 [9512] postgres@foodstore ip_origen_1(puerto) app=psql CONTEXTO:  función PL/pgSQL inline_code_block en la línea 1 en RAISE
+2026-11-12 11:14:37.048 -03 [9512] postgres@foodstore ip_origen_1(puerto) app=psql SENTENCIA:  DO $$ BEGIN RAISE LOG 'MARCA INICIO simulacro_20261112_111436'; END $$;
+2026-11-12 11:14:37.049 -03 [9512] postgres@foodstore ip_origen_1(puerto) app=psql LOG:  desconexión: duración de sesión: 0:00:00.054 usuario=postgres base=foodstore host=ip_origen_1 port=(puerto)
+2026-11-12 11:14:37.293 -03 [15192] [desconocido]@[desconocido] ip_origen_1(puerto) app=[desconocido] LOG:  conexi�n recibida: host=ip_origen_1 port=(puerto)
+2026-11-12 11:14:37.317 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=[desconocido] LOG:  conexi�n autenticada: identidad=�app_web� m�todo=scram-sha-256 (C:/Program Files/PostgreSQL/18/data/pg_hba.conf:117)
+2026-11-12 11:14:37.317 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=[desconocido] LOG:  conexi�n autorizada: usuario=app_web base_de_datos=foodstore nombre_de_aplicaci�n=psql
+2026-11-12 11:14:37.354 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql LOG:  fn_autenticar: intento fallido mail=anon_336c5c15e0@ejemplo.test
+2026-11-12 11:14:37.354 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql CONTEXTO:  función PL/pgSQL fn_autenticar(text,text) en la línea 22 en RAISE
+2026-11-12 11:14:37.377 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql LOG:  fn_autenticar: intento fallido mail=anon_336c5c15e0@ejemplo.test
+2026-11-12 11:14:37.377 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql CONTEXTO:  función PL/pgSQL fn_autenticar(text,text) en la línea 22 en RAISE
+2026-11-12 11:14:37.400 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql LOG:  fn_autenticar: intento fallido mail=anon_336c5c15e0@ejemplo.test
+2026-11-12 11:14:37.400 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql CONTEXTO:  función PL/pgSQL fn_autenticar(text,text) en la línea 22 en RAISE
+2026-11-12 11:14:37.422 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql LOG:  fn_autenticar: intento fallido mail=anon_336c5c15e0@ejemplo.test
+2026-11-12 11:14:37.422 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql CONTEXTO:  función PL/pgSQL fn_autenticar(text,text) en la línea 22 en RAISE
+2026-11-12 11:14:37.444 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql LOG:  fn_autenticar: intento fallido mail=anon_336c5c15e0@ejemplo.test
+2026-11-12 11:14:37.444 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql CONTEXTO:  función PL/pgSQL fn_autenticar(text,text) en la línea 22 en RAISE
+2026-11-12 11:14:37.467 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql LOG:  fn_autenticar: inicio de sesion correcto mail=anon_336c5c15e0@ejemplo.test usuario_id=35
+2026-11-12 11:14:37.467 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql CONTEXTO:  función PL/pgSQL fn_autenticar(text,text) en la línea 17 en RAISE
+2026-11-12 11:14:37.469 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql ERROR:  permiso denegado a la tabla usuario
+2026-11-12 11:14:37.469 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql SENTENCIA:  SELECT * FROM usuario;
+2026-11-12 11:14:37.469 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql ERROR:  permiso denegado a la tabla usuario
+2026-11-12 11:14:37.469 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql SENTENCIA:  SELECT id, nombre, apellido, mail FROM usuario;
+2026-11-12 11:14:37.470 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql ERROR:  permiso denegado a la vista vista_usuario_reportes
+2026-11-12 11:14:37.470 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql SENTENCIA:  SELECT * FROM vista_usuario_reportes;
+2026-11-12 11:14:37.470 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql LOG:  sentencia: GRANT admin_datos TO rol_app_lectura;
+2026-11-12 11:14:37.471 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql ERROR:  se ha denegado el permiso para otorgar el rol «admin_datos»
+2026-11-12 11:14:37.471 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql DETALLE:  Sólo los roles con la opción ADMIN en el rol «admin_datos» pueden otorgar este rol.
+2026-11-12 11:14:37.471 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql SENTENCIA:  GRANT admin_datos TO rol_app_lectura;
+2026-11-12 11:14:37.471 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql LOG:  sentencia: GRANT admin_datos TO app_web;
+2026-11-12 11:14:37.471 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql ERROR:  se ha denegado el permiso para otorgar el rol «admin_datos»
+2026-11-12 11:14:37.471 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql DETALLE:  Sólo los roles con la opción ADMIN en el rol «admin_datos» pueden otorgar este rol.
+2026-11-12 11:14:37.471 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql SENTENCIA:  GRANT admin_datos TO app_web;
+2026-11-12 11:14:37.471 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql ERROR:  se ha denegado el permiso para definir el rol «admin_datos»
+2026-11-12 11:14:37.471 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql SENTENCIA:  SET ROLE admin_datos;
+2026-11-12 11:14:37.472 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql ERROR:  permiso denegado a la función fn_resetear_password
+2026-11-12 11:14:37.472 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql SENTENCIA:  SELECT fn_resetear_password('anon_336c5c15e0@ejemplo.test', '***');
+2026-11-12 11:14:37.473 -03 [15192] app_web@foodstore ip_origen_1(puerto) app=psql LOG:  desconexión: duración de sesión: 0:00:00.203 usuario=app_web base=foodstore host=ip_origen_1 port=(puerto)
+2026-11-12 11:14:38.793 -03 [11668] [desconocido]@[desconocido] ip_origen_1(puerto) app=[desconocido] LOG:  conexi�n recibida: host=ip_origen_1 port=(puerto)
+2026-11-12 11:14:38.817 -03 [11668] postgres@foodstore ip_origen_1(puerto) app=[desconocido] LOG:  conexi�n autenticada: identidad=�postgres� m�todo=scram-sha-256 (C:/Program Files/PostgreSQL/18/data/pg_hba.conf:117)
+2026-11-12 11:14:38.817 -03 [11668] postgres@foodstore ip_origen_1(puerto) app=[desconocido] LOG:  conexi�n autorizada: usuario=postgres base_de_datos=foodstore nombre_de_aplicaci�n=psql
+2026-11-12 11:14:38.826 -03 [11668] postgres@foodstore ip_origen_1(puerto) app=psql LOG:  MARCA FIN simulacro_20261112_111436
