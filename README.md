@@ -17,6 +17,31 @@ Food Store es un sistema de pedidos para un negocio de comidas: categorías, pro
 | [Modelo ER y normalización](docs/modelo_ER_relacional_normalizacion.md) | Diagrama, diccionario de datos, paso a modelo relacional y normalización hasta BCNF |
 | [Declaración de uso de IA](docs/duia/DUIA_resumen.md) | Qué herramientas se usaron, para qué y qué se aceptó o descartó |
 
+## Segunda entrega (Unidades 4 a 8)
+
+| Documento | Qué tiene |
+|---|---|
+| [Informe técnico de la segunda entrega](docs/informe_segunda_entrega.md) | Qué se implementó en cada unidad, cómo se probó, resultados, decisiones y uso de IA |
+| [Declaración de uso de IA](docs/duia/DUIA_segunda_entrega.md) | Herramientas, prompts y specs, y qué se aceptó o se descartó |
+| [Code review de las U4 a U7](docs/code_review_u4_u7.md) | Los 15 hallazgos de OpenCode con su decisión. Se comprueban con `bash docs/comprobar_hallazgos_u4_u7.sh`. El de las U1 a U3 y U8 está en el TP8 |
+| Specs de Kiro | `.kiro/specs/u4-migracion-fnbc/` y `.kiro/specs/u5-roles/`. La de la U8 está en `trabajos-practicos/unidad8/food-store/.kiro/` |
+
+| Unidad | Tema | Carpeta |
+|:-:|---|---|
+| 4 | BCNF, migración reversible y desnormalización controlada | [`trabajos-practicos/unidad4_fnbc_desnormalizacion`](trabajos-practicos/unidad4_fnbc_desnormalizacion) |
+| 5 | Roles, auditoría, simulacro de incidente y anonimización | [`trabajos-practicos/unidad5_seguridad`](trabajos-practicos/unidad5_seguridad) |
+| 6 | Respaldo, mantenimiento y simulacro de desastre | [`trabajos-practicos/unidad6_mantenimiento`](trabajos-practicos/unidad6_mantenimiento) |
+| 7 | Pedidos en MongoDB y comparación con PostgreSQL | [`trabajos-practicos/unidad7_nosql`](trabajos-practicos/unidad7_nosql) |
+| 8 | Base SQLite de la tablet y sincronización simulada (TP8) | [`trabajos-practicos/unidad8/food-store`](trabajos-practicos/unidad8/food-store) |
+
+Para ejecutarla, desde Git Bash:
+
+```bash
+NUEVA=1 ./ejecutar_segunda_entrega.sh
+```
+
+Crea la base `foodstore` desde cero con los scripts de la primera entrega y corre las unidades 4 a 7 en orden. La U8 tiene su propio `ejecutar_todo.sh` en su carpeta. Cada unidad guarda sus evidencias en su carpeta. Antes hay que configurar `pgpass.conf` y ponerle contraseña a `app_web` con `\password app_web`. Las contraseñas no se escriben en ningún archivo.
+
 ## Cómo ejecutarlo
 
 Desde **Git Bash**, en la carpeta del proyecto:

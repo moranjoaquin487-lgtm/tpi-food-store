@@ -1,0 +1,39 @@
+Contraseña de app_web (Enter = usar pgpass.conf): 
+
+================ Base foodstore ================
+>> Se crea foodstore desde cero con los scripts de la primera entrega (en una carpeta temporal,
+   para no pisar las evidencias de la primera entrega)
+
+================ U4 · FNBC, migración reversible y desnormalización ================
+
+================ U5 · Roles, auditoría, simulacro y anonimización ================
+>> Parte B: configuración de la auditoría
+>> Secuencia de prueba como app_web
+>> Intento de inicio de sesión con contraseña incorrecta (se espera que falle)
+>> Listo: docs/log_auditoria_prueba.txt (19 líneas)
+>> Parte C: simulacro de incidente
+>> Ejecutando la secuencia como app_web
+>> Control: mails sin anonimizar en el log anonimizado (se espera 0)
+0
+>> Control: contraseñas probadas que llegaron al log ORIGINAL (se espera 0)
+0
+>> Listo: docs/log_simulacro_anonimizado.txt y evidencias/C_simulacro_verificacion.txt
+>> Parte D: usuario_anon y equivalencia
+>> Verificación final de permisos (incluye usuario_anon)
+
+================ U7 · Estado del pedido, exportación y MongoDB ================
+
+================ U8 · Base de la tablet (TP8, ya entregado) ================
+   La U8 está en trabajos-practicos/unidad8/food-store, con su propio ejecutar_todo.sh
+   (copia de pruebas foodstore_tp8). No se vuelve a correr acá para no pisar sus evidencias.
+
+================ U6 · Respaldo, chequeo, mantenimiento y simulacro de desastre ================
+2026-11-12 11:14:53 INICIO respaldo de foodstore en localhost:5432 -> backups/foodstore_20261112_111453.dump
+2026-11-12 11:14:56 OK backups/foodstore_20261112_111453.dump  tamaño=7.9M  objetos=230  duración=2s
+>> Simulacro contra reloj (1 proceso)
+== Resultado
+RTO observado (createdb + pg_restore + validaciones): 5,927 s
+   de los cuales createdb + pg_restore:               4,807 s
+RPO observado (antigüedad del respaldo al restaurar):  0 h 0 min 12 s
+Validaciones: FALLARON
+La base foodstore no se modificó durante el simulacro.

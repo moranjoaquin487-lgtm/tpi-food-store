@@ -1,0 +1,120 @@
+===== Se aplican las correcciones en la base: 01_auth_funciones.sql (#1) y 01_estado_pedido.sql (#7)
+psql:trabajos-practicos/unidad5_seguridad/sql/01_auth_funciones.sql:18: NOTICE:  la extensión «pgcrypto» ya existe, omitiendo
+psql:trabajos-practicos/unidad5_seguridad/sql/01_auth_funciones.sql:29: NOTICE:  la relación «auditoria_seguridad» ya existe, omitiendo
+psql:trabajos-practicos/unidad7_nosql/01_estado_pedido.sql:33: NOTICE:  La columna estado ya existe: no se reasignan los estados
+   estado   | pedidos 
+------------+---------
+ PENDIENTE  |   20001
+ CONFIRMADO |   20001
+ ENTREGADO  |  140005
+ CANCELADO  |   20002
+(4 filas)
+
+
+===== #1, #7 y #10 en la base (todo dentro de BEGIN ... ROLLBACK)
+== #1 ¿Quién queda en auditoria_precio cuando admin_datos cambia un precio?
+ fn_auditar_precios_es_security_definer 
+----------------------------------------
+ t
+(1 fila)
+
+BEGIN
+-- Antes de corregir: DEFAULT current_user (dentro de la función, current_user es el dueño)
+ALTER TABLE
+SET
+UPDATE 1
+RESET
+ registrado_con_la_version_anterior 
+------------------------------------
+ postgres
+(1 fila)
+
+-- Con la corrección: DEFAULT session_user
+ALTER TABLE
+SET
+UPDATE 1
+RESET
+ registrado_con_la_correccion 
+------------------------------
+ admin_datos
+(1 fila)
+
+ROLLBACK
+ default_actual_de_usuario_bd 
+------------------------------
+ SESSION_USER
+(1 fila)
+
+== #7 ¿01_estado_pedido.sql pisa un estado que cambió de verdad?
+BEGIN
+UPDATE 1
+-- Versión anterior (docs/code_review_u4_u7_antes/01_estado_pedido.sql)
+DO
+psql:docs/code_review_u4_u7_antes/01_estado_pedido.sql:15: NOTICE:  la columna «estado» de la relación «pedido» ya existe, omitiendo
+ALTER TABLE
+UPDATE 200009
+   estado   | pedidos 
+------------+---------
+ PENDIENTE  |   20001
+ CONFIRMADO |   20001
+ ENTREGADO  |  140005
+ CANCELADO  |   20002
+(4 filas)
+
+ pedido_3_despues_de_la_version_anterior 
+-----------------------------------------
+ CANCELADO
+(1 fila)
+
+UPDATE 1
+-- Versión corregida (trabajos-practicos/unidad7_nosql/01_estado_pedido.sql)
+DO
+psql:trabajos-practicos/unidad7_nosql/01_estado_pedido.sql:33: NOTICE:  La columna estado ya existe: no se reasignan los estados
+DO
+   estado   | pedidos 
+------------+---------
+ PENDIENTE  |   20002
+ CONFIRMADO |   20001
+ ENTREGADO  |  140005
+ CANCELADO  |   20001
+(4 filas)
+
+ pedido_3_despues_de_la_version_corregida 
+------------------------------------------
+ PENDIENTE
+(1 fila)
+
+ROLLBACK
+== #10 Un GRANT a PUBLIC: ¿lo ve la verificación de permisos?
+BEGIN
+GRANT
+-- Como la comparación anterior: solo roles con nombre (JOIN contra pg_roles)
+ lo_ve_la_comparacion_anterior 
+-------------------------------
+                             0
+(1 fila)
+
+-- El control nuevo de verificacion_permisos.sql (grantee = 0, que es PUBLIC)
+      objeto       | privilegio_para_public 
+-------------------+------------------------
+ fn_total_pedido() | EXECUTE
+(1 fila)
+
+ROLLBACK
+== Fin: todo se deshizo con ROLLBACK
+
+===== #5 Los controles del simulacro, con un log de prueba (en una carpeta temporal)
+-- Log de prueba con un mail sin anonimizar. Versión anterior:
+>> Control: mails sin anonimizar en el log anonimizado (se espera 0)
+1
+>> Control: contraseñas probadas que llegaron al log ORIGINAL (se espera 0)
+0
+>> Listo: docs/log_simulacro_anonimizado.txt y evidencias/C_simulacro_verificacion.txt
+   código de salida: 0
+-- Versión corregida:
+>> Control: mails sin anonimizar en el log anonimizado (se espera 0)
+1
+>> Control: contraseñas probadas que llegaron al log ORIGINAL (se espera 0)
+0
+   ERROR: el log anonimizado tiene mails reales o el original tiene contraseñas. No se lo des a la IA.
+   código de salida: 1

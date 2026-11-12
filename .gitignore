@@ -2,3 +2,11 @@
 *.dump
 *.backup
 .env
+
+# Segunda entrega: log original del simulacro (tiene mails) y respaldos de la U6
+trabajos-practicos/unidad5_seguridad/evidencias/privado/
+trabajos-practicos/unidad6_mantenimiento/backups/
+trabajos-practicos/unidad6_mantenimiento/logs/
+
+# Copia local del zip entregado del TP8 (el TP8 está versionado en unidad8/food-store)
+trabajos-practicos/unidad8/*.zip
