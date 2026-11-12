@@ -22,7 +22,7 @@ def main() -> int:
                             capture_output=True, check=True).stdout
     datos = b"".join(salida.split())
     if not datos:
-        print("No hay archivo de log: logging_collector está apagado (ver PASOS.md).", file=sys.stderr)
+        print("No hay archivo de log: logging_collector está apagado (ver docs/informe_auditoria.md).", file=sys.stderr)
         return 1
     crudo = base64.b64decode(datos)
     try:

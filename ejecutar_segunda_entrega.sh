@@ -2,7 +2,7 @@
 # Segunda entrega del TPI (Unidades 4 a 8): arma la base y corre todo en orden.
 # Cada paso guarda su salida en la carpeta evidencias/ de su unidad.
 #
-# Antes de correrlo, una sola vez (ver PASOS):
+# Antes de correrlo, una sola vez (ver el README):
 #   - pgpass.conf con la contraseña de postgres
 #   - en psql:  \password app_web   (la contraseña nunca se escribe en un archivo)
 #
@@ -62,7 +62,7 @@ construccion sql/00_usuarios_prueba.sql   evidencias/A_00_usuarios_prueba.txt
 construccion sql/01_auth_funciones.sql    evidencias/A_01_auth_funciones.txt
 construccion sql/roles.sql                evidencias/A_02_roles.txt
 psql -X -d "$DB" -c "SELECT rolname FROM pg_authid WHERE rolname = 'app_web' AND rolpassword IS NULL" -At \
-    | grep -q app_web && echo "   AVISO: app_web no tiene contraseña. Poné una con \\password app_web (ver PASOS)"
+    | grep -q app_web && echo "   AVISO: app_web no tiene contraseña. Poné una con \\password app_web (ver el README)"
 echo ">> Parte B: configuración de la auditoría"
 # ALTER SYSTEM no puede ir dentro de una transacción: va sin --single-transaction, pero con
 # ON_ERROR_STOP, para que un error corte acá (code review U4-U7, hallazgo #4).

@@ -27,5 +27,5 @@ SELECT name, setting FROM pg_settings
                 'log_line_prefix', 'log_min_error_statement')
  ORDER BY name;
 
-\echo '== Archivo de log actual (si sale vacío, logging_collector está apagado: ver PASOS.md)'
+\echo '== Archivo de log actual (si sale vacío, logging_collector está apagado: ver docs/informe_auditoria.md)'
 SELECT pg_current_logfile() AS archivo_de_log;
