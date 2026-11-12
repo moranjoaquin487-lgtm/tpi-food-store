@@ -1,0 +1,525 @@
+################ Versión: OpenCode (opencode) · sqlite3 3.54.1 ################
+===== schema_sqlite.sql (si hay errores, aparecen acá) =====
+sin errores
++---------+-----------------------------------------+
+|  tipo   |                 nombre                  |
++---------+-----------------------------------------+
+| index   | idx_cola_sync_un_pendiente_por_borrador |
+| trigger | trg_cola_sync_estado_final              |
+| trigger | trg_item_borrador_bloqueado_delete      |
+| trigger | trg_item_borrador_bloqueado_insert      |
+| trigger | trg_item_borrador_bloqueado_update      |
++---------+-----------------------------------------+
+
+===== 1.c · pruebas_sqlite.sql =====
+
+$ sqlite3 -header -table t.db < pruebas_sqlite.sql
++------------+-------+-------------+
+| borradores | items | solicitudes |
++------------+-------+-------------+
+|          0 |     0 |           0 |
++------------+-------+-------------+
++--------------------------------------+------------+-------------------+----------+--------------+--------------------------------------+-----------+
+|               id_local               | forma_pago |     producto      | cantidad | precio_visto |            solicitud_uuid            |  estado   |
++--------------------------------------+------------+-------------------+----------+--------------+--------------------------------------+-----------+
+| b001c000-0000-4000-8000-000000000000 | EFECTIVO   | Agua 500ml        |        2 | 400.00       | a001c001-0000-4000-8000-000000000000 | PENDIENTE |
+| b001c000-0000-4000-8000-000000000000 | EFECTIVO   | Empanada de carne |        6 | 350.00       | a001c001-0000-4000-8000-000000000000 | PENDIENTE |
++--------------------------------------+------------+-------------------+----------+--------------+--------------------------------------+-----------+
++--------------------------------------+
+|      uuid_generado_en_la_tablet      |
++--------------------------------------+
+| 8f71b245-60c3-441d-a6d5-642d17fca6a6 |
++--------------------------------------+
++-------------------------------------+--------------------------------+
+| borradores_dentro_de_la_transaccion | items_dentro_de_la_transaccion |
++-------------------------------------+--------------------------------+
+|                                   2 |                              3 |
++-------------------------------------+--------------------------------+
++---------------------------------+----------------------------+
+| borradores_despues_del_rollback | items_despues_del_rollback |
++---------------------------------+----------------------------+
+|                               1 |                          2 |
++---------------------------------+----------------------------+
++----------------+
+| bases_abiertas |
++----------------+
+| main           |
++----------------+
++---------------------------+---------+-------------+
+|          nombre           | precio  | stock_visto |
++---------------------------+---------+-------------+
+| Agua 500ml                | 400.00  |          80 |
+| Cerveza 1L                | 1200.00 |          50 |
+| Coca 1.5L                 | 800.00  |          60 |
+| Empanada de carne         | 350.00  |         120 |
+| Empanada de jamón y queso | 320.00  |          90 |
+| Empanada de pollo         | 330.00  |         100 |
+| Flan casero               | 600.00  |          15 |
+| Fugazzeta                 | 1400.00 |          25 |
+| Muzzarella                | 1050.00 |          40 |
+| Napolitana                | 1500.00 |          30 |
++---------------------------+---------+-------------+
++------------------+-------------+
+| borradores_antes | items_antes |
++------------------+-------------+
+|                1 |           2 |
++------------------+-------------+
+Error near line 93: CHECK constraint failed: cantidad > 0
+Error near line 99: FOREIGN KEY constraint failed
++-----------------------+
+| items_del_borrador_c7 |
++-----------------------+
+|                     0 |
++-----------------------+
++--------------------+---------------+
+| borradores_despues | items_despues |
++--------------------+---------------+
+|                  1 |             2 |
++--------------------+---------------+
+
+===== C2 =====
+
+$ sqlite3 -header -table t.db < semaforo.sql
++---------------------------------------+
+| solicitudes_evaluadas_en_esta_corrida |
++---------------------------------------+
+|                                     2 |
++---------------------------------------+
++-----------+----------+-------------------+-----------------------------------------------------------+
+| solicitud | borrador |      estado       |                          motivo                           |
++-----------+----------+-------------------+-----------------------------------------------------------+
+| a001c001  | b001c000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c20001  | b0c20000 | CONFLICTO         | Muzzarella: precio visto 1050.00, precio actual 1150.00   |
++-----------+----------+-------------------+-----------------------------------------------------------+
+
+$ sqlite3 -header -table t.db < semaforo.sql
++---------------------------------------+
+| solicitudes_evaluadas_en_esta_corrida |
++---------------------------------------+
+|                                     1 |
++---------------------------------------+
++-----------+----------+-------------------+-----------------------------------------------------------+
+| solicitud | borrador |      estado       |                          motivo                           |
++-----------+----------+-------------------+-----------------------------------------------------------+
+| a001c001  | b001c000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c20001  | b0c20000 | CONFLICTO         | Muzzarella: precio visto 1050.00, precio actual 1150.00   |
+| a0c20002  | b0c20000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
++-----------+----------+-------------------+-----------------------------------------------------------+
+
+===== C3 =====
+
+$ sqlite3 -header -table t.db < semaforo.sql
++---------------------------------------+
+| solicitudes_evaluadas_en_esta_corrida |
++---------------------------------------+
+|                                     1 |
++---------------------------------------+
++-----------+----------+-------------------+-----------------------------------------------------------+
+| solicitud | borrador |      estado       |                          motivo                           |
++-----------+----------+-------------------+-----------------------------------------------------------+
+| a001c001  | b001c000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c20001  | b0c20000 | CONFLICTO         | Muzzarella: precio visto 1050.00, precio actual 1150.00   |
+| a0c20002  | b0c20000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c30001  | b0c30000 | RECHAZADO         | Flan casero: pide 20 y quedan 15                          |
++-----------+----------+-------------------+-----------------------------------------------------------+
+
+===== C4 =====
+
+$ sqlite3 -header -table t.db < semaforo.sql
++---------------------------------------+
+| solicitudes_evaluadas_en_esta_corrida |
++---------------------------------------+
+|                                     1 |
++---------------------------------------+
++-----------+----------+-------------------+-----------------------------------------------------------+
+| solicitud | borrador |      estado       |                          motivo                           |
++-----------+----------+-------------------+-----------------------------------------------------------+
+| a001c001  | b001c000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c20001  | b0c20000 | CONFLICTO         | Muzzarella: precio visto 1050.00, precio actual 1150.00   |
+| a0c20002  | b0c20000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c30001  | b0c30000 | RECHAZADO         | Flan casero: pide 20 y quedan 15                          |
+| a0c40001  | b0c40000 | RECHAZADO         | Fugazzeta fue dado de baja                                |
++-----------+----------+-------------------+-----------------------------------------------------------+
+
+$ sqlite3 -header -table t.db < casos/c4_catalogo.sql
++---------------------------+---------+-------------+
+|          nombre           | precio  | stock_visto |
++---------------------------+---------+-------------+
+| Agua 500ml                | 400.00  |          80 |
+| Cerveza 1L                | 1200.00 |          50 |
+| Coca 1.5L                 | 800.00  |          60 |
+| Empanada de carne         | 350.00  |         120 |
+| Empanada de jamón y queso | 320.00  |          90 |
+| Empanada de pollo         | 330.00  |         100 |
+| Flan casero               | 600.00  |          15 |
+| Muzzarella                | 1150.00 |          40 |
+| Napolitana                | 1500.00 |          30 |
++---------------------------+---------+-------------+
++----+-----------+------------+-----------+
+| id |  nombre   | disponible | eliminado |
++----+-----------+------------+-----------+
+|  1 | Fugazzeta |          0 |         1 |
++----+-----------+------------+-----------+
++----------------------------------+
+| items_que_apuntan_a_la_fugazzeta |
++----------------------------------+
+|                                1 |
++----------------------------------+
++-------+-------+--------+------+
+| table | rowid | parent | fkid |
++-------+-------+--------+------+
+
+===== C5 =====
+
+$ sqlite3 -header -table t.db < semaforo.sql
++---------------------------------------+
+| solicitudes_evaluadas_en_esta_corrida |
++---------------------------------------+
+|                                     1 |
++---------------------------------------+
++-----------+----------+-------------------+-----------------------------------------------------------+
+| solicitud | borrador |      estado       |                          motivo                           |
++-----------+----------+-------------------+-----------------------------------------------------------+
+| a001c001  | b001c000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c20001  | b0c20000 | CONFLICTO         | Muzzarella: precio visto 1050.00, precio actual 1150.00   |
+| a0c20002  | b0c20000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c30001  | b0c30000 | RECHAZADO         | Flan casero: pide 20 y quedan 15                          |
+| a0c40001  | b0c40000 | RECHAZADO         | Fugazzeta fue dado de baja                                |
+| a0c50001  | b0c50000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
++-----------+----------+-------------------+-----------------------------------------------------------+
+
+===== C6 =====
+
+$ sqlite3 -header -table t.db < casos/c6_reenvio.sql
++-------------------+
+| solicitudes_antes |
++-------------------+
+|                 6 |
++-------------------+
+Error near line 6: UNIQUE constraint failed: cola_sync.solicitud_uuid
++---------------------+
+| solicitudes_despues |
++---------------------+
+|                   6 |
++---------------------+
+Error near line 12: La solicitud ya fue evaluada: su estado no cambia
++-----------+-------------------+
+| solicitud |      estado       |
++-----------+-------------------+
+| a001c001  | SIMULADO_APROBADO |
+| a0c20001  | CONFLICTO         |
+| a0c20002  | SIMULADO_APROBADO |
+| a0c30001  | RECHAZADO         |
+| a0c40001  | RECHAZADO         |
+| a0c50001  | SIMULADO_APROBADO |
++-----------+-------------------+
+
+$ sqlite3 -header -table t.db < semaforo.sql
++---------------------------------------+
+| solicitudes_evaluadas_en_esta_corrida |
++---------------------------------------+
+|                                     0 |
++---------------------------------------+
++-----------+----------+-------------------+-----------------------------------------------------------+
+| solicitud | borrador |      estado       |                          motivo                           |
++-----------+----------+-------------------+-----------------------------------------------------------+
+| a001c001  | b001c000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c20001  | b0c20000 | CONFLICTO         | Muzzarella: precio visto 1050.00, precio actual 1150.00   |
+| a0c20002  | b0c20000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c30001  | b0c30000 | RECHAZADO         | Flan casero: pide 20 y quedan 15                          |
+| a0c40001  | b0c40000 | RECHAZADO         | Fugazzeta fue dado de baja                                |
+| a0c50001  | b0c50000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
++-----------+----------+-------------------+-----------------------------------------------------------+
+
+===== Controles extra =====
+
+-- UUID que no es hexadecimal y usuario con mail (tienen que fallar):
+Error in 2nd command line argument: CHECK constraint failed: id_local GLOB '[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-4[0-9a-f][0-9a-f][0-9a-f]-[89ab][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+Error in 2nd command line argument: CHECK constraint failed: length(trim(usuario)) > 0 AND usuario NOT LIKE '%@%'
++----------+---------+
+| id_local | usuario |
++----------+---------+
+
+-- Cambiar el motivo de una solicitud ya evaluada (tiene que fallar):
+Error in 2nd command line argument: La solicitud ya fue evaluada: su estado no cambia
++-----------+-----------+----------------------------------+
+| solicitud |  estado   |              motivo              |
++-----------+-----------+----------------------------------+
+| a0c30001  | RECHAZADO | Flan casero: pide 20 y quedan 15 |
++-----------+-----------+----------------------------------+
+
+===== Estado final de la cola =====
++-----------+-------------------+
+| solicitud |      estado       |
++-----------+-------------------+
+| a001c001  | SIMULADO_APROBADO |
+| a0c20001  | CONFLICTO         |
+| a0c20002  | SIMULADO_APROBADO |
+| a0c30001  | RECHAZADO         |
+| a0c40001  | RECHAZADO         |
+| a0c50001  | SIMULADO_APROBADO |
++-----------+-------------------+
+
+
+################ Versión: movil (la entregada) (movil) · sqlite3 3.54.1 ################
+===== schema_sqlite.sql (si hay errores, aparecen acá) =====
+sin errores
++---------+---------------------------------+
+|  tipo   |             nombre              |
++---------+---------------------------------+
+| index   | idx_item_borrador_producto      |
+| index   | ux_cola_sync_una_pendiente      |
+| trigger | trg_cola_sync_estado_final      |
+| trigger | trg_item_borrador_bloqueado_del |
+| trigger | trg_item_borrador_bloqueado_ins |
+| trigger | trg_item_borrador_bloqueado_upd |
++---------+---------------------------------+
+
+===== 1.c · pruebas_sqlite.sql =====
+
+$ sqlite3 -header -table t.db < pruebas_sqlite.sql
++------------+-------+-------------+
+| borradores | items | solicitudes |
++------------+-------+-------------+
+|          0 |     0 |           0 |
++------------+-------+-------------+
++--------------------------------------+------------+-------------------+----------+--------------+--------------------------------------+-----------+
+|               id_local               | forma_pago |     producto      | cantidad | precio_visto |            solicitud_uuid            |  estado   |
++--------------------------------------+------------+-------------------+----------+--------------+--------------------------------------+-----------+
+| b001c000-0000-4000-8000-000000000000 | EFECTIVO   | Agua 500ml        |        2 | 400.00       | a001c001-0000-4000-8000-000000000000 | PENDIENTE |
+| b001c000-0000-4000-8000-000000000000 | EFECTIVO   | Empanada de carne |        6 | 350.00       | a001c001-0000-4000-8000-000000000000 | PENDIENTE |
++--------------------------------------+------------+-------------------+----------+--------------+--------------------------------------+-----------+
++--------------------------------------+
+|      uuid_generado_en_la_tablet      |
++--------------------------------------+
+| 778a1bef-8b28-4a68-b289-851ff0321051 |
++--------------------------------------+
++-------------------------------------+--------------------------------+
+| borradores_dentro_de_la_transaccion | items_dentro_de_la_transaccion |
++-------------------------------------+--------------------------------+
+|                                   2 |                              3 |
++-------------------------------------+--------------------------------+
++---------------------------------+----------------------------+
+| borradores_despues_del_rollback | items_despues_del_rollback |
++---------------------------------+----------------------------+
+|                               1 |                          2 |
++---------------------------------+----------------------------+
++----------------+
+| bases_abiertas |
++----------------+
+| main           |
++----------------+
++---------------------------+---------+-------------+
+|          nombre           | precio  | stock_visto |
++---------------------------+---------+-------------+
+| Agua 500ml                | 400.00  |          80 |
+| Cerveza 1L                | 1200.00 |          50 |
+| Coca 1.5L                 | 800.00  |          60 |
+| Empanada de carne         | 350.00  |         120 |
+| Empanada de jamón y queso | 320.00  |          90 |
+| Empanada de pollo         | 330.00  |         100 |
+| Flan casero               | 600.00  |          15 |
+| Fugazzeta                 | 1400.00 |          25 |
+| Muzzarella                | 1050.00 |          40 |
+| Napolitana                | 1500.00 |          30 |
++---------------------------+---------+-------------+
++------------------+-------------+
+| borradores_antes | items_antes |
++------------------+-------------+
+|                1 |           2 |
++------------------+-------------+
+Error near line 93: CHECK constraint failed: cantidad > 0
+Error near line 99: FOREIGN KEY constraint failed
++-----------------------+
+| items_del_borrador_c7 |
++-----------------------+
+|                     0 |
++-----------------------+
++--------------------+---------------+
+| borradores_despues | items_despues |
++--------------------+---------------+
+|                  1 |             2 |
++--------------------+---------------+
+
+===== C2 =====
+
+$ sqlite3 -header -table t.db < semaforo.sql
++---------------------------------------+
+| solicitudes_evaluadas_en_esta_corrida |
++---------------------------------------+
+|                                     2 |
++---------------------------------------+
++-----------+----------+-------------------+-----------------------------------------------------------+
+| solicitud | borrador |      estado       |                          motivo                           |
++-----------+----------+-------------------+-----------------------------------------------------------+
+| a001c001  | b001c000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c20001  | b0c20000 | CONFLICTO         | Muzzarella: precio visto 1050.00, precio actual 1150.00   |
++-----------+----------+-------------------+-----------------------------------------------------------+
+
+$ sqlite3 -header -table t.db < semaforo.sql
++---------------------------------------+
+| solicitudes_evaluadas_en_esta_corrida |
++---------------------------------------+
+|                                     1 |
++---------------------------------------+
++-----------+----------+-------------------+-----------------------------------------------------------+
+| solicitud | borrador |      estado       |                          motivo                           |
++-----------+----------+-------------------+-----------------------------------------------------------+
+| a001c001  | b001c000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c20001  | b0c20000 | CONFLICTO         | Muzzarella: precio visto 1050.00, precio actual 1150.00   |
+| a0c20002  | b0c20000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
++-----------+----------+-------------------+-----------------------------------------------------------+
+
+===== C3 =====
+
+$ sqlite3 -header -table t.db < semaforo.sql
++---------------------------------------+
+| solicitudes_evaluadas_en_esta_corrida |
++---------------------------------------+
+|                                     1 |
++---------------------------------------+
++-----------+----------+-------------------+-----------------------------------------------------------+
+| solicitud | borrador |      estado       |                          motivo                           |
++-----------+----------+-------------------+-----------------------------------------------------------+
+| a001c001  | b001c000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c20001  | b0c20000 | CONFLICTO         | Muzzarella: precio visto 1050.00, precio actual 1150.00   |
+| a0c20002  | b0c20000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c30001  | b0c30000 | RECHAZADO         | Flan casero: pide 20 y quedan 15                          |
++-----------+----------+-------------------+-----------------------------------------------------------+
+
+===== C4 =====
+
+$ sqlite3 -header -table t.db < semaforo.sql
++---------------------------------------+
+| solicitudes_evaluadas_en_esta_corrida |
++---------------------------------------+
+|                                     1 |
++---------------------------------------+
++-----------+----------+-------------------+-----------------------------------------------------------+
+| solicitud | borrador |      estado       |                          motivo                           |
++-----------+----------+-------------------+-----------------------------------------------------------+
+| a001c001  | b001c000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c20001  | b0c20000 | CONFLICTO         | Muzzarella: precio visto 1050.00, precio actual 1150.00   |
+| a0c20002  | b0c20000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c30001  | b0c30000 | RECHAZADO         | Flan casero: pide 20 y quedan 15                          |
+| a0c40001  | b0c40000 | RECHAZADO         | Fugazzeta fue dado de baja                                |
++-----------+----------+-------------------+-----------------------------------------------------------+
+
+$ sqlite3 -header -table t.db < casos/c4_catalogo.sql
++---------------------------+---------+-------------+
+|          nombre           | precio  | stock_visto |
++---------------------------+---------+-------------+
+| Agua 500ml                | 400.00  |          80 |
+| Cerveza 1L                | 1200.00 |          50 |
+| Coca 1.5L                 | 800.00  |          60 |
+| Empanada de carne         | 350.00  |         120 |
+| Empanada de jamón y queso | 320.00  |          90 |
+| Empanada de pollo         | 330.00  |         100 |
+| Flan casero               | 600.00  |          15 |
+| Muzzarella                | 1150.00 |          40 |
+| Napolitana                | 1500.00 |          30 |
++---------------------------+---------+-------------+
++----+-----------+------------+-----------+
+| id |  nombre   | disponible | eliminado |
++----+-----------+------------+-----------+
+|  1 | Fugazzeta |          0 |         1 |
++----+-----------+------------+-----------+
++----------------------------------+
+| items_que_apuntan_a_la_fugazzeta |
++----------------------------------+
+|                                1 |
++----------------------------------+
++-------+-------+--------+------+
+| table | rowid | parent | fkid |
++-------+-------+--------+------+
+
+===== C5 =====
+
+$ sqlite3 -header -table t.db < semaforo.sql
++---------------------------------------+
+| solicitudes_evaluadas_en_esta_corrida |
++---------------------------------------+
+|                                     1 |
++---------------------------------------+
++-----------+----------+-------------------+-----------------------------------------------------------+
+| solicitud | borrador |      estado       |                          motivo                           |
++-----------+----------+-------------------+-----------------------------------------------------------+
+| a001c001  | b001c000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c20001  | b0c20000 | CONFLICTO         | Muzzarella: precio visto 1050.00, precio actual 1150.00   |
+| a0c20002  | b0c20000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c30001  | b0c30000 | RECHAZADO         | Flan casero: pide 20 y quedan 15                          |
+| a0c40001  | b0c40000 | RECHAZADO         | Fugazzeta fue dado de baja                                |
+| a0c50001  | b0c50000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
++-----------+----------+-------------------+-----------------------------------------------------------+
+
+===== C6 =====
+
+$ sqlite3 -header -table t.db < casos/c6_reenvio.sql
++-------------------+
+| solicitudes_antes |
++-------------------+
+|                 6 |
++-------------------+
+Error near line 6: UNIQUE constraint failed: cola_sync.solicitud_uuid
++---------------------+
+| solicitudes_despues |
++---------------------+
+|                   6 |
++---------------------+
+Error near line 12: La solicitud ya fue evaluada: su estado no cambia
++-----------+-------------------+
+| solicitud |      estado       |
++-----------+-------------------+
+| a001c001  | SIMULADO_APROBADO |
+| a0c20001  | CONFLICTO         |
+| a0c20002  | SIMULADO_APROBADO |
+| a0c30001  | RECHAZADO         |
+| a0c40001  | RECHAZADO         |
+| a0c50001  | SIMULADO_APROBADO |
++-----------+-------------------+
+
+$ sqlite3 -header -table t.db < semaforo.sql
++---------------------------------------+
+| solicitudes_evaluadas_en_esta_corrida |
++---------------------------------------+
+|                                     0 |
++---------------------------------------+
++-----------+----------+-------------------+-----------------------------------------------------------+
+| solicitud | borrador |      estado       |                          motivo                           |
++-----------+----------+-------------------+-----------------------------------------------------------+
+| a001c001  | b001c000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c20001  | b0c20000 | CONFLICTO         | Muzzarella: precio visto 1050.00, precio actual 1150.00   |
+| a0c20002  | b0c20000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0c30001  | b0c30000 | RECHAZADO         | Flan casero: pide 20 y quedan 15                          |
+| a0c40001  | b0c40000 | RECHAZADO         | Fugazzeta fue dado de baja                                |
+| a0c50001  | b0c50000 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
++-----------+----------+-------------------+-----------------------------------------------------------+
+
+===== Controles extra =====
+
+-- UUID que no es hexadecimal y usuario con mail (tienen que fallar):
+Error in 2nd command line argument: CHECK constraint failed: id_local GLOB '[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-4[0-9a-f][0-9a-f][0-9a-f]-[89ab][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+Error in 2nd command line argument: CHECK constraint failed: length(trim(usuario)) > 0 AND usuario NOT LIKE '%@%'
++----------+---------+
+| id_local | usuario |
++----------+---------+
+
+-- Cambiar el motivo de una solicitud ya evaluada (tiene que fallar):
+Error in 2nd command line argument: La solicitud ya fue evaluada: su estado no cambia
++-----------+-----------+----------------------------------+
+| solicitud |  estado   |              motivo              |
++-----------+-----------+----------------------------------+
+| a0c30001  | RECHAZADO | Flan casero: pide 20 y quedan 15 |
++-----------+-----------+----------------------------------+
+
+===== Estado final de la cola =====
++-----------+-------------------+
+| solicitud |      estado       |
++-----------+-------------------+
+| a001c001  | SIMULADO_APROBADO |
+| a0c20001  | CONFLICTO         |
+| a0c20002  | SIMULADO_APROBADO |
+| a0c30001  | RECHAZADO         |
+| a0c40001  | RECHAZADO         |
+| a0c50001  | SIMULADO_APROBADO |
++-----------+-------------------+

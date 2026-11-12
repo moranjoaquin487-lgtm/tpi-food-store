@@ -1,0 +1,13 @@
+id,nombre,precio_centavos,stock,disponible,eliminado,copiado_en,filas_totales
+1,Fugazzeta,140000,25,t,f,2026-11-11T01:37:26Z,12
+2,Napolitana,150000,30,t,f,2026-11-11T01:37:26Z,12
+3,Muzzarella,115000,40,t,f,2026-11-11T01:37:26Z,12
+4,Empanada de jamón y queso,32000,90,t,f,2026-11-11T01:37:26Z,12
+5,Empanada de pollo,33000,100,t,f,2026-11-11T01:37:26Z,12
+6,Empanada de carne,35000,120,t,f,2026-11-11T01:37:26Z,12
+7,Cerveza 1L,120000,50,t,f,2026-11-11T01:37:26Z,12
+8,Agua 500ml,40000,80,t,f,2026-11-11T01:37:26Z,12
+9,Coca 1.5L,80000,60,t,f,2026-11-11T01:37:26Z,12
+10,Helado 1/4 kg,90000,0,f,f,2026-11-11T01:37:26Z,12
+11,Flan casero,60000,15,t,f,2026-11-11T01:37:26Z,12
+12,Pizza congelada,110000,10,f,t,2026-11-11T01:37:26Z,12

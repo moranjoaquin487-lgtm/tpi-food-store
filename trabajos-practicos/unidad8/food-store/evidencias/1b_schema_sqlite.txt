@@ -1,0 +1,22 @@
+===== 1.b · Base de la tablet desde cero =====
+
+$ rm -f movil/foodstore_movil.db
+
+$ cd movil && sqlite3 -bail -header -table foodstore_movil.db < schema_sqlite.sql
+
+$ cd movil && sqlite3 -header -table foodstore_movil.db "SELECT type, name, tbl_name FROM sqlite_schema ..."
++---------+-----------------------------------------+-------------------+
+|  tipo   |                 nombre                  |       tabla       |
++---------+-----------------------------------------+-------------------+
+| table   | cola_sync                               | cola_sync         |
+| table   | item_borrador                           | item_borrador     |
+| table   | pedido_borrador                         | pedido_borrador   |
+| table   | producto_cache                          | producto_cache    |
+| table   | snapshot_servidor                       | snapshot_servidor |
+| index   | idx_cola_sync_un_pendiente_por_borrador | cola_sync         |
+| trigger | trg_cola_sync_estado_final              | cola_sync         |
+| trigger | trg_item_borrador_bloqueado_delete      | item_borrador     |
+| trigger | trg_item_borrador_bloqueado_insert      | item_borrador     |
+| trigger | trg_item_borrador_bloqueado_update      | item_borrador     |
++---------+-----------------------------------------+-------------------+
+(PRAGMA foreign_keys vale por conexión: cada script de la tablet lo activa en su primera línea.)

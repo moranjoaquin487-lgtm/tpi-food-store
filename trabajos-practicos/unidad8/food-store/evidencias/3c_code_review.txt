@@ -1,0 +1,300 @@
+===== Comprobaciones del code review de OpenCode · PostgreSQL 18.6 · sqlite3 3.54.1 =====
+NOTICE:  no existe la base de datos «tpi_food_store_revision», omitiendo
+
+===== #1 · U2 · sql/07_consultas.sql (7.2) y 05b: la facturación pierde las ventas de un producto dado de baja · ACEPTADO =====
+BEGIN;
+BEGIN
+-- El producto ACTIVO con más ventas (si ya estuviera inactivo, no habría diferencia que mostrar).
+SELECT p.id_producto, p.nombre, c.nombre AS categoria, SUM(dp.cantidad * dp.precio_unitario) AS sus_ventas
+  FROM producto p JOIN detalle_pedido dp USING (id_producto) JOIN categoria c USING (id_categoria)
+ WHERE p.activo
+ GROUP BY 1, 2, 3 ORDER BY 4 DESC LIMIT 1 \gset
+CREATE TEMP VIEW facturacion_7_2 AS
+SELECT c.nombre AS categoria, COALESCE(SUM(dp.cantidad * dp.precio_unitario), 0) AS facturado
+  FROM categoria c
+  LEFT JOIN producto p        ON p.id_categoria = c.id_categoria AND p.activo = TRUE
+  LEFT JOIN detalle_pedido dp ON dp.id_producto = p.id_producto
+ WHERE c.activo = TRUE GROUP BY c.nombre;
+CREATE VIEW
+CREATE TEMP TABLE antes AS SELECT * FROM facturacion_7_2;
+SELECT 4
+UPDATE producto SET activo = FALSE WHERE id_producto = :id_producto;   -- baja lógica (09_soft_delete)
+UPDATE 1
+SELECT a.categoria, a.facturado AS antes_de_la_baja, d.facturado AS despues_de_la_baja,
+       a.facturado - d.facturado AS ventas_que_desaparecen
+  FROM antes a JOIN facturacion_7_2 d USING (categoria) WHERE a.facturado <> d.facturado;
+ categoria | antes_de_la_baja | despues_de_la_baja | ventas_que_desaparecen 
+-----------+------------------+--------------------+------------------------
+ Lácteos   |     100254249.64 |       100049049.64 |              205200.00
+(1 fila)
+
+SELECT COUNT(*) AS lineas_de_venta_que_siguen_en_detalle_pedido FROM detalle_pedido WHERE id_producto = :id_producto;
+ lineas_de_venta_que_siguen_en_detalle_pedido 
+----------------------------------------------
+                                            9
+(1 fila)
+
+ROLLBACK;
+ROLLBACK
+
+===== #2 · U1 · sql/01_schema.sql: los CASCADE borran vistas, la materializada y el procedimiento sin avisar · ACEPTADO =====
+SELECT (SELECT COUNT(*) FROM information_schema.views WHERE table_schema = 'public') AS vistas,
+       (SELECT COUNT(*) FROM pg_matviews) AS materializadas,
+       (SELECT COUNT(*) FROM pg_proc WHERE proname = 'sp_registrar_pedido') AS procedimiento;
+ vistas | materializadas | procedimiento 
+--------+----------------+---------------
+      5 |              1 |             1
+(1 fila)
+
+BEGIN;
+BEGIN
+SET client_min_messages = warning;   -- como lo corre ejecutar_todo.sh del TPI: no se ve ningún aviso
+SET
+DROP TABLE IF EXISTS detalle_pedido CASCADE;
+DROP TABLE
+DROP TABLE IF EXISTS pedido CASCADE;
+DROP TABLE
+DROP TABLE IF EXISTS producto CASCADE;
+DROP TABLE
+DROP TABLE IF EXISTS categoria CASCADE;
+DROP TABLE
+DROP TABLE IF EXISTS cliente CASCADE;
+DROP TABLE
+SELECT 'después de los DROP TABLE' AS momento,
+       (SELECT COUNT(*) FROM information_schema.views WHERE table_schema = 'public') AS vistas,
+       (SELECT COUNT(*) FROM pg_matviews) AS materializadas,
+       (SELECT COUNT(*) FROM pg_proc WHERE proname = 'sp_registrar_pedido') AS procedimiento;
+          momento          | vistas | materializadas | procedimiento 
+---------------------------+--------+----------------+---------------
+ después de los DROP TABLE |      1 |              0 |             1
+(1 fila)
+
+DROP TYPE IF EXISTS forma_pago_enum CASCADE;   -- el parámetro de sp_registrar_pedido es de este tipo
+DROP TYPE
+DROP TABLE IF EXISTS usuario CASCADE;
+DROP TABLE
+SELECT 'después del DROP TYPE' AS momento,
+       (SELECT COUNT(*) FROM information_schema.views WHERE table_schema = 'public') AS vistas,
+       (SELECT COUNT(*) FROM pg_matviews) AS materializadas,
+       (SELECT COUNT(*) FROM pg_proc WHERE proname = 'sp_registrar_pedido') AS procedimiento;
+        momento        | vistas | materializadas | procedimiento 
+-----------------------+--------+----------------+---------------
+ después del DROP TYPE |      0 |              0 |             0
+(1 fila)
+
+ROLLBACK;
+ROLLBACK
+
+===== #3 · U1 · sql/03 y sql/06: el trigger de stock valida pero no descuenta; con dos ventas a la vez frena el CHECK · ACEPTADO =====
+(a) Un UPDATE de una línea ya vendida no toca el stock:
+BEGIN;
+BEGIN
+SELECT dp.id_detalle, dp.id_producto, dp.cantidad, p.stock AS stock_antes
+  FROM detalle_pedido dp JOIN producto p USING (id_producto)
+ WHERE p.activo AND p.stock > 5 ORDER BY dp.id_detalle LIMIT 1 \gset
+UPDATE detalle_pedido SET cantidad = cantidad + 1 WHERE id_detalle = :id_detalle;
+UPDATE 1
+SELECT :cantidad AS cantidad_antes, cantidad AS cantidad_ahora, :stock_antes AS stock_antes,
+       (SELECT stock FROM producto WHERE id_producto = :id_producto) AS stock_ahora
+  FROM detalle_pedido WHERE id_detalle = :id_detalle;
+ cantidad_antes | cantidad_ahora | stock_antes | stock_ahora 
+----------------+----------------+-------------+-------------
+              2 |              3 |          12 |          12
+(1 fila)
+
+ROLLBACK;
+ROLLBACK
+
+(b) Dos sesiones piden las 8 unidades del producto 6; la B arranca 0,5 s después:
+----- SESIÓN A -----
+BEGIN;
+BEGIN
+CALL sp_registrar_pedido(10, 'EFECTIVO', '[{"id_producto": 6, "cantidad": 8}]');
+NOTICE:  Pedido 260010 registrado. Total: 60800.00
+CALL
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 fila)
+
+COMMIT;
+COMMIT
+----- SESIÓN B -----
+CALL sp_registrar_pedido(11, 'TARJETA', '[{"id_producto": 6, "cantidad": 8}]');
+ERROR:  el nuevo registro para la relación «producto» viola la restricción «check» «producto_stock_check»
+DETALLE:  La fila que falla contiene (6, Queso cremoso 500g, Queso cremoso fraccionado, 7600.00, -8, t, 3, 2026-11-10 22:13:44.108952-03).
+función PL/pgSQL sp_registrar_pedido(bigint,forma_pago_enum,jsonb) en la línea 25 en sentencia SQL
+ id_producto | stock_final 
+-------------+-------------
+           6 |           0
+(1 fila)
+
+ pedidos_nuevos 
+----------------
+              1
+(1 fila)
+
+
+===== #9 · U1 · crear_base.sh: el código de salida de un bloque con | tee es el de tee · ACEPTADO =====
+sin pipefail, código de salida: 0
+con pipefail, código de salida: 1
+NOTICE:  no existe la base de datos «foodstore_tp8_reglas», omitiendo
+
+===== #10 · U1 · semana2/restricciones.sql: la Regla A deja cambiar el producto de una línea con el precio congelado · ACEPTADO =====
+BEGIN;
+BEGIN
+SELECT d.pedido_id FROM detalle_pedido d JOIN producto p ON p.id = d.producto_id
+ WHERE p.nombre = 'Muzzarella'
+   AND NOT EXISTS (SELECT 1 FROM detalle_pedido x JOIN producto q ON q.id = x.producto_id
+                    WHERE x.pedido_id = d.pedido_id AND q.nombre = 'Napolitana')
+ LIMIT 1 \gset
+UPDATE detalle_pedido SET producto_id = (SELECT id FROM producto WHERE nombre = 'Napolitana')
+ WHERE pedido_id = :pedido_id AND producto_id = (SELECT id FROM producto WHERE nombre = 'Muzzarella');
+UPDATE 1
+SELECT d.pedido_id, p.nombre AS producto_ahora, d.precio_unitario, p.precio AS precio_de_lista
+  FROM detalle_pedido d JOIN producto p ON p.id = d.producto_id
+ WHERE d.pedido_id = :pedido_id AND p.nombre = 'Napolitana';
+ pedido_id | producto_ahora | precio_unitario | precio_de_lista 
+-----------+----------------+-----------------+-----------------
+         1 | Napolitana     |         1000.00 |         1500.00
+(1 fila)
+
+ROLLBACK;
+ROLLBACK
+
+===== #20 · U8 · servidor del TP8 sin las reglas A, B y C: con las reglas cargadas, la instantánea final es la misma · DESCARTADO =====
+Las preparaciones de C2 (precio) y C4 (baja lógica) pasan con las reglas A, B y C activas.
+  trigger: trg_regla_a_precio_congelado
+  trigger: trg_regla_b_baja_categoria
+  trigger: trg_regla_c_fecha_pedido
+diff de v_snapshot_movil entre foodstore_tp8 (sin reglas) y foodstore_tp8_reglas (con reglas): sin diferencias
+
+===== #13 · U8 · servidor/v_snapshot_movil.sql: centavos en INTEGER desbordan con un precio alto · CORREGIDO =====
+Antes (::INTEGER):
+SELECT ROUND(25000000.00 * 100)::INTEGER AS precio_centavos;
+ERROR:  entero fuera de rango
+Ahora (::BIGINT, en la vista):
+BEGIN;
+BEGIN
+UPDATE producto SET precio = 25000000.00 WHERE nombre = 'Flan casero';
+UPDATE 1
+SELECT nombre, precio_centavos, pg_typeof(precio_centavos) AS tipo FROM v_snapshot_movil WHERE nombre = 'Flan casero';
+   nombre    | precio_centavos |  tipo  
+-------------+-----------------+--------
+ Flan casero |      2500000000 | bigint
+(1 fila)
+
+ROLLBACK;
+ROLLBACK
+
+===== #18 · U8 · servidor/verificacion_final.sql: no detectaba un producto nuevo ni un cambio que no mueve los totales · CORREGIDO =====
+--- Versión anterior (docs/code_review/antes/verificacion_final.sql): no ve el producto nuevo
+ pedidos_al_empezar | pedidos_ahora | lineas_al_empezar | lineas_ahora | stock_total_al_empezar | stock_total_ahora 
+--------------------+---------------+-------------------+--------------+------------------------+-------------------
+                  7 |             7 |                12 |           12 |                    620 |               620
+(1 fila)
+
+ nombre | stock_al_empezar | stock_ahora 
+--------+------------------+-------------
+(0 filas)
+
+   nombre   | precio_al_empezar | precio_ahora | activo_al_empezar | activo_ahora 
+------------+-------------------+--------------+-------------------+--------------
+ Fugazzeta  |           1400.00 |      1400.00 | t                 | f
+ Muzzarella |           1050.00 |      1150.00 | t                 | t
+(2 filas)
+
+--- Versión corregida (servidor/verificacion_final.sql): lo detecta
+ pedidos_al_empezar | pedidos_ahora | lineas_al_empezar | lineas_ahora | productos_al_empezar | productos_ahora | stock_total_al_empezar | stock_total_ahora 
+--------------------+---------------+-------------------+--------------+----------------------+-----------------+------------------------+-------------------
+                  7 |             7 |                12 |           12 |                   12 |              13 |                    620 |               620
+(1 fila)
+
+ diferencia | clave 
+------------+-------
+(0 filas)
+
+    producto    | stock_al_empezar | stock_ahora 
+----------------+------------------+-------------
+ Producto nuevo |                  |           0
+(1 fila)
+
+   nombre   | precio_al_empezar | precio_ahora | activo_al_empezar | activo_ahora 
+------------+-------------------+--------------+-------------------+--------------
+ Fugazzeta  |           1400.00 |      1400.00 | t                 | f
+ Muzzarella |           1050.00 |      1150.00 | t                 | t
+(2 filas)
+
+
+===== #26 · U8 · v_snapshot_movil: eliminado no mira la categoría · DESCARTADO (una categoría inactiva ya da disponible = false) =====
+BEGIN;
+BEGIN
+UPDATE categoria SET activo = FALSE WHERE nombre = 'Bebidas';
+UPDATE 1
+SELECT nombre, disponible, eliminado FROM v_snapshot_movil WHERE nombre = 'Coca 1.5L';
+  nombre   | disponible | eliminado 
+-----------+------------+-----------
+ Coca 1.5L | f          | f
+(1 fila)
+
+ROLLBACK;
+ROLLBACK
+En semaforo.sql, disponible = 'f' es motivo de RECHAZADO («no está disponible»), igual que una baja.
+
+===== #31 · U1 · data.sql: row_number() OVER (ORDER BY fecha) sería ambiguo con fechas repetidas · DESCARTADO =====
+SELECT fecha, COUNT(*) AS pedidos_con_esa_fecha FROM pedido GROUP BY fecha HAVING COUNT(*) > 1;
+ fecha | pedidos_con_esa_fecha 
+-------+-----------------------
+(0 filas)
+
+
+===== #4 · U8 · movil/cargar_snapshot.sql: un CSV cortado dejaba como lápidas los productos que faltan · CORREGIDO =====
++----------------+-----------+---------+
+|    momento     | productos | lapidas |
++----------------+-----------+---------+
+| carga completa |        12 |       1 |
++----------------+-----------+---------+
+
+CSV cortado: 5 filas de 12.
+Versión anterior (docs/code_review/antes/cargar_snapshot.sql):
++-------------------------+-----------+---------+
+|         momento         | productos | lapidas |
++-------------------------+-----------+---------+
+| después del CSV cortado |        12 |       7 |
++-------------------------+-----------+---------+
+Versión corregida (movil/cargar_snapshot.sql):
+Error near line 27: CHECK constraint failed: completa = 1
++-------------------------+-----------+---------+
+|         momento         | productos | lapidas |
++-------------------------+-----------+---------+
+| después del CSV cortado |        12 |       1 |
++-------------------------+-----------+---------+
+
+===== #5 · U8 · movil/semaforo.sql: dos solicitudes del mismo producto se evalúan por separado · ACEPTADO (límite documentado) =====
++----------------------------------+
+| stock_del_flan_en_la_instantanea |
++----------------------------------+
+|                               15 |
++----------------------------------+
++---------------------------------------+
+| solicitudes_evaluadas_en_esta_corrida |
++---------------------------------------+
+|                                     2 |
++---------------------------------------+
++-----------+----------+-------------------+-----------------------------------------------------------+
+| solicitud | borrador |      estado       |                          motivo                           |
++-----------+----------+-------------------+-----------------------------------------------------------+
+| a0000001  | b0000001 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
+| a0000002  | b0000002 | SIMULADO_APROBADO | coincide con la instantánea (simulación: no es una venta) |
++-----------+----------+-------------------+-----------------------------------------------------------+
+
+===== #19 · U8 · movil/pruebas_sqlite.sql: la solicitud de 1.c queda PENDIENTE hasta C2 · DESCARTADO =====
+La pide la consigna (borrador completo guardado con BEGIN … COMMIT). Se evalúa en la primera corrida del semáforo,
+con la misma instantánea que C2, y no cambia el resultado de C2 porque cada caso tiene su propia solicitud:
++-----------+-------------------+----------------------+
+| solicitud |      estado       |     evaluada_con     |
++-----------+-------------------+----------------------+
+| a001c001  | SIMULADO_APROBADO | 2026-11-11T01:37:26Z |
+| a0c20001  | CONFLICTO         | 2026-11-11T01:37:26Z |
++-----------+-------------------+----------------------+
