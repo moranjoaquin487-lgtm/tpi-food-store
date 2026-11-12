@@ -1,0 +1,111 @@
+-- U4 · 07 — Pruebas de las salvaguardas de la desnormalización
+-- Todo corre dentro de BEGIN ... ROLLBACK.
+\echo '== Estado inicial: diferencias entre resumen y cálculo real (se esperan 0 filas)'
+== Estado inicial: diferencias entre resumen y cálculo real (se esperan 0 filas)
+SELECT * FROM fn_verificar_resumen_categoria();
+ id_categoria | unidades_resumen | unidades_real | facturacion_resumen | facturacion_real 
+--------------+------------------+---------------+---------------------+------------------
+(0 filas)
+
+\echo '== Un pedido nuevo con CALL sp_registrar_pedido actualiza el resumen en la misma transacción'
+== Un pedido nuevo con CALL sp_registrar_pedido actualiza el resumen en la misma transacción
+BEGIN;
+BEGIN
+SELECT id_categoria, unidades, facturacion FROM resumen_ventas_categoria
+ WHERE id_categoria = (SELECT id_categoria FROM producto WHERE nombre = 'Yerba mate 1kg');
+ id_categoria | unidades | facturacion  
+--------------+----------+--------------
+            4 |   200030 | 101967315.91
+(1 fila)
+
+SELECT MIN(id_cliente) AS cliente FROM cliente \gset
+SELECT id_producto AS yerba FROM producto WHERE nombre = 'Yerba mate 1kg' \gset
+CALL sp_registrar_pedido(:cliente, 'EFECTIVO',
+     jsonb_build_array(jsonb_build_object('id_producto', :yerba, 'cantidad', 2)));
+psql:sql/07_pruebas_desnormalizacion.sql:14: NOTICE:  Pedido 260010 registrado. Total: 13600.00
+CALL
+SELECT id_categoria, unidades, facturacion FROM resumen_ventas_categoria
+ WHERE id_categoria = (SELECT id_categoria FROM producto WHERE nombre = 'Yerba mate 1kg');
+ id_categoria | unidades | facturacion  
+--------------+----------+--------------
+            4 |   200032 | 101980915.91
+(1 fila)
+
+\echo '   Diferencias después del INSERT (se esperan 0 filas):'
+   Diferencias después del INSERT (se esperan 0 filas):
+SELECT * FROM fn_verificar_resumen_categoria();
+ id_categoria | unidades_resumen | unidades_real | facturacion_resumen | facturacion_real 
+--------------+------------------+---------------+---------------------+------------------
+(0 filas)
+
+\echo '== UPDATE de cantidades y DELETE de un pedido completo (cascada sobre detalle_pedido)'
+== UPDATE de cantidades y DELETE de un pedido completo (cascada sobre detalle_pedido)
+UPDATE detalle_pedido SET cantidad = cantidad + 1
+ WHERE id_pedido = (SELECT MIN(id_pedido) FROM pedido);
+UPDATE 4
+DELETE FROM pedido WHERE id_pedido = (SELECT MAX(id_pedido) FROM pedido);
+DELETE 1
+\echo '   Diferencias (se esperan 0 filas):'
+   Diferencias (se esperan 0 filas):
+SELECT * FROM fn_verificar_resumen_categoria();
+ id_categoria | unidades_resumen | unidades_real | facturacion_resumen | facturacion_real 
+--------------+------------------+---------------+---------------------+------------------
+(0 filas)
+
+\echo '== Cambio de categoría de un producto con ventas'
+== Cambio de categoría de un producto con ventas
+UPDATE producto SET id_categoria = (SELECT id_categoria FROM categoria WHERE nombre = 'Bebidas')
+ WHERE nombre = 'Yerba mate 1kg';
+UPDATE 1
+\echo '   Diferencias (se esperan 0 filas):'
+   Diferencias (se esperan 0 filas):
+SELECT * FROM fn_verificar_resumen_categoria();
+ id_categoria | unidades_resumen | unidades_real | facturacion_resumen | facturacion_real 
+--------------+------------------+---------------+---------------------+------------------
+(0 filas)
+
+ROLLBACK;
+ROLLBACK
+\echo '== Si alguien desactiva el trigger, la verificación lo detecta y el recálculo lo repara'
+== Si alguien desactiva el trigger, la verificación lo detecta y el recálculo lo repara
+BEGIN;
+BEGIN
+ALTER TABLE detalle_pedido DISABLE TRIGGER trg_resumen_detalle_ins;
+ALTER TABLE
+INSERT INTO detalle_pedido (cantidad, precio_unitario, id_pedido, id_producto)
+SELECT 1, p.precio, (SELECT MIN(id_pedido) FROM pedido), p.id_producto
+  FROM producto p
+ WHERE p.activo AND p.stock > 0
+   AND NOT EXISTS (SELECT 1 FROM detalle_pedido d
+                    WHERE d.id_pedido = (SELECT MIN(id_pedido) FROM pedido) AND d.id_producto = p.id_producto)
+ ORDER BY p.id_producto LIMIT 1;
+INSERT 0 1
+\echo '   Diferencias detectadas (se espera 1 fila):'
+   Diferencias detectadas (se espera 1 fila):
+SELECT * FROM fn_verificar_resumen_categoria();
+ id_categoria | unidades_resumen | unidades_real | facturacion_resumen | facturacion_real 
+--------------+------------------+---------------+---------------------+------------------
+            1 |           199984 |        199985 |        101743808.50 |     101747008.50
+(1 fila)
+
+CALL sp_recalcular_resumen_categoria();
+CALL
+\echo '   Después del recálculo (se esperan 0 filas):'
+   Después del recálculo (se esperan 0 filas):
+SELECT * FROM fn_verificar_resumen_categoria();
+ id_categoria | unidades_resumen | unidades_real | facturacion_resumen | facturacion_real 
+--------------+------------------+---------------+---------------------+------------------
+(0 filas)
+
+ROLLBACK;
+ROLLBACK
+\echo '== CHECK de no negatividad (se espera error)'
+== CHECK de no negatividad (se espera error)
+BEGIN;
+BEGIN
+UPDATE resumen_ventas_categoria SET unidades = -1
+ WHERE id_categoria = (SELECT MIN(id_categoria) FROM resumen_ventas_categoria);
+psql:sql/07_pruebas_desnormalizacion.sql:54: ERROR:  el nuevo registro para la relación «resumen_ventas_categoria» viola la restricción «check» «resumen_ventas_categoria_unidades_check»
+DETALLE:  La fila que falla contiene (1, -1, 101743808.50, 2026-11-12 11:14:22.114574-03).
+ROLLBACK;
+ROLLBACK

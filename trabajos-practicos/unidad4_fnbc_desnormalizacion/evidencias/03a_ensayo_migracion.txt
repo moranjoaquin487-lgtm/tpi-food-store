@@ -1,0 +1,149 @@
+-- U4 · 03 — Migración a BCNF dentro de una transacción reversible
+--
+-- Descompone control_lote_almacen (L, D, R) por la DF violatoria R -> D:
+--   R1 = responsable_deposito (R, D)   clave: R
+--   R2 = control_lote         (L, R)   clave: {L, R}
+--
+-- Uso:
+--   psql -d foodstore -f 03_migracion_fnbc.sql                    -> ensayo: corre todo y termina en ROLLBACK
+--   psql -d foodstore -v accion=COMMIT -f 03_migracion_fnbc.sql   -> aplica la migración
+-- Si cualquier verificación falla, el script se corta y no queda nada a medias.
+\set ON_ERROR_STOP on
+\if :{?accion}
+\else
+  \set accion ROLLBACK
+\endif
+\echo '== Modo de ejecución:' :accion
+== Modo de ejecución: ROLLBACK
+BEGIN;
+BEGIN
+-- 0. Precondiciones: la tabla heredada existe y la DF2 se cumple en los datos.
+DO $$
+BEGIN
+    IF to_regclass('public.control_lote_almacen') IS NULL THEN
+        RAISE EXCEPTION 'No existe la tabla heredada control_lote_almacen (¿ya se migró?)';
+    END IF;
+    IF EXISTS (SELECT 1 FROM control_lote_almacen
+                GROUP BY responsable_control_id
+               HAVING COUNT(DISTINCT deposito_id) > 1) THEN
+        RAISE EXCEPTION 'La DF responsable -> depósito no se cumple en los datos: corregirlos antes de migrar';
+    END IF;
+END $$;
+DO
+-- 1. R1: un responsable pertenece a un único depósito (la PK garantiza R -> D).
+CREATE TABLE responsable_deposito (
+    responsable_control_id  BIGINT PRIMARY KEY REFERENCES usuario (id),
+    deposito_id             BIGINT NOT NULL    REFERENCES deposito (id)
+);
+CREATE TABLE
+CREATE INDEX idx_responsable_deposito_deposito ON responsable_deposito (deposito_id);
+CREATE INDEX
+-- 2. R2: qué responsable controló cada lote.
+CREATE TABLE control_lote (
+    lote_id                 BIGINT NOT NULL REFERENCES lote (id),
+    responsable_control_id  BIGINT NOT NULL REFERENCES responsable_deposito (responsable_control_id),
+    PRIMARY KEY (lote_id, responsable_control_id)
+);
+CREATE TABLE
+CREATE INDEX idx_control_lote_responsable ON control_lote (responsable_control_id);
+CREATE INDEX
+-- 3. Carga sin pérdida desde la tabla heredada.
+INSERT INTO responsable_deposito (responsable_control_id, deposito_id)
+SELECT DISTINCT responsable_control_id, deposito_id FROM control_lote_almacen;
+INSERT 0 24
+INSERT INTO control_lote (lote_id, responsable_control_id)
+SELECT lote_id, responsable_control_id FROM control_lote_almacen;
+INSERT 0 600
+-- 4. La tabla original se conserva como respaldo y una vista reconstruye la relación.
+ALTER TABLE control_lote_almacen RENAME TO control_lote_almacen_respaldo;
+ALTER TABLE
+CREATE VIEW v_control_lote_almacen AS
+SELECT cl.lote_id, rd.deposito_id, cl.responsable_control_id
+  FROM control_lote cl
+  JOIN responsable_deposito rd ON rd.responsable_control_id = cl.responsable_control_id;
+CREATE VIEW
+-- 5. Salvaguarda de la DF1 {L, D} -> R.
+-- La descomposición en BCNF no preserva esta dependencia: ninguna de las dos tablas
+-- tiene L y D juntos. Sin esta salvaguarda, dos responsables del mismo depósito
+-- podrían controlar el mismo lote. El candado serializa a los escritores para que
+-- dos transacciones concurrentes no pasen el control a la vez.
+CREATE OR REPLACE FUNCTION fn_control_lote_df1()
+RETURNS TRIGGER
+LANGUAGE plpgsql AS $$
+DECLARE
+    v_lote BIGINT;
+    v_dep  BIGINT;
+BEGIN
+    PERFORM pg_advisory_xact_lock(hashtext('control_lote_df1'));
+    SELECT lote_id, deposito_id INTO v_lote, v_dep
+      FROM v_control_lote_almacen
+     GROUP BY lote_id, deposito_id
+    HAVING COUNT(*) > 1
+     LIMIT 1;
+    IF FOUND THEN
+        RAISE EXCEPTION 'El lote % ya tiene un responsable del depósito % (regla {lote, depósito} -> responsable)',
+                        v_lote, v_dep;
+    END IF;
+    RETURN NULL;
+END $$;
+CREATE FUNCTION
+CREATE TRIGGER trg_control_lote_df1
+    AFTER INSERT OR UPDATE ON control_lote
+    FOR EACH STATEMENT EXECUTE FUNCTION fn_control_lote_df1();
+CREATE TRIGGER
+CREATE TRIGGER trg_responsable_deposito_df1
+    AFTER UPDATE OF deposito_id ON responsable_deposito
+    FOR EACH STATEMENT EXECUTE FUNCTION fn_control_lote_df1();
+CREATE TRIGGER
+-- 6. Verificación: la reunión devuelve exactamente las filas originales.
+\echo '== Conteos'
+== Conteos
+SELECT (SELECT COUNT(*) FROM control_lote_almacen_respaldo) AS filas_originales,
+       (SELECT COUNT(*) FROM responsable_deposito)          AS filas_r1,
+       (SELECT COUNT(*) FROM control_lote)                  AS filas_r2,
+       (SELECT COUNT(*) FROM v_control_lote_almacen)        AS filas_reunion;
+ filas_originales | filas_r1 | filas_r2 | filas_reunion 
+------------------+----------+----------+---------------
+              600 |       24 |      600 |           600
+(1 fila)
+
+\echo '== Diferencias entre la tabla original y la reunión (se espera 0 y 0)'
+== Diferencias entre la tabla original y la reunión (se espera 0 y 0)
+SELECT (SELECT COUNT(*) FROM (SELECT * FROM control_lote_almacen_respaldo
+                              EXCEPT SELECT * FROM v_control_lote_almacen) x) AS tuplas_perdidas,
+       (SELECT COUNT(*) FROM (SELECT * FROM v_control_lote_almacen
+                              EXCEPT SELECT * FROM control_lote_almacen_respaldo) x) AS tuplas_espurias;
+ tuplas_perdidas | tuplas_espurias 
+-----------------+-----------------
+               0 |               0
+(1 fila)
+
+DO $$
+DECLARE
+    v_perdidas INT;
+    v_espurias INT;
+BEGIN
+    SELECT COUNT(*) INTO v_perdidas FROM (SELECT * FROM control_lote_almacen_respaldo
+                                          EXCEPT SELECT * FROM v_control_lote_almacen) x;
+    SELECT COUNT(*) INTO v_espurias FROM (SELECT * FROM v_control_lote_almacen
+                                          EXCEPT SELECT * FROM control_lote_almacen_respaldo) x;
+    IF v_perdidas + v_espurias > 0 THEN
+        RAISE EXCEPTION 'La migración no es sin pérdida: % perdidas, % espurias', v_perdidas, v_espurias;
+    END IF;
+    RAISE NOTICE 'Verificación sin pérdida: OK';
+END $$;
+psql:sql/03_migracion_fnbc.sql:123: NOTICE:  Verificación sin pérdida: OK
+DO
+:accion;
+ROLLBACK
+\echo '== Estado después de' :accion
+== Estado después de ROLLBACK
+SELECT to_regclass('public.control_lote_almacen')          AS tabla_heredada,
+       to_regclass('public.control_lote_almacen_respaldo') AS respaldo,
+       to_regclass('public.responsable_deposito')          AS r1,
+       to_regclass('public.control_lote')                  AS r2;
+    tabla_heredada    | respaldo | r1 | r2 
+----------------------+----------+----+----
+ control_lote_almacen |          |    | 
+(1 fila)
+

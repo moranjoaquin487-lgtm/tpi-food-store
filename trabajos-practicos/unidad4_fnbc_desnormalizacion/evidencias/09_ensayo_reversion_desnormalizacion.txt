@@ -1,0 +1,51 @@
+-- U4 · 09 — Reversión de la desnormalización
+-- Quita la tabla resumen, sus triggers y funciones. Los reportes vuelven a la consulta normalizada.
+-- Uso: sin variables = ensayo (ROLLBACK); con -v accion=COMMIT = revierte de verdad.
+\set ON_ERROR_STOP on
+\if :{?accion}
+\else
+  \set accion ROLLBACK
+\endif
+\echo '== Modo de ejecución:' :accion
+== Modo de ejecución: ROLLBACK
+BEGIN;
+BEGIN
+DROP VIEW IF EXISTS v_top5_categorias;
+DROP VIEW
+DROP TRIGGER trg_resumen_detalle_ins ON detalle_pedido;
+DROP TRIGGER
+DROP TRIGGER trg_resumen_detalle_upd ON detalle_pedido;
+DROP TRIGGER
+DROP TRIGGER trg_resumen_detalle_del ON detalle_pedido;
+DROP TRIGGER
+DROP TRIGGER trg_resumen_cambio_categoria ON producto;
+DROP TRIGGER
+DROP FUNCTION fn_resumen_detalle();
+DROP FUNCTION
+DROP FUNCTION fn_resumen_cambio_categoria();
+DROP FUNCTION
+DROP FUNCTION fn_resumen_aplicar(JSONB);
+DROP FUNCTION
+DROP FUNCTION fn_verificar_resumen_categoria();
+DROP FUNCTION
+DROP PROCEDURE sp_recalcular_resumen_categoria();
+DROP PROCEDURE
+DROP TABLE resumen_ventas_categoria;
+DROP TABLE
+\echo '== Triggers que quedan sobre detalle_pedido'
+== Triggers que quedan sobre detalle_pedido
+SELECT tgname FROM pg_trigger WHERE tgrelid = 'detalle_pedido'::regclass AND NOT tgisinternal ORDER BY 1;
+             tgname             
+--------------------------------
+ trg_verificar_producto_activo
+ trg_verificar_stock_suficiente
+(2 filas)
+
+:accion;
+ROLLBACK
+SELECT to_regclass('public.resumen_ventas_categoria') AS tabla_resumen;
+      tabla_resumen       
+--------------------------
+ resumen_ventas_categoria
+(1 fila)
+

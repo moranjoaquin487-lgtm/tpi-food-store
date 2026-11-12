@@ -1,0 +1,215 @@
+-- U4 · 08 — Mediciones antes y después de la desnormalización
+ANALYZE detalle_pedido;
+ANALYZE
+ANALYZE producto;
+ANALYZE
+ANALYZE resumen_ventas_categoria;
+ANALYZE
+\echo '== ANTES: top 5 calculado sobre las tablas normalizadas'
+== ANTES: top 5 calculado sobre las tablas normalizadas
+EXPLAIN (ANALYZE, BUFFERS, COSTS OFF)
+SELECT c.id_categoria, c.nombre, SUM(dp.cantidad) AS unidades,
+       SUM(dp.cantidad * dp.precio_unitario) AS facturacion
+  FROM detalle_pedido dp
+  JOIN producto  p ON p.id_producto  = dp.id_producto
+  JOIN categoria c ON c.id_categoria = p.id_categoria
+ GROUP BY c.id_categoria, c.nombre
+ ORDER BY facturacion DESC
+ LIMIT 5;
+                                                                QUERY PLAN                                                                 
+-------------------------------------------------------------------------------------------------------------------------------------------
+ Limit (actual time=291.278..304.289 rows=5.00 loops=1)
+   Buffers: shared hit=4901
+   ->  Sort (actual time=291.275..304.285 rows=5.00 loops=1)
+         Sort Key: (sum(((dp.cantidad)::numeric * dp.precio_unitario))) DESC
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=4901
+         ->  Finalize GroupAggregate (actual time=291.224..304.256 rows=5.00 loops=1)
+               Group Key: c.nombre
+               Buffers: shared hit=4901
+               ->  Gather Merge (actual time=291.201..304.223 rows=15.00 loops=1)
+                     Workers Planned: 2
+                     Workers Launched: 2
+                     Buffers: shared hit=4901
+                     ->  Sort (actual time=212.508..212.512 rows=5.00 loops=3)
+                           Sort Key: c.nombre
+                           Sort Method: quicksort  Memory: 25kB
+                           Buffers: shared hit=4901
+                           Worker 0:  Sort Method: quicksort  Memory: 25kB
+                           Worker 1:  Sort Method: quicksort  Memory: 25kB
+                           ->  Partial HashAggregate (actual time=212.447..212.455 rows=5.00 loops=3)
+                                 Group Key: c.nombre
+                                 Batches: 1  Memory Usage: 32kB
+                                 Buffers: shared hit=4885
+                                 Worker 0:  Batches: 1  Memory Usage: 32kB
+                                 Worker 1:  Batches: 1  Memory Usage: 32kB
+                                 ->  Hash Join (actual time=20.434..140.929 rows=133332.00 loops=3)
+                                       Hash Cond: (p.id_categoria = c.id_categoria)
+                                       Buffers: shared hit=4885
+                                       ->  Hash Join (actual time=20.263..104.391 rows=133332.00 loops=3)
+                                             Hash Cond: (dp.id_producto = p.id_producto)
+                                             Buffers: shared hit=4882
+                                             ->  Parallel Seq Scan on detalle_pedido dp (actual time=0.016..15.711 rows=133332.00 loops=3)
+                                                   Buffers: shared hit=3334
+                                             ->  Hash (actual time=20.079..20.080 rows=50010.00 loops=3)
+                                                   Buckets: 65536  Batches: 1  Memory Usage: 2857kB
+                                                   Buffers: shared hit=1548
+                                                   ->  Seq Scan on producto p (actual time=0.148..10.340 rows=50010.00 loops=3)
+                                                         Buffers: shared hit=1548
+                                       ->  Hash (actual time=0.155..0.155 rows=5.00 loops=3)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                             Buffers: shared hit=3
+                                             ->  Seq Scan on categoria c (actual time=0.138..0.140 rows=5.00 loops=3)
+                                                   Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=201
+ Planning Time: 2.650 ms
+ Execution Time: 304.774 ms
+(47 filas)
+
+\echo '== DESPUÉS: top 5 leído de la tabla resumen'
+== DESPUÉS: top 5 leído de la tabla resumen
+EXPLAIN (ANALYZE, BUFFERS, COSTS OFF)
+SELECT * FROM v_top5_categorias;
+                                              QUERY PLAN                                               
+-------------------------------------------------------------------------------------------------------
+ Limit (actual time=0.085..0.088 rows=5.00 loops=1)
+   Buffers: shared hit=2
+   ->  Sort (actual time=0.084..0.086 rows=5.00 loops=1)
+         Sort Key: r.facturacion DESC
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=2
+         ->  Hash Join (actual time=0.067..0.072 rows=5.00 loops=1)
+               Hash Cond: (r.id_categoria = c.id_categoria)
+               Buffers: shared hit=2
+               ->  Seq Scan on resumen_ventas_categoria r (actual time=0.029..0.030 rows=5.00 loops=1)
+                     Buffers: shared hit=1
+               ->  Hash (actual time=0.023..0.023 rows=5.00 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on categoria c (actual time=0.016..0.018 rows=5.00 loops=1)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=36
+ Planning Time: 1.051 ms
+ Execution Time: 0.120 ms
+(20 filas)
+
+\echo '== Los dos caminos dan el mismo resultado (se esperan 0 diferencias)'
+== Los dos caminos dan el mismo resultado (se esperan 0 diferencias)
+WITH normalizado AS (
+    SELECT c.id_categoria, c.nombre, SUM(dp.cantidad)::BIGINT AS unidades,
+           SUM(dp.cantidad * dp.precio_unitario) AS facturacion
+      FROM detalle_pedido dp
+      JOIN producto  p ON p.id_producto  = dp.id_producto
+      JOIN categoria c ON c.id_categoria = p.id_categoria
+     GROUP BY c.id_categoria, c.nombre
+     ORDER BY facturacion DESC LIMIT 5)
+SELECT (SELECT COUNT(*) FROM (SELECT * FROM normalizado EXCEPT SELECT * FROM v_top5_categorias) a)
+     + (SELECT COUNT(*) FROM (SELECT * FROM v_top5_categorias EXCEPT SELECT * FROM normalizado) b) AS diferencias;
+ diferencias 
+-------------
+           0
+(1 fila)
+
+SELECT * FROM v_top5_categorias;
+ id_categoria |   nombre    | unidades | facturacion  
+--------------+-------------+----------+--------------
+            4 | Almacén     |   200030 | 101967315.91
+            1 | Panificados |   199984 | 101743808.50
+            2 | Bebidas     |   199981 | 101138654.10
+            3 | Lácteos     |   200008 | 100193453.13
+            5 | Congelados  |   199963 |  99574088.50
+(5 filas)
+
+\echo '== Costo en la escritura: 1000 líneas de detalle con el trigger del resumen'
+== Costo en la escritura: 1000 líneas de detalle con el trigger del resumen
+BEGIN;
+BEGIN
+INSERT INTO pedido (forma_pago, id_cliente) VALUES ('EFECTIVO', (SELECT MIN(id_cliente) FROM cliente));
+INSERT 0 1
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY ON)
+INSERT INTO detalle_pedido (cantidad, precio_unitario, id_pedido, id_producto)
+SELECT 1, precio, (SELECT MAX(id_pedido) FROM pedido), id_producto
+  FROM producto WHERE activo AND stock > 0 ORDER BY id_producto LIMIT 1000;
+                                                             QUERY PLAN                                                              
+-------------------------------------------------------------------------------------------------------------------------------------
+ Insert on detalle_pedido (actual time=30.532..30.534 rows=0.00 loops=1)
+   Buffers: shared hit=13158 dirtied=15 written=15
+   ->  Subquery Scan on "*SELECT*" (actual time=0.197..1.840 rows=1000.00 loops=1)
+         Buffers: shared hit=1040
+         ->  Limit (actual time=0.155..0.933 rows=1000.00 loops=1)
+               Buffers: shared hit=30
+               InitPlan 2
+                 ->  Result (actual time=0.140..0.141 rows=1.00 loops=1)
+                       Buffers: shared hit=4
+                       InitPlan 1
+                         ->  Limit (actual time=0.138..0.139 rows=1.00 loops=1)
+                               Buffers: shared hit=4
+                               ->  Index Only Scan Backward using pedido_pkey on pedido (actual time=0.138..0.138 rows=1.00 loops=1)
+                                     Heap Fetches: 1
+                                     Index Searches: 1
+                                     Buffers: shared hit=4
+               ->  Index Scan using producto_pkey on producto (actual time=0.155..0.829 rows=1000.00 loops=1)
+                     Filter: (activo AND (stock > 0))
+                     Rows Removed by Filter: 1
+                     Index Searches: 1
+                     Buffers: shared hit=30
+ Planning:
+   Buffers: shared hit=28
+ Planning Time: 0.572 ms
+ Trigger for constraint detalle_pedido_id_pedido_fkey: time=8.779 calls=1000
+ Trigger for constraint detalle_pedido_id_producto_fkey: time=8.699 calls=1000
+ Trigger trg_resumen_detalle_ins: time=14.599 calls=1
+ Trigger trg_verificar_producto_activo: time=8.891 calls=1000
+ Trigger trg_verificar_stock_suficiente: time=7.393 calls=1000
+ Execution Time: 62.855 ms
+(30 filas)
+
+ROLLBACK;
+ROLLBACK
+\echo '== Lo mismo sin el trigger del resumen'
+== Lo mismo sin el trigger del resumen
+BEGIN;
+BEGIN
+ALTER TABLE detalle_pedido DISABLE TRIGGER trg_resumen_detalle_ins;
+ALTER TABLE
+INSERT INTO pedido (forma_pago, id_cliente) VALUES ('EFECTIVO', (SELECT MIN(id_cliente) FROM cliente));
+INSERT 0 1
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY ON)
+INSERT INTO detalle_pedido (cantidad, precio_unitario, id_pedido, id_producto)
+SELECT 1, precio, (SELECT MAX(id_pedido) FROM pedido), id_producto
+  FROM producto WHERE activo AND stock > 0 ORDER BY id_producto LIMIT 1000;
+                                                             QUERY PLAN                                                              
+-------------------------------------------------------------------------------------------------------------------------------------
+ Insert on detalle_pedido (actual time=27.782..27.785 rows=0.00 loops=1)
+   Buffers: shared hit=13086 dirtied=16 written=16
+   ->  Subquery Scan on "*SELECT*" (actual time=0.034..1.591 rows=1000.00 loops=1)
+         Buffers: shared hit=1023
+         ->  Limit (actual time=0.030..0.751 rows=1000.00 loops=1)
+               Buffers: shared hit=23
+               InitPlan 2
+                 ->  Result (actual time=0.016..0.017 rows=1.00 loops=1)
+                       Buffers: shared hit=4
+                       InitPlan 1
+                         ->  Limit (actual time=0.015..0.016 rows=1.00 loops=1)
+                               Buffers: shared hit=4
+                               ->  Index Only Scan Backward using pedido_pkey on pedido (actual time=0.014..0.015 rows=1.00 loops=1)
+                                     Heap Fetches: 1
+                                     Index Searches: 1
+                                     Buffers: shared hit=4
+               ->  Index Scan using producto_pkey on producto (actual time=0.029..0.651 rows=1000.00 loops=1)
+                     Filter: (activo AND (stock > 0))
+                     Rows Removed by Filter: 1
+                     Index Searches: 1
+                     Buffers: shared hit=23
+ Planning Time: 0.259 ms
+ Trigger for constraint detalle_pedido_id_pedido_fkey: time=8.273 calls=1000
+ Trigger for constraint detalle_pedido_id_producto_fkey: time=8.254 calls=1000
+ Trigger trg_verificar_producto_activo: time=8.427 calls=1000
+ Trigger trg_verificar_stock_suficiente: time=7.252 calls=1000
+ Execution Time: 44.530 ms
+(27 filas)
+
+ROLLBACK;
+ROLLBACK
