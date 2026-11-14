@@ -1,0 +1,503 @@
+-- TP Unidad 4 · Parte 2 — Top 5 de categorías del día con desnormalización controlada
+-- Estructura desnormalizada (tp4.ventas_dia_categoria), su sincronización con disparadores,
+-- la consulta del punto 5.2(d) y el script de auditoría del punto 5.2(e).
+--
+-- Se corre como postgres sobre la copia foodstore_tp4 (ver ejecutar_tp_u4.sh).
+-- Adaptación al esquema real de Food Store (la consigna usa nombres genéricos):
+--   * no hay dp.subtotal: el monto de una línea es cantidad * precio_unitario;
+--   * las claves se llaman id_producto, id_categoria e id_pedido;
+--   * pedido y detalle_pedido no tienen borrado lógico. Lo que no cuenta como venta es un
+--     pedido CANCELADO (columna estado, de la U7). Un pedido borrado se borra con sus líneas;
+--   * pedido.fecha es TIMESTAMPTZ: «el día» es la fecha en la hora de Argentina.
+\set ON_ERROR_STOP on
+CREATE SCHEMA IF NOT EXISTS tp4;
+psql:sql/tp_desnormalizacion_top_categorias.sql:13: NOTICE:  el esquema «tp4» ya existe, omitiendo
+CREATE SCHEMA
+SET search_path TO tp4, public;
+SET
+-- Limpieza, para poder volver a correrlo ------------------------------------------------
+DROP TRIGGER IF EXISTS trg_ventas_dia_detalle   ON public.detalle_pedido;
+psql:sql/tp_desnormalizacion_top_categorias.sql:17: NOTICE:  “trigger” «trg_ventas_dia_detalle» para la relación «public.detalle_pedido» no existe, omitiendo
+DROP TRIGGER
+DROP TRIGGER IF EXISTS trg_ventas_dia_pedido_del ON public.pedido;
+psql:sql/tp_desnormalizacion_top_categorias.sql:18: NOTICE:  “trigger” «trg_ventas_dia_pedido_del» para la relación «public.pedido» no existe, omitiendo
+DROP TRIGGER
+DROP TRIGGER IF EXISTS trg_ventas_dia_pedido_upd ON public.pedido;
+psql:sql/tp_desnormalizacion_top_categorias.sql:19: NOTICE:  “trigger” «trg_ventas_dia_pedido_upd» para la relación «public.pedido» no existe, omitiendo
+DROP TRIGGER
+DROP TRIGGER IF EXISTS trg_ventas_dia_producto  ON public.producto;
+psql:sql/tp_desnormalizacion_top_categorias.sql:20: NOTICE:  “trigger” «trg_ventas_dia_producto» para la relación «public.producto» no existe, omitiendo
+DROP TRIGGER
+DROP VIEW  IF EXISTS v_auditoria_ventas_dia;
+psql:sql/tp_desnormalizacion_top_categorias.sql:21: NOTICE:  la vista «v_auditoria_ventas_dia» no existe, omitiendo
+DROP VIEW
+DROP TABLE IF EXISTS ventas_dia_categoria;
+psql:sql/tp_desnormalizacion_top_categorias.sql:22: NOTICE:  la tabla «ventas_dia_categoria» no existe, omitiendo
+DROP TABLE
+-- El día de una venta, siempre en la hora de Argentina (no depende de la zona de la sesión)
+CREATE OR REPLACE FUNCTION dia_venta(p TIMESTAMPTZ) RETURNS DATE
+LANGUAGE sql IMMUTABLE AS $$ SELECT (p AT TIME ZONE 'America/Argentina/Buenos_Aires')::DATE $$;
+CREATE FUNCTION
+CREATE OR REPLACE FUNCTION hoy() RETURNS DATE
+LANGUAGE sql STABLE AS $$ SELECT (now() AT TIME ZONE 'America/Argentina/Buenos_Aires')::DATE $$;
+CREATE FUNCTION
+-- =====================================================================================
+-- 5.2(a) La consulta original, adaptada al esquema, con EXPLAIN ANALYZE
+-- =====================================================================================
+ANALYZE public.pedido, public.detalle_pedido, public.producto, public.categoria;
+ANALYZE
+\echo '== Tamaño de la base y ventas de hoy (hora de Argentina)'
+== Tamaño de la base y ventas de hoy (hora de Argentina)
+SELECT (SELECT COUNT(*) FROM pedido) AS pedidos, (SELECT COUNT(*) FROM detalle_pedido) AS lineas,
+       (SELECT COUNT(*) FROM pedido WHERE dia_venta(fecha) = hoy() AND estado <> 'CANCELADO') AS pedidos_de_hoy,
+       hoy() AS hoy;
+ pedidos | lineas | pedidos_de_hoy |    hoy     
+---------+--------+----------------+------------
+  200005 | 399994 |            215 | 2026-11-13
+(1 fila)
+
+\echo '== 5.2(a) Consulta original: recorre y une detalle_pedido, producto, categoria y pedido'
+== 5.2(a) Consulta original: recorre y une detalle_pedido, producto, categoria y pedido
+SELECT c.nombre AS categoria, SUM(dp.cantidad * dp.precio_unitario) AS total_vendido
+  FROM detalle_pedido dp
+  JOIN producto  pr  ON pr.id_producto   = dp.id_producto
+  JOIN categoria c   ON c.id_categoria   = pr.id_categoria
+  JOIN pedido    ped ON ped.id_pedido    = dp.id_pedido
+ WHERE dia_venta(ped.fecha) = hoy()
+   AND ped.estado <> 'CANCELADO'
+ GROUP BY c.nombre
+ ORDER BY total_vendido DESC
+ LIMIT 5;
+  categoria  | total_vendido 
+-------------+---------------
+ Almacén     |     131671.29
+ Congelados  |     127249.80
+ Panificados |      97053.11
+ Lácteos     |      93984.01
+ Bebidas     |      90490.17
+(5 filas)
+
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT c.nombre AS categoria, SUM(dp.cantidad * dp.precio_unitario) AS total_vendido
+  FROM detalle_pedido dp
+  JOIN producto  pr  ON pr.id_producto   = dp.id_producto
+  JOIN categoria c   ON c.id_categoria   = pr.id_categoria
+  JOIN pedido    ped ON ped.id_pedido    = dp.id_pedido
+ WHERE dia_venta(ped.fecha) = hoy()
+   AND ped.estado <> 'CANCELADO'
+ GROUP BY c.nombre
+ ORDER BY total_vendido DESC
+ LIMIT 5;
+                                                                                                                    QUERY PLAN                                                                                                                     
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=16833.41..16833.43 rows=5 width=41) (actual time=164.487..164.490 rows=5.00 loops=1)
+   Buffers: shared hit=5313
+   ->  Sort  (cost=16833.41..16833.43 rows=5 width=41) (actual time=164.486..164.488 rows=5.00 loops=1)
+         Sort Key: (sum(((dp.cantidad)::numeric * dp.precio_unitario))) DESC
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=5313
+         ->  GroupAggregate  (cost=0.84..16833.36 rows=5 width=41) (actual time=164.229..164.478 rows=5.00 loops=1)
+               Group Key: c.nombre
+               Buffers: shared hit=5313
+               ->  Nested Loop  (cost=0.84..16815.35 rows=1794 width=19) (actual time=2.318..164.338 rows=437.00 loops=1)
+                     Join Filter: (c.id_categoria = pr.id_categoria)
+                     Rows Removed by Join Filter: 1748
+                     Buffers: shared hit=5313
+                     ->  Index Scan using categoria_nombre_key on categoria c  (cost=0.13..12.21 rows=5 width=17) (actual time=0.006..0.008 rows=5.00 loops=1)
+                           Index Searches: 1
+                           Buffers: shared hit=2
+                     ->  Materialize  (cost=0.71..16673.08 rows=1794 width=18) (actual time=0.399..32.828 rows=437.00 loops=5)
+                           Storage: Memory  Maximum Storage: 37kB
+                           Buffers: shared hit=5311
+                           ->  Nested Loop  (cost=0.71..16664.11 rows=1794 width=18) (actual time=1.993..163.921 rows=437.00 loops=1)
+                                 Buffers: shared hit=5311
+                                 ->  Nested Loop  (cost=0.42..16100.70 rows=1794 width=18) (actual time=1.984..162.443 rows=437.00 loops=1)
+                                       Buffers: shared hit=4000
+                                       ->  Seq Scan on pedido ped  (cost=0.00..8638.14 rows=897 width=8) (actual time=1.971..161.429 rows=215.00 loops=1)
+                                             Filter: ((estado <> 'CANCELADO'::estado_pedido_enum) AND (((fecha AT TIME ZONE 'America/Argentina/Buenos_Aires'::text))::date = ((now() AT TIME ZONE 'America/Argentina/Buenos_Aires'::text))::date))
+                                             Rows Removed by Filter: 199790
+                                             Buffers: shared hit=3138
+                                       ->  Index Scan using detalle_pedido_id_pedido_id_producto_key on detalle_pedido dp  (cost=0.42..8.30 rows=2 width=26) (actual time=0.004..0.004 rows=2.03 loops=215)
+                                             Index Cond: (id_pedido = ped.id_pedido)
+                                             Index Searches: 215
+                                             Buffers: shared hit=862
+                                 ->  Index Scan using producto_pkey on producto pr  (cost=0.29..0.31 rows=1 width=16) (actual time=0.003..0.003 rows=1.00 loops=437)
+                                       Index Cond: (id_producto = dp.id_producto)
+                                       Index Searches: 437
+                                       Buffers: shared hit=1311
+ Planning:
+   Buffers: shared hit=35
+ Planning Time: 0.759 ms
+ Execution Time: 164.528 ms
+(39 filas)
+
+-- =====================================================================================
+-- 5.2(c) Estructura desnormalizada y su mecanismo de sincronización
+-- =====================================================================================
+BEGIN;
+BEGIN
+-- Una fila por día y categoría con lo vendido. Es un dato derivado: la fuente de verdad
+-- siguen siendo pedido y detalle_pedido, y la tabla se puede reconstruir en cualquier momento.
+CREATE TABLE ventas_dia_categoria (
+    dia            DATE          NOT NULL,
+    id_categoria   BIGINT        NOT NULL REFERENCES public.categoria (id_categoria),
+    unidades       BIGINT        NOT NULL CHECK (unidades > 0),
+    total_vendido  NUMERIC(14,2) NOT NULL CHECK (total_vendido >= 0),
+    PRIMARY KEY (dia, id_categoria)          -- el panel busca por día: WHERE dia = hoy()
+);
+CREATE TABLE
+-- Suma (o resta) una variación en la fila de ese día y categoría. Con una variación positiva
+-- alcanza un INSERT ... ON CONFLICT. Con una negativa no: PostgreSQL controla el CHECK sobre la
+-- fila propuesta antes de detectar el conflicto (el mismo error de la U4 del TPI). Por eso la
+-- resta es un UPDATE, y si la fila queda en 0 unidades se borra.
+CREATE OR REPLACE FUNCTION fn_ventas_ajustar(p_dia DATE, p_categoria BIGINT, p_unidades BIGINT, p_monto NUMERIC)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER SET search_path = tp4, public, pg_temp AS $$
+BEGIN
+    IF p_unidades = 0 AND p_monto = 0 THEN RETURN; END IF;
+    IF p_unidades > 0 THEN
+        INSERT INTO ventas_dia_categoria AS v (dia, id_categoria, unidades, total_vendido)
+        VALUES (p_dia, p_categoria, p_unidades, p_monto)
+        ON CONFLICT (dia, id_categoria) DO UPDATE
+           SET unidades = v.unidades + EXCLUDED.unidades,
+               total_vendido = v.total_vendido + EXCLUDED.total_vendido;
+    ELSE
+        UPDATE ventas_dia_categoria
+           SET unidades = unidades + p_unidades, total_vendido = total_vendido + p_monto
+         WHERE dia = p_dia AND id_categoria = p_categoria;
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'ventas_dia_categoria desincronizada: no hay fila para % / categoría %', p_dia, p_categoria;
+        END IF;
+        DELETE FROM ventas_dia_categoria
+         WHERE dia = p_dia AND id_categoria = p_categoria AND unidades = 0;
+    END IF;
+END $$;
+CREATE FUNCTION
+-- Línea de pedido nueva, cambiada o borrada. Si el pedido ya no existe es porque se está
+-- borrando el pedido entero: eso lo descontó antes trg_ventas_dia_pedido_del.
+CREATE OR REPLACE FUNCTION fn_ventas_dia_detalle() RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = tp4, public, pg_temp AS $$
+DECLARE v_fecha TIMESTAMPTZ; v_estado TEXT; v_cat BIGINT;
+BEGIN
+    IF TG_OP IN ('UPDATE', 'DELETE') THEN
+        SELECT fecha, estado INTO v_fecha, v_estado FROM pedido WHERE id_pedido = OLD.id_pedido;
+        IF FOUND AND v_estado <> 'CANCELADO' THEN
+            SELECT id_categoria INTO v_cat FROM producto WHERE id_producto = OLD.id_producto;
+            PERFORM fn_ventas_ajustar(dia_venta(v_fecha), v_cat, -OLD.cantidad, -(OLD.cantidad * OLD.precio_unitario));
+        END IF;
+    END IF;
+    IF TG_OP IN ('INSERT', 'UPDATE') THEN
+        SELECT fecha, estado INTO v_fecha, v_estado FROM pedido WHERE id_pedido = NEW.id_pedido;
+        IF FOUND AND v_estado <> 'CANCELADO' THEN
+            SELECT id_categoria INTO v_cat FROM producto WHERE id_producto = NEW.id_producto;
+            PERFORM fn_ventas_ajustar(dia_venta(v_fecha), v_cat, NEW.cantidad, NEW.cantidad * NEW.precio_unitario);
+        END IF;
+    END IF;
+    RETURN NULL;
+END $$;
+CREATE FUNCTION
+-- Suma o resta todas las líneas de un pedido (signo +1 o -1), agrupadas por categoría
+CREATE OR REPLACE FUNCTION fn_ventas_pedido(p_pedido BIGINT, p_fecha TIMESTAMPTZ, p_signo INT)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER SET search_path = tp4, public, pg_temp AS $$
+DECLARE r RECORD;
+BEGIN
+    FOR r IN SELECT pr.id_categoria, SUM(dp.cantidad) AS u, SUM(dp.cantidad * dp.precio_unitario) AS m
+               FROM detalle_pedido dp JOIN producto pr ON pr.id_producto = dp.id_producto
+              WHERE dp.id_pedido = p_pedido GROUP BY 1 LOOP
+        PERFORM fn_ventas_ajustar(dia_venta(p_fecha), r.id_categoria, p_signo * r.u, p_signo * r.m);
+    END LOOP;
+END $$;
+CREATE FUNCTION
+-- Pedido borrado: se descuentan sus líneas ANTES de que el borrado en cascada se las lleve
+CREATE OR REPLACE FUNCTION fn_ventas_dia_pedido_del() RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = tp4, public, pg_temp AS $$
+BEGIN
+    IF OLD.estado <> 'CANCELADO' THEN PERFORM fn_ventas_pedido(OLD.id_pedido, OLD.fecha, -1); END IF;
+    RETURN OLD;
+END $$;
+CREATE FUNCTION
+-- Pedido que cambia de fecha o de estado (por ejemplo, se cancela): sale de donde estaba
+-- y entra donde corresponde
+CREATE OR REPLACE FUNCTION fn_ventas_dia_pedido_upd() RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = tp4, public, pg_temp AS $$
+BEGIN
+    IF OLD.estado <> 'CANCELADO' THEN PERFORM fn_ventas_pedido(OLD.id_pedido, OLD.fecha, -1); END IF;
+    IF NEW.estado <> 'CANCELADO' THEN PERFORM fn_ventas_pedido(NEW.id_pedido, NEW.fecha, +1); END IF;
+    RETURN NULL;
+END $$;
+CREATE FUNCTION
+-- Producto que cambia de categoría: sus ventas pasan de una categoría a la otra
+CREATE OR REPLACE FUNCTION fn_ventas_dia_producto() RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = tp4, public, pg_temp AS $$
+DECLARE r RECORD;
+BEGIN
+    FOR r IN SELECT dia_venta(ped.fecha) AS dia, SUM(dp.cantidad) AS u, SUM(dp.cantidad * dp.precio_unitario) AS m
+               FROM detalle_pedido dp JOIN pedido ped ON ped.id_pedido = dp.id_pedido
+              WHERE dp.id_producto = NEW.id_producto AND ped.estado <> 'CANCELADO' GROUP BY 1 LOOP
+        PERFORM fn_ventas_ajustar(r.dia, OLD.id_categoria, -r.u, -r.m);
+        PERFORM fn_ventas_ajustar(r.dia, NEW.id_categoria,  r.u,  r.m);
+    END LOOP;
+    RETURN NULL;
+END $$;
+CREATE FUNCTION
+CREATE TRIGGER trg_ventas_dia_detalle AFTER INSERT OR UPDATE OR DELETE ON public.detalle_pedido
+    FOR EACH ROW EXECUTE FUNCTION fn_ventas_dia_detalle();
+CREATE TRIGGER
+CREATE TRIGGER trg_ventas_dia_pedido_del BEFORE DELETE ON public.pedido
+    FOR EACH ROW EXECUTE FUNCTION fn_ventas_dia_pedido_del();
+CREATE TRIGGER
+CREATE TRIGGER trg_ventas_dia_pedido_upd AFTER UPDATE OF fecha, estado ON public.pedido
+    FOR EACH ROW WHEN (OLD.fecha IS DISTINCT FROM NEW.fecha OR OLD.estado IS DISTINCT FROM NEW.estado)
+    EXECUTE FUNCTION fn_ventas_dia_pedido_upd();
+CREATE TRIGGER
+CREATE TRIGGER trg_ventas_dia_producto AFTER UPDATE OF id_categoria ON public.producto
+    FOR EACH ROW WHEN (OLD.id_categoria IS DISTINCT FROM NEW.id_categoria)
+    EXECUTE FUNCTION fn_ventas_dia_producto();
+CREATE TRIGGER
+-- Carga inicial desde la fuente de verdad. Las tablas quedan bloqueadas contra escrituras
+-- hasta el COMMIT: ninguna venta puede entrar entre la carga y la activación de los triggers.
+LOCK TABLE public.pedido, public.detalle_pedido, public.producto IN SHARE ROW EXCLUSIVE MODE;
+LOCK TABLE
+INSERT INTO ventas_dia_categoria (dia, id_categoria, unidades, total_vendido)
+SELECT dia_venta(ped.fecha), pr.id_categoria, SUM(dp.cantidad), SUM(dp.cantidad * dp.precio_unitario)
+  FROM detalle_pedido dp
+  JOIN producto pr  ON pr.id_producto = dp.id_producto
+  JOIN pedido   ped ON ped.id_pedido  = dp.id_pedido
+ WHERE ped.estado <> 'CANCELADO'
+ GROUP BY 1, 2;
+INSERT 0 3654
+COMMIT;
+COMMIT
+\echo '== Filas de la estructura desnormalizada'
+== Filas de la estructura desnormalizada
+SELECT COUNT(*) AS filas, MIN(dia) AS primer_dia, MAX(dia) AS ultimo_dia FROM ventas_dia_categoria;
+ filas | primer_dia | ultimo_dia 
+-------+------------+------------
+  3654 | 2024-11-13 | 2026-11-13
+(1 fila)
+
+-- =====================================================================================
+-- 5.2(e) Auditoría: diferencias entre el dato redundante y su fuente de verdad
+-- =====================================================================================
+CREATE VIEW v_auditoria_ventas_dia AS
+WITH real AS (
+    SELECT dia_venta(ped.fecha) AS dia, pr.id_categoria,
+           SUM(dp.cantidad) AS unidades, SUM(dp.cantidad * dp.precio_unitario) AS total_vendido
+      FROM detalle_pedido dp
+      JOIN producto pr  ON pr.id_producto = dp.id_producto
+      JOIN pedido   ped ON ped.id_pedido  = dp.id_pedido
+     WHERE ped.estado <> 'CANCELADO'
+     GROUP BY 1, 2)
+SELECT COALESCE(r.dia, v.dia) AS dia, COALESCE(r.id_categoria, v.id_categoria) AS id_categoria,
+       r.unidades AS unidades_reales, v.unidades AS unidades_resumen,
+       r.total_vendido AS total_real, v.total_vendido AS total_resumen
+  FROM real r FULL JOIN ventas_dia_categoria v ON v.dia = r.dia AND v.id_categoria = r.id_categoria
+ WHERE r.unidades IS DISTINCT FROM v.unidades OR r.total_vendido IS DISTINCT FROM v.total_vendido;
+CREATE VIEW
+\echo '== 5.2(e) Auditoría sobre la base migrada (se esperan 0 filas)'
+== 5.2(e) Auditoría sobre la base migrada (se esperan 0 filas)
+SELECT * FROM v_auditoria_ventas_dia ORDER BY dia, id_categoria;
+ dia | id_categoria | unidades_reales | unidades_resumen | total_real | total_resumen 
+-----+--------------+-----------------+------------------+------------+---------------
+(0 filas)
+
+-- =====================================================================================
+-- 5.2(d) El mismo reporte, leyendo la estructura desnormalizada
+-- =====================================================================================
+\echo '== 5.2(d) Top 5 del día desde ventas_dia_categoria (mismo resultado que 5.2(a))'
+== 5.2(d) Top 5 del día desde ventas_dia_categoria (mismo resultado que 5.2(a))
+SELECT c.nombre AS categoria, v.total_vendido
+  FROM ventas_dia_categoria v
+  JOIN categoria c ON c.id_categoria = v.id_categoria
+ WHERE v.dia = hoy()
+ ORDER BY v.total_vendido DESC
+ LIMIT 5;
+  categoria  | total_vendido 
+-------------+---------------
+ Almacén     |     131671.29
+ Congelados  |     127249.80
+ Panificados |      97053.11
+ Lácteos     |      93984.01
+ Bebidas     |      90490.17
+(5 filas)
+
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT c.nombre AS categoria, v.total_vendido
+  FROM ventas_dia_categoria v
+  JOIN categoria c ON c.id_categoria = v.id_categoria
+ WHERE v.dia = hoy()
+ ORDER BY v.total_vendido DESC
+ LIMIT 5;
+                                                                       QUERY PLAN                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=34.99..35.00 rows=5 width=27) (actual time=0.059..0.060 rows=5.00 loops=1)
+   Buffers: shared hit=8
+   ->  Sort  (cost=34.99..35.04 rows=19 width=27) (actual time=0.058..0.059 rows=5.00 loops=1)
+         Sort Key: v.total_vendido DESC
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=8
+         ->  Hash Join  (cost=5.55..34.67 rows=19 width=27) (actual time=0.051..0.055 rows=5.00 loops=1)
+               Hash Cond: (v.id_categoria = c.id_categoria)
+               Buffers: shared hit=8
+               ->  Bitmap Heap Scan on ventas_dia_categoria v  (cost=4.43..33.51 rows=19 width=26) (actual time=0.027..0.029 rows=5.00 loops=1)
+                     Recheck Cond: (dia = ((now() AT TIME ZONE 'America/Argentina/Buenos_Aires'::text))::date)
+                     Heap Blocks: exact=5
+                     Buffers: shared hit=7
+                     ->  Bitmap Index Scan on ventas_dia_categoria_pkey  (cost=0.00..4.43 rows=19 width=0) (actual time=0.016..0.017 rows=5.00 loops=1)
+                           Index Cond: (dia = ((now() AT TIME ZONE 'America/Argentina/Buenos_Aires'::text))::date)
+                           Index Searches: 1
+                           Buffers: shared hit=2
+               ->  Hash  (cost=1.05..1.05 rows=5 width=17) (actual time=0.019..0.019 rows=5.00 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on categoria c  (cost=0.00..1.05 rows=5 width=17) (actual time=0.015..0.016 rows=5.00 loops=1)
+                           Buffers: shared hit=1
+ Planning Time: 0.146 ms
+ Execution Time: 0.086 ms
+(24 filas)
+
+\echo '== Los dos caminos dan el mismo resultado (se esperan 0 diferencias)'
+== Los dos caminos dan el mismo resultado (se esperan 0 diferencias)
+WITH antes AS (
+    SELECT c.nombre AS categoria, SUM(dp.cantidad * dp.precio_unitario) AS total_vendido
+      FROM detalle_pedido dp
+      JOIN producto pr ON pr.id_producto = dp.id_producto
+      JOIN categoria c ON c.id_categoria = pr.id_categoria
+      JOIN pedido ped  ON ped.id_pedido  = dp.id_pedido
+     WHERE dia_venta(ped.fecha) = hoy() AND ped.estado <> 'CANCELADO'
+     GROUP BY c.nombre ORDER BY total_vendido DESC LIMIT 5),
+despues AS (
+    SELECT c.nombre AS categoria, v.total_vendido
+      FROM ventas_dia_categoria v JOIN categoria c ON c.id_categoria = v.id_categoria
+     WHERE v.dia = hoy() ORDER BY v.total_vendido DESC LIMIT 5)
+SELECT (SELECT COUNT(*) FROM (SELECT * FROM antes EXCEPT SELECT * FROM despues) a)
+     + (SELECT COUNT(*) FROM (SELECT * FROM despues EXCEPT SELECT * FROM antes) b) AS diferencias;
+ diferencias 
+-------------
+           0
+(1 fila)
+
+-- =====================================================================================
+-- Pruebas de la sincronización (todo dentro de BEGIN ... ROLLBACK)
+-- =====================================================================================
+\echo '== Sincronización: venta nueva, cambio de cantidad, cancelación, borrado y cambio de categoría'
+== Sincronización: venta nueva, cambio de cantidad, cancelación, borrado y cambio de categoría
+BEGIN;
+BEGIN
+CREATE TEMP TABLE prueba AS
+SELECT (SELECT MIN(id_cliente) FROM cliente) AS cliente,
+       (SELECT MIN(id_producto) FROM producto WHERE activo AND stock >= 10 AND id_categoria = 1) AS prod_a,
+       (SELECT MIN(id_producto) FROM producto WHERE activo AND stock >= 10 AND id_categoria = 2) AS prod_b;
+SELECT 1
+SELECT dia, id_categoria, unidades, total_vendido FROM ventas_dia_categoria
+ WHERE dia = hoy() AND id_categoria IN (1, 2) ORDER BY 2;
+    dia     | id_categoria | unidades | total_vendido 
+------------+--------------+----------+---------------
+ 2026-11-13 |            1 |      230 |      97053.11
+ 2026-11-13 |            2 |      182 |      90490.17
+(2 filas)
+
+\echo '-- 1. Venta nueva de hoy con dos líneas'
+-- 1. Venta nueva de hoy con dos líneas
+INSERT INTO pedido (forma_pago, id_cliente) SELECT 'EFECTIVO', cliente FROM prueba RETURNING id_pedido AS pedido_prueba \gset
+INSERT 0 1
+INSERT INTO detalle_pedido (cantidad, precio_unitario, id_pedido, id_producto)
+SELECT 2, 1000.00, :pedido_prueba, prod_a FROM prueba UNION ALL
+SELECT 3,  500.00, :pedido_prueba, prod_b FROM prueba;
+INSERT 0 2
+SELECT dia, id_categoria, unidades, total_vendido FROM ventas_dia_categoria
+ WHERE dia = hoy() AND id_categoria IN (1, 2) ORDER BY 2;
+    dia     | id_categoria | unidades | total_vendido 
+------------+--------------+----------+---------------
+ 2026-11-13 |            1 |      232 |      99053.11
+ 2026-11-13 |            2 |      185 |      91990.17
+(2 filas)
+
+SELECT COUNT(*) AS auditoria_tras_la_venta FROM v_auditoria_ventas_dia;
+ auditoria_tras_la_venta 
+-------------------------
+                       0
+(1 fila)
+
+\echo '-- 2. Cambio de cantidad en una línea'
+-- 2. Cambio de cantidad en una línea
+UPDATE detalle_pedido SET cantidad = 5 WHERE id_pedido = :pedido_prueba AND id_producto = (SELECT prod_a FROM prueba);
+UPDATE 1
+SELECT COUNT(*) AS auditoria_tras_el_cambio FROM v_auditoria_ventas_dia;
+ auditoria_tras_el_cambio 
+--------------------------
+                        0
+(1 fila)
+
+\echo '-- 3. El pedido se cancela'
+-- 3. El pedido se cancela
+UPDATE pedido SET estado = 'CANCELADO' WHERE id_pedido = :pedido_prueba;
+UPDATE 1
+SELECT COUNT(*) AS auditoria_tras_la_cancelacion FROM v_auditoria_ventas_dia;
+ auditoria_tras_la_cancelacion 
+-------------------------------
+                             0
+(1 fila)
+
+\echo '-- 4. El pedido vuelve a PENDIENTE y después se borra con sus líneas'
+-- 4. El pedido vuelve a PENDIENTE y después se borra con sus líneas
+UPDATE pedido SET estado = 'PENDIENTE' WHERE id_pedido = :pedido_prueba;
+UPDATE 1
+DELETE FROM pedido WHERE id_pedido = :pedido_prueba;
+DELETE 1
+SELECT COUNT(*) AS auditoria_tras_el_borrado FROM v_auditoria_ventas_dia;
+ auditoria_tras_el_borrado 
+---------------------------
+                         0
+(1 fila)
+
+\echo '-- 5. Un producto cambia de categoría'
+-- 5. Un producto cambia de categoría
+UPDATE producto SET id_categoria = 3 WHERE id_producto = (SELECT prod_a FROM prueba);
+UPDATE 1
+SELECT COUNT(*) AS auditoria_tras_cambiar_la_categoria FROM v_auditoria_ventas_dia;
+ auditoria_tras_cambiar_la_categoria 
+-------------------------------------
+                                   0
+(1 fila)
+
+ROLLBACK;
+ROLLBACK
+-- =====================================================================================
+-- Reversión: la desnormalización se quita sin perder información
+-- =====================================================================================
+-- La fuente de verdad nunca se tocó, así que revertir es borrar los triggers, las funciones y
+-- la tabla. Se ensaya dentro de una transacción y se deshace, para que el TP quede armado.
+\echo '== Reversión (ensayo con ROLLBACK): se borra la desnormalización y la consulta original sigue igual'
+== Reversión (ensayo con ROLLBACK): se borra la desnormalización y la consulta original sigue igual
+BEGIN;
+BEGIN
+DROP TRIGGER trg_ventas_dia_detalle    ON public.detalle_pedido;
+DROP TRIGGER
+DROP TRIGGER trg_ventas_dia_pedido_del ON public.pedido;
+DROP TRIGGER
+DROP TRIGGER trg_ventas_dia_pedido_upd ON public.pedido;
+DROP TRIGGER
+DROP TRIGGER trg_ventas_dia_producto   ON public.producto;
+DROP TRIGGER
+DROP VIEW  v_auditoria_ventas_dia;
+DROP VIEW
+DROP TABLE ventas_dia_categoria;
+DROP TABLE
+SELECT c.nombre AS categoria, SUM(dp.cantidad * dp.precio_unitario) AS total_vendido
+  FROM detalle_pedido dp
+  JOIN producto pr ON pr.id_producto = dp.id_producto
+  JOIN categoria c ON c.id_categoria = pr.id_categoria
+  JOIN pedido ped  ON ped.id_pedido  = dp.id_pedido
+ WHERE dia_venta(ped.fecha) = hoy() AND ped.estado <> 'CANCELADO'
+ GROUP BY c.nombre ORDER BY total_vendido DESC LIMIT 5;
+  categoria  | total_vendido 
+-------------+---------------
+ Almacén     |     131671.29
+ Congelados  |     127249.80
+ Panificados |      97053.11
+ Lácteos     |      93984.01
+ Bebidas     |      90490.17
+(5 filas)
+
+ROLLBACK;
+ROLLBACK
