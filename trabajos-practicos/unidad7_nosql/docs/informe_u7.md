@@ -101,8 +101,6 @@ Resultados de laboratorio disponibles (`evidencias/pruebas_integridad.txt`):
 
 ## 4. Conclusión
 
-> Borrador: revisalo y ajustalo con tu propio criterio antes de entregar (hasta 200 palabras).
-
 Conviene **mantener PostgreSQL** como fuente de verdad de los pedidos, por dos criterios:
 
 1. **Coherencia transaccional.** Registrar una venta toca el pedido, sus líneas y el stock de varios productos en una sola transacción, con triggers que impiden vender sin stock. En MongoDB, el stock quedaría en otra colección. Habría que usar transacciones de varios documentos y reprogramar en la aplicación los controles que hoy hace el motor. El laboratorio mostró además que MongoDB acepta productos inexistentes y totales incoherentes si la aplicación no los controla.

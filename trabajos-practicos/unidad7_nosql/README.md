@@ -10,7 +10,7 @@
 | 4 Consultas a–d en MongoDB | `consultas_mongodb.js` |
 | 5 Equivalentes en PostgreSQL y tabla de verificación | `consultas_postgresql.sql`, `verificar_consultas.sh` → `evidencias/tabla_verificacion.md` |
 | 6–7 Comparación con IA y contraste | `prompts/comparacion_ia.md`, `pruebas_integridad_mongodb.js`, `docs/respuestas_ia/comparacion.md` |
-| Informe (hasta 5 páginas) | `docs/informe_u7.pdf` (fuente: `docs/informe_u7.md`) |
+| Informe (hasta 5 páginas) | [`docs/Informe_TP_U7_Moran.pdf`](docs/Informe_TP_U7_Moran.pdf) (fuente: `docs/informe_u7.md`) |
 
 **Orden:**
 
