@@ -11,4 +11,6 @@
 | **D** Anonimización | `sql/usuario_anon.sql`, `sql/equivalencia_agregados.sql`, `sql/D_comprobar_consultas_ia.sql` | [`docs/verificacion_equivalencia.md`](docs/verificacion_equivalencia.md), `docs/respuestas_ia/D_consultas.md`, `evidencias/D_comprobacion_consultas_ia.txt` |
 | **E** Bitácora | [`BITACORA.md`](BITACORA.md) | Historial de Git, un commit por parte |
 
+**Informe para el campus** (las cinco partes en un solo PDF): [`docs/Informe_TP_U5_Moran.pdf`](docs/Informe_TP_U5_Moran.pdf).
+
 Las contraseñas no están en ningún archivo: se ponen con `\password` y se leen de `pgpass.conf`. El log original del simulacro tiene mails y queda en `evidencias/privado/`, que no se sube al repositorio.

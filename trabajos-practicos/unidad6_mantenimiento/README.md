@@ -11,6 +11,7 @@
 | Mantenimiento justificado e integridad | `maintenance.sql` |
 | Simulacro contra reloj (RTO y RPO) | `restore_test.sh` (`JOBS=4` para restaurar en paralelo) |
 | Informe post-incidente | `informe_u6.pdf` (fuente: `informe_u6.md`) |
+| Informe para el campus (todo el TP en un solo PDF) | `Informe_TP_U6_Moran.pdf` |
 | Tarea programada | `programar_respaldo.cmd` (crea la tarea diaria de las 02:00) y `respaldo_tarea.cmd` (lo que ejecuta la tarea) |
 | Evidencias | `evidencias/`: respaldos, `health_check.txt`, `maintenance.txt`, `restore_test_*.txt`, `tarea_programada.txt`, `revision_opencode.md` |
 
