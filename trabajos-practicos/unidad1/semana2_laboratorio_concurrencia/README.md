@@ -23,6 +23,8 @@ Esta carpeta es la raíz del trabajo: los scripts se corren y los agentes se abr
 | Parte 3 — Lectura crítica | [`docs/ejercicio_lectura_critica.md`](docs/ejercicio_lectura_critica.md), con la demostración en [`food-store/lectura_critica_demo.sql`](food-store/lectura_critica_demo.sql) |
 | DUIA | [`docs/duia/duia_parte1.md`](docs/duia/duia_parte1.md) (incluye la Parte 0), [`duia_parte2.md`](docs/duia/duia_parte2.md) y [`duia_parte3.md`](docs/duia/duia_parte3.md) |
 
+**Informe para el campus** (las cuatro partes, las DUIA y el historial de commits en un solo PDF): [`docs/Informe_TP_Semana2_Moran.pdf`](docs/Informe_TP_Semana2_Moran.pdf).
+
 La defensa oral es presencial y no forma parte de esta carpeta.
 
 ## Cómo reproducirlo
