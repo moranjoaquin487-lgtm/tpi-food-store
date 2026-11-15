@@ -1,0 +1,31 @@
+== Volumen cargado (consigna: 50.000 productos, 20.000 clientes, 200.000 pedidos con sus detalles)
+     tabla      | filas  
+----------------+--------
+ cliente        |  20005
+ producto       |  50010
+ pedido         | 200005
+ detalle_pedido | 399994
+(4 filas)
+
+== Productos por categoría (se espera un reparto parejo)
+  categoria  | productos 
+-------------+-----------
+ Almacén     |     10003
+ Bebidas     |     10002
+ Congelados  |     10001
+ Lácteos     |     10002
+ Panificados |     10002
+(5 filas)
+
+== Restricciones (se espera 0 en todas)
+ check_producto | check_detalle | detalles_huerfanos | pedidos_huerfanos | lineas_repetidas | pedidos_futuros 
+----------------+---------------+--------------------+-------------------+------------------+-----------------
+              0 |             0 |                  0 |                 0 |                0 |               0
+(1 fila)
+
+== Cobertura: pedidos sin líneas, clientes con pedidos y líneas por pedido
+ pedidos_sin_lineas | clientes_con_pedidos | lineas_por_pedido 
+--------------------+----------------------+-------------------
+                  3 |                20000 |              2.00
+(1 fila)
+

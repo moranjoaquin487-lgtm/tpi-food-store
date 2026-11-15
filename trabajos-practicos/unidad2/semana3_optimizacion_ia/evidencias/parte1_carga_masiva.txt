@@ -1,0 +1,11 @@
+El despliegue de duración está activado.
+INSERT 0 50000
+Duración: 912,870 ms
+INSERT 0 20000
+Duración: 292,963 ms
+INSERT 0 200000
+Duración: 4252,786 ms (00:04,253)
+INSERT 0 399985
+Duración: 13421,585 ms (00:13,422)
+ANALYZE
+Duración: 800,065 ms

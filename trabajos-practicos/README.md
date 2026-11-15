@@ -9,6 +9,7 @@
 |:-:|---|---|
 | 1 | Semana 1 — Del dominio al esquema: modelo ER, normalización y DDL | [`unidad1/semana1_modelo_er_normalizacion_ddl`](unidad1/semana1_modelo_er_normalizacion_ddl) |
 | 1 | Semana 2 — Laboratorio de concurrencia e IA | [`unidad1/semana2_laboratorio_concurrencia`](unidad1/semana2_laboratorio_concurrencia) |
+| 2 | Semana 3 — Optimización asistida por IA: carga masiva, EXPLAIN e índices | [`unidad2/semana3_optimizacion_ia`](unidad2/semana3_optimizacion_ia) |
 | 4 | Normalización avanzada: BCNF, migración reversible y desnormalización | [`unidad4_fnbc_desnormalizacion`](unidad4_fnbc_desnormalizacion) |
 | 4 | TP Semana 8 — FNBC de `control_lote_almacen` y top 5 de categorías desnormalizado | [`unidad4_tp_semana8`](unidad4_tp_semana8) |
 | 5 | Administración y seguridad: roles, auditoría, incidente y anonimización | [`unidad5_seguridad`](unidad5_seguridad) |

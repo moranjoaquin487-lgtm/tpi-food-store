@@ -1,0 +1,26 @@
+CREATE INDEX
+ANALYZE
+ filas 
+-------
+    20
+(1 fila)
+
+                                                                             QUERY PLAN                                                                             
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=3.66..71.35 rows=20 width=32) (actual time=0.048..0.051 rows=20.00 loops=1)
+   Buffers: shared hit=23
+   ->  Incremental Sort  (cost=3.66..646.69 rows=190 width=32) (actual time=0.047..0.048 rows=20.00 loops=1)
+         Sort Key: precio, id_producto
+         Presorted Key: precio
+         Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 26kB  Peak Memory: 26kB
+         Buffers: shared hit=23
+         ->  Index Scan using idx_producto_categoria_precio_activo on producto  (cost=0.29..638.14 rows=190 width=32) (actual time=0.026..0.036 rows=21.00 loops=1)
+               Index Cond: ((id_categoria = 3) AND (precio >= '500'::numeric) AND (precio <= '520'::numeric))
+               Index Searches: 1
+               Buffers: shared hit=23
+ Planning:
+   Buffers: shared hit=6
+ Planning Time: 0.186 ms
+ Execution Time: 0.067 ms
+(15 filas)
+

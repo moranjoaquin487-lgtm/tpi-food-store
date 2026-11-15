@@ -1,0 +1,14 @@
+-- Parte 2 · Cambios aceptados de la propuesta de OpenCode (docs/respuestas_ia/parte2_propuestas_opencode.md).
+-- Se aplican en una sola transacción sobre la copia foodstore_tp3. Después, el runner corre VACUUM (ANALYZE),
+-- que OpenCode también recomendó: sin el mapa de visibilidad, un Index Only Scan tiene que ir igual al heap.
+
+-- Q1 y Q2: índice por fecha que además trae las dos claves de los joins (para Index Only Scan).
+CREATE INDEX idx_pedido_fecha ON pedido (fecha) INCLUDE (id_pedido, id_cliente);
+
+-- Q3: índice por producto que trae la cantidad. Reemplaza al de solo id_producto, que queda redundante
+-- (el nuevo tiene la misma primera columna, así que sigue sirviendo para la FK y para las demás consultas).
+CREATE INDEX idx_detalle_producto_cantidad ON detalle_pedido (id_producto) INCLUDE (cantidad);
+DROP INDEX idx_detalle_pedido_id_producto;
+
+-- La reescritura de Q1 (predicado sargable) está en sql/parte2_despues.sql.
+-- No se aplicó el GROUP BY solo por la PK que propuso para Q2 y Q3: no cambia ningún nodo del plan.

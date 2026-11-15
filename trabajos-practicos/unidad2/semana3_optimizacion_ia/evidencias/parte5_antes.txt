@@ -1,0 +1,29 @@
+ filas 
+-------
+    20
+(1 fila)
+
+                                                                          QUERY PLAN                                                                           
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=809.02..809.07 rows=20 width=32) (actual time=2.086..2.088 rows=20.00 loops=1)
+   Buffers: shared hit=525
+   ->  Sort  (cost=809.02..809.49 rows=190 width=32) (actual time=2.085..2.087 rows=20.00 loops=1)
+         Sort Key: precio, id_producto
+         Sort Method: top-N heapsort  Memory: 27kB
+         Buffers: shared hit=525
+         ->  Bitmap Heap Scan on producto  (cost=111.83..803.96 rows=190 width=32) (actual time=0.364..2.018 rows=190.00 loops=1)
+               Recheck Cond: ((id_categoria = 3) AND activo)
+               Filter: ((precio >= '500'::numeric) AND (precio <= '520'::numeric))
+               Rows Removed by Filter: 9812
+               Heap Blocks: exact=516
+               Buffers: shared hit=525
+               ->  Bitmap Index Scan on idx_producto_categoria_activo  (cost=0.00..111.78 rows=10065 width=0) (actual time=0.280..0.280 rows=10002.00 loops=1)
+                     Index Cond: (id_categoria = 3)
+                     Index Searches: 1
+                     Buffers: shared hit=9
+ Planning:
+   Buffers: shared hit=6
+ Planning Time: 0.140 ms
+ Execution Time: 2.104 ms
+(20 filas)
+

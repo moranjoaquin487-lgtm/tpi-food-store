@@ -1,0 +1,76 @@
+######## Spec 1 · Resumen por categoría vigente: productos, precio promedio y unidades de los últimos 90 días
+== Versión A (agregaciones previas y LEFT JOIN)
+CREATE VIEW
+  categoria  | productos_vigentes | precio_promedio | unidades_90_dias 
+-------------+--------------------+-----------------+------------------
+ Lácteos     |              10002 |          510.13 |            25010
+ Panificados |              10002 |          506.16 |            24882
+ Almacén     |              10003 |          505.50 |            24755
+ Bebidas     |              10002 |          502.89 |            24724
+(4 filas)
+
+== Versión B (subconsultas escalares correlacionadas)
+CREATE VIEW
+  categoria  | productos_vigentes | precio_promedio | unidades_90_dias 
+-------------+--------------------+-----------------+------------------
+ Lácteos     |              10002 |          510.13 |            25010
+ Panificados |              10002 |          506.16 |            24882
+ Almacén     |              10003 |          505.50 |            24755
+ Bebidas     |              10002 |          502.89 |            24724
+(4 filas)
+
+== Equivalencia de la spec 1
+ filas_a | filas_b | diferencias_a_menos_b | diferencias_b_menos_a 
+---------+---------+-----------------------+-----------------------
+       4 |       4 |                     0 |                     0
+(1 fila)
+
+######## Spec 2 · Clientes que gastaron más de un 50 % por encima del promedio por cliente (los 15 primeros)
+== Versión A (subconsulta en el HAVING)
+CREATE VIEW
+ id_cliente |   nombre    |   apellido    | pedidos | gasto_total 
+------------+-------------+---------------+---------+-------------
+      12401 | Nombre12396 | Apellido12396 |      25 |    79646.67
+      18961 | Nombre18956 | Apellido18956 |      23 |    68829.68
+       1255 | Nombre1250  | Apellido1250  |      26 |    67885.14
+       7627 | Nombre7622  | Apellido7622  |      20 |    67627.38
+       2749 | Nombre2744  | Apellido2744  |      20 |    65674.62
+      11784 | Nombre11779 | Apellido11779 |      21 |    65391.38
+      17855 | Nombre17850 | Apellido17850 |      11 |    65101.18
+       4985 | Nombre4980  | Apellido4980  |      20 |    64272.00
+      10725 | Nombre10720 | Apellido10720 |      22 |    63942.54
+      14123 | Nombre14118 | Apellido14118 |      20 |    63868.50
+       6315 | Nombre6310  | Apellido6310  |      18 |    63094.73
+       3485 | Nombre3480  | Apellido3480  |      19 |    62949.52
+       2285 | Nombre2280  | Apellido2280  |      17 |    62864.01
+       1364 | Nombre1359  | Apellido1359  |      23 |    62260.37
+      18596 | Nombre18591 | Apellido18591 |      13 |    62231.14
+(15 filas)
+
+== Versión B (CTE con promedio por función de ventana)
+CREATE VIEW
+ id_cliente |   nombre    |   apellido    | pedidos | gasto_total 
+------------+-------------+---------------+---------+-------------
+      12401 | Nombre12396 | Apellido12396 |      25 |    79646.67
+      18961 | Nombre18956 | Apellido18956 |      23 |    68829.68
+       1255 | Nombre1250  | Apellido1250  |      26 |    67885.14
+       7627 | Nombre7622  | Apellido7622  |      20 |    67627.38
+       2749 | Nombre2744  | Apellido2744  |      20 |    65674.62
+      11784 | Nombre11779 | Apellido11779 |      21 |    65391.38
+      17855 | Nombre17850 | Apellido17850 |      11 |    65101.18
+       4985 | Nombre4980  | Apellido4980  |      20 |    64272.00
+      10725 | Nombre10720 | Apellido10720 |      22 |    63942.54
+      14123 | Nombre14118 | Apellido14118 |      20 |    63868.50
+       6315 | Nombre6310  | Apellido6310  |      18 |    63094.73
+       3485 | Nombre3480  | Apellido3480  |      19 |    62949.52
+       2285 | Nombre2280  | Apellido2280  |      17 |    62864.01
+       1364 | Nombre1359  | Apellido1359  |      23 |    62260.37
+      18596 | Nombre18591 | Apellido18591 |      13 |    62231.14
+(15 filas)
+
+== Equivalencia de la spec 2
+ filas_a | filas_b | diferencias_a_menos_b | diferencias_b_menos_a 
+---------+---------+-----------------------+-----------------------
+      15 |      15 |                     0 |                     0
+(1 fila)
+
