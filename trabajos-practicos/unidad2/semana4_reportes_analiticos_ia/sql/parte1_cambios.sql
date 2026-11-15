@@ -1,0 +1,9 @@
+-- Parte 1 · Índice propuesto por OpenCode (I1 e I2, docs/respuestas_ia/parte1_propuestas_opencode.md).
+-- Se aplica en una sola transacción sobre la copia foodstore_s4; después el runner corre VACUUM (ANALYZE).
+-- Busca que el join pedido-detalle pueda hacerse con Nested Loop e Index Only Scan sobre detalle_pedido,
+-- en lugar de leer la tabla completa para el Hash Join.
+CREATE INDEX idx_detalle_pedido_cover ON detalle_pedido (id_pedido) INCLUDE (id_producto, cantidad, precio_unitario);
+
+-- Las reescrituras R1 y R2 están en sql/parte1_despues.sql.
+-- Los cambios de configuración C1, C2 y C3 (work_mem, random_page_cost y workers paralelos) se prueban solo
+-- en la sesión, en sql/parte1_ajuste.sql: no quedan guardados en la base ni en el servidor.

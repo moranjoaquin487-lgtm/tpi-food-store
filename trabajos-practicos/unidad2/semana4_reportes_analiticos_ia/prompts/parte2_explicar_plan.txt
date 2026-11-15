@@ -1,0 +1,45 @@
+Explicá en lenguaje natural, nodo por nodo, qué hace este plan de ejecución de PostgreSQL y por qué tarda lo que tarda.
+
+ Nested Loop  (cost=7201.91..7227.61 rows=10 width=71) (actual time=31.700..31.745 rows=10.00 loops=1)
+   Buffers: shared hit=24767
+   ->  Nested Loop  (cost=7201.76..7226.57 rows=10 width=70) (actual time=31.687..31.722 rows=10.00 loops=1)
+         Buffers: shared hit=24757
+         ->  Limit  (cost=7201.47..7201.50 rows=10 width=48) (actual time=31.674..31.677 rows=10.00 loops=1)
+               Buffers: shared hit=24727
+               ->  Sort  (cost=7201.47..7239.67 rows=15279 width=48) (actual time=31.674..31.675 rows=10.00 loops=1)
+                     Sort Key: (sum(((d.cantidad)::numeric * d.precio_unitario))) DESC, d.id_producto
+                     Sort Method: top-N heapsort  Memory: 26kB
+                     Buffers: shared hit=24727
+                     ->  HashAggregate  (cost=6680.31..6871.30 rows=15279 width=48) (actual time=26.284..29.932 rows=14119.00 loops=1)
+                           Group Key: d.id_producto
+                           Batches: 1  Memory Usage: 5905kB
+                           Buffers: shared hit=24727
+                           ->  Nested Loop  (cost=0.85..6489.32 rows=15279 width=18) (actual time=0.024..18.523 rows=16381.00 loops=1)
+                                 Buffers: shared hit=24727
+                                 ->  Index Only Scan using idx_pedido_fecha on pedido p  (cost=0.42..175.93 rows=7640 width=8) (actual time=0.015..0.763 rows=8210.00 loops=1)
+                                       Index Cond: (fecha >= (now() - '30 days'::interval))
+                                       Heap Fetches: 0
+                                       Index Searches: 1
+                                       Buffers: shared hit=45
+                                 ->  Index Only Scan using idx_detalle_pedido_cover on detalle_pedido d  (cost=0.42..0.81 rows=2 width=26) (actual time=0.002..0.002 rows=2.00 loops=8210)
+                                       Index Cond: (id_pedido = p.id_pedido)
+                                       Heap Fetches: 0
+                                       Index Searches: 8210
+                                       Buffers: shared hit=24682
+         ->  Index Scan using producto_pkey on producto pr  (cost=0.29..2.51 rows=1 width=30) (actual time=0.004..0.004 rows=1.00 loops=10)
+               Index Cond: (id_producto = d.id_producto)
+               Index Searches: 10
+               Buffers: shared hit=30
+   ->  Memoize  (cost=0.14..0.16 rows=1 width=17) (actual time=0.002..0.002 rows=1.00 loops=10)
+         Cache Key: pr.id_categoria
+         Cache Mode: logical
+         Hits: 5  Misses: 5  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+         Buffers: shared hit=10
+         ->  Index Scan using categoria_pkey on categoria c  (cost=0.13..0.15 rows=1 width=17) (actual time=0.002..0.002 rows=1.00 loops=5)
+               Index Cond: (id_categoria = pr.id_categoria)
+               Index Searches: 5
+               Buffers: shared hit=10
+ Planning:
+   Buffers: shared hit=32
+ Planning Time: 0.597 ms
+ Execution Time: 32.364 ms

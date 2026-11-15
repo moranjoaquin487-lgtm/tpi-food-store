@@ -1,0 +1,252 @@
+######## Spec A · Los 3 primeros puestos de productos por unidades vendidas en 90 días, dentro de cada categoría
+== Versión A1 (DENSE_RANK con PARTITION BY)
+CREATE VIEW
+  categoria  | puesto | id_producto |    producto    | unidades 
+-------------+--------+-------------+----------------+----------
+ Almacén     |      1 |       31198 | Producto 31188 |       18
+ Almacén     |      1 |       45458 | Producto 45448 |       18
+ Almacén     |      2 |        6558 | Producto 6548  |       16
+ Almacén     |      2 |       34958 | Producto 34948 |       16
+ Almacén     |      2 |       36078 | Producto 36068 |       16
+ Almacén     |      3 |        2138 | Producto 2128  |       14
+ Almacén     |      3 |        2608 | Producto 2598  |       14
+ Almacén     |      3 |        4118 | Producto 4108  |       14
+ Almacén     |      3 |        4288 | Producto 4278  |       14
+ Almacén     |      3 |        6258 | Producto 6248  |       14
+ Almacén     |      3 |        7978 | Producto 7968  |       14
+ Almacén     |      3 |       12398 | Producto 12388 |       14
+ Almacén     |      3 |       15318 | Producto 15308 |       14
+ Almacén     |      3 |       20558 | Producto 20548 |       14
+ Almacén     |      3 |       24698 | Producto 24688 |       14
+ Almacén     |      3 |       32418 | Producto 32408 |       14
+ Almacén     |      3 |       32798 | Producto 32788 |       14
+ Almacén     |      3 |       33558 | Producto 33548 |       14
+ Almacén     |      3 |       35278 | Producto 35268 |       14
+ Almacén     |      3 |       39828 | Producto 39818 |       14
+ Almacén     |      3 |       40428 | Producto 40418 |       14
+ Almacén     |      3 |       41838 | Producto 41828 |       14
+ Almacén     |      3 |       43158 | Producto 43148 |       14
+ Almacén     |      3 |       43638 | Producto 43628 |       14
+ Almacén     |      3 |       46758 | Producto 46748 |       14
+ Almacén     |      3 |       49278 | Producto 49268 |       14
+ Bebidas     |      1 |        3786 | Producto 3776  |       16
+ Bebidas     |      1 |       36466 | Producto 36456 |       16
+ Bebidas     |      1 |       39226 | Producto 39216 |       16
+ Bebidas     |      1 |       40866 | Producto 40856 |       16
+ Bebidas     |      1 |       46446 | Producto 46436 |       16
+ Bebidas     |      2 |        1086 | Producto 1076  |       14
+ Bebidas     |      2 |        4906 | Producto 4896  |       14
+ Bebidas     |      2 |       16946 | Producto 16936 |       14
+ Bebidas     |      2 |       17886 | Producto 17876 |       14
+ Bebidas     |      2 |       18466 | Producto 18456 |       14
+ Bebidas     |      2 |       18636 | Producto 18626 |       14
+ Bebidas     |      2 |       19346 | Producto 19336 |       14
+ Bebidas     |      2 |       21346 | Producto 21336 |       14
+ Bebidas     |      2 |       28866 | Producto 28856 |       14
+ Bebidas     |      2 |       31576 | Producto 31566 |       14
+ Bebidas     |      2 |       33086 | Producto 33076 |       14
+ Bebidas     |      2 |       36706 | Producto 36696 |       14
+ Bebidas     |      2 |       36806 | Producto 36796 |       14
+ Bebidas     |      2 |       40026 | Producto 40016 |       14
+ Bebidas     |      2 |       41706 | Producto 41696 |       14
+ Bebidas     |      2 |       45666 | Producto 45656 |       14
+ Bebidas     |      3 |       33081 | Producto 33071 |       13
+ Lácteos     |      1 |       29522 | Producto 29512 |       18
+ Lácteos     |      1 |       29842 | Producto 29832 |       18
+ Lácteos     |      2 |       22922 | Producto 22912 |       16
+ Lácteos     |      2 |       30262 | Producto 30252 |       16
+ Lácteos     |      2 |       44922 | Producto 44912 |       16
+ Lácteos     |      3 |        1872 | Producto 1862  |       14
+ Lácteos     |      3 |        3762 | Producto 3752  |       14
+ Lácteos     |      3 |        3782 | Producto 3772  |       14
+ Lácteos     |      3 |       14312 | Producto 14302 |       14
+ Lácteos     |      3 |       18742 | Producto 18732 |       14
+ Lácteos     |      3 |       20492 | Producto 20482 |       14
+ Lácteos     |      3 |       21502 | Producto 21492 |       14
+ Lácteos     |      3 |       22362 | Producto 22352 |       14
+ Lácteos     |      3 |       24442 | Producto 24432 |       14
+ Lácteos     |      3 |       28352 | Producto 28342 |       14
+ Lácteos     |      3 |       39222 | Producto 39212 |       14
+ Lácteos     |      3 |       45652 | Producto 45642 |       14
+ Lácteos     |      3 |       48702 | Producto 48692 |       14
+ Panificados |      1 |        2010 | Producto 2000  |       18
+ Panificados |      1 |        3550 | Producto 3540  |       18
+ Panificados |      2 |        2930 | Producto 2920  |       16
+ Panificados |      2 |       13070 | Producto 13060 |       16
+ Panificados |      2 |       30110 | Producto 30100 |       16
+ Panificados |      2 |       38870 | Producto 38860 |       16
+ Panificados |      3 |        1190 | Producto 1180  |       14
+ Panificados |      3 |        1390 | Producto 1380  |       14
+ Panificados |      3 |        2290 | Producto 2280  |       14
+ Panificados |      3 |        3930 | Producto 3920  |       14
+ Panificados |      3 |        7630 | Producto 7620  |       14
+ Panificados |      3 |       12800 | Producto 12790 |       14
+ Panificados |      3 |       16030 | Producto 16020 |       14
+ Panificados |      3 |       18550 | Producto 18540 |       14
+ Panificados |      3 |       19625 | Producto 19615 |       14
+ Panificados |      3 |       30290 | Producto 30280 |       14
+ Panificados |      3 |       33650 | Producto 33640 |       14
+ Panificados |      3 |       38630 | Producto 38620 |       14
+ Panificados |      3 |       44350 | Producto 44340 |       14
+ Panificados |      3 |       46330 | Producto 46320 |       14
+ Panificados |      3 |       47010 | Producto 47000 |       14
+(87 filas)
+
+== Versión A2 (puesto con subconsulta correlacionada sobre los niveles de unidades de cada categoría)
+CREATE VIEW
+  categoria  | puesto | id_producto |    producto    | unidades 
+-------------+--------+-------------+----------------+----------
+ Almacén     |      1 |       31198 | Producto 31188 |       18
+ Almacén     |      1 |       45458 | Producto 45448 |       18
+ Almacén     |      2 |        6558 | Producto 6548  |       16
+ Almacén     |      2 |       34958 | Producto 34948 |       16
+ Almacén     |      2 |       36078 | Producto 36068 |       16
+ Almacén     |      3 |        2138 | Producto 2128  |       14
+ Almacén     |      3 |        2608 | Producto 2598  |       14
+ Almacén     |      3 |        4118 | Producto 4108  |       14
+ Almacén     |      3 |        4288 | Producto 4278  |       14
+ Almacén     |      3 |        6258 | Producto 6248  |       14
+ Almacén     |      3 |        7978 | Producto 7968  |       14
+ Almacén     |      3 |       12398 | Producto 12388 |       14
+ Almacén     |      3 |       15318 | Producto 15308 |       14
+ Almacén     |      3 |       20558 | Producto 20548 |       14
+ Almacén     |      3 |       24698 | Producto 24688 |       14
+ Almacén     |      3 |       32418 | Producto 32408 |       14
+ Almacén     |      3 |       32798 | Producto 32788 |       14
+ Almacén     |      3 |       33558 | Producto 33548 |       14
+ Almacén     |      3 |       35278 | Producto 35268 |       14
+ Almacén     |      3 |       39828 | Producto 39818 |       14
+ Almacén     |      3 |       40428 | Producto 40418 |       14
+ Almacén     |      3 |       41838 | Producto 41828 |       14
+ Almacén     |      3 |       43158 | Producto 43148 |       14
+ Almacén     |      3 |       43638 | Producto 43628 |       14
+ Almacén     |      3 |       46758 | Producto 46748 |       14
+ Almacén     |      3 |       49278 | Producto 49268 |       14
+ Bebidas     |      1 |        3786 | Producto 3776  |       16
+ Bebidas     |      1 |       36466 | Producto 36456 |       16
+ Bebidas     |      1 |       39226 | Producto 39216 |       16
+ Bebidas     |      1 |       40866 | Producto 40856 |       16
+ Bebidas     |      1 |       46446 | Producto 46436 |       16
+ Bebidas     |      2 |        1086 | Producto 1076  |       14
+ Bebidas     |      2 |        4906 | Producto 4896  |       14
+ Bebidas     |      2 |       16946 | Producto 16936 |       14
+ Bebidas     |      2 |       17886 | Producto 17876 |       14
+ Bebidas     |      2 |       18466 | Producto 18456 |       14
+ Bebidas     |      2 |       18636 | Producto 18626 |       14
+ Bebidas     |      2 |       19346 | Producto 19336 |       14
+ Bebidas     |      2 |       21346 | Producto 21336 |       14
+ Bebidas     |      2 |       28866 | Producto 28856 |       14
+ Bebidas     |      2 |       31576 | Producto 31566 |       14
+ Bebidas     |      2 |       33086 | Producto 33076 |       14
+ Bebidas     |      2 |       36706 | Producto 36696 |       14
+ Bebidas     |      2 |       36806 | Producto 36796 |       14
+ Bebidas     |      2 |       40026 | Producto 40016 |       14
+ Bebidas     |      2 |       41706 | Producto 41696 |       14
+ Bebidas     |      2 |       45666 | Producto 45656 |       14
+ Bebidas     |      3 |       33081 | Producto 33071 |       13
+ Lácteos     |      1 |       29522 | Producto 29512 |       18
+ Lácteos     |      1 |       29842 | Producto 29832 |       18
+ Lácteos     |      2 |       22922 | Producto 22912 |       16
+ Lácteos     |      2 |       30262 | Producto 30252 |       16
+ Lácteos     |      2 |       44922 | Producto 44912 |       16
+ Lácteos     |      3 |        1872 | Producto 1862  |       14
+ Lácteos     |      3 |        3762 | Producto 3752  |       14
+ Lácteos     |      3 |        3782 | Producto 3772  |       14
+ Lácteos     |      3 |       14312 | Producto 14302 |       14
+ Lácteos     |      3 |       18742 | Producto 18732 |       14
+ Lácteos     |      3 |       20492 | Producto 20482 |       14
+ Lácteos     |      3 |       21502 | Producto 21492 |       14
+ Lácteos     |      3 |       22362 | Producto 22352 |       14
+ Lácteos     |      3 |       24442 | Producto 24432 |       14
+ Lácteos     |      3 |       28352 | Producto 28342 |       14
+ Lácteos     |      3 |       39222 | Producto 39212 |       14
+ Lácteos     |      3 |       45652 | Producto 45642 |       14
+ Lácteos     |      3 |       48702 | Producto 48692 |       14
+ Panificados |      1 |        2010 | Producto 2000  |       18
+ Panificados |      1 |        3550 | Producto 3540  |       18
+ Panificados |      2 |        2930 | Producto 2920  |       16
+ Panificados |      2 |       13070 | Producto 13060 |       16
+ Panificados |      2 |       30110 | Producto 30100 |       16
+ Panificados |      2 |       38870 | Producto 38860 |       16
+ Panificados |      3 |        1190 | Producto 1180  |       14
+ Panificados |      3 |        1390 | Producto 1380  |       14
+ Panificados |      3 |        2290 | Producto 2280  |       14
+ Panificados |      3 |        3930 | Producto 3920  |       14
+ Panificados |      3 |        7630 | Producto 7620  |       14
+ Panificados |      3 |       12800 | Producto 12790 |       14
+ Panificados |      3 |       16030 | Producto 16020 |       14
+ Panificados |      3 |       18550 | Producto 18540 |       14
+ Panificados |      3 |       19625 | Producto 19615 |       14
+ Panificados |      3 |       30290 | Producto 30280 |       14
+ Panificados |      3 |       33650 | Producto 33640 |       14
+ Panificados |      3 |       38630 | Producto 38620 |       14
+ Panificados |      3 |       44350 | Producto 44340 |       14
+ Panificados |      3 |       46330 | Producto 46320 |       14
+ Panificados |      3 |       47010 | Producto 47000 |       14
+(87 filas)
+
+== Equivalencia de la spec A
+ filas_a1 | filas_a2 | diferencias_a_menos_b | diferencias_b_menos_a 
+----------+----------+-----------------------+-----------------------
+       87 |       87 |                     0 |                     0
+(1 fila)
+
+######## Spec B · Clientes sin compras en los últimos 60 días: fecha de la última compra y total de pedidos
+== Versión B1 (subconsultas correlacionadas)
+CREATE VIEW
+ id_cliente |          cliente          | ultima_compra | pedidos 
+------------+---------------------------+---------------+---------
+      14929 | Nombre14924 Apellido14924 | 2025-02-05    |       2
+      10184 | Nombre10179 Apellido10179 | 2025-02-11    |       2
+      13016 | Nombre13011 Apellido13011 | 2025-02-12    |       2
+       5334 | Nombre5329 Apellido5329   | 2025-04-16    |       2
+       1653 | Nombre1648 Apellido1648   | 2025-04-24    |       4
+       5971 | Nombre5966 Apellido5966   | 2025-04-25    |       2
+       3218 | Nombre3213 Apellido3213   | 2025-04-26    |       5
+      10113 | Nombre10108 Apellido10108 | 2025-04-28    |       5
+      17172 | Nombre17167 Apellido17167 | 2025-05-12    |       4
+       3367 | Nombre3362 Apellido3362   | 2025-05-19    |       3
+       1779 | Nombre1774 Apellido1774   | 2025-05-21    |       3
+        106 | Nombre101 Apellido101     | 2025-05-31    |       5
+      18513 | Nombre18508 Apellido18508 | 2025-06-05    |       1
+       9941 | Nombre9936 Apellido9936   | 2025-06-08    |       4
+      10487 | Nombre10482 Apellido10482 | 2025-06-18    |       2
+      14244 | Nombre14239 Apellido14239 | 2025-06-19    |       2
+      18881 | Nombre18876 Apellido18876 | 2025-06-19    |       5
+      10031 | Nombre10026 Apellido10026 | 2025-06-20    |       8
+       1094 | Nombre1089 Apellido1089   | 2025-06-21    |       5
+      12581 | Nombre12576 Apellido12576 | 2025-06-23    |       5
+(20 filas)
+
+== Versión B2 (JOIN + GROUP BY + HAVING)
+CREATE VIEW
+ id_cliente |          cliente          | ultima_compra | pedidos 
+------------+---------------------------+---------------+---------
+      14929 | Nombre14924 Apellido14924 | 2025-02-05    |       2
+      10184 | Nombre10179 Apellido10179 | 2025-02-11    |       2
+      13016 | Nombre13011 Apellido13011 | 2025-02-12    |       2
+       5334 | Nombre5329 Apellido5329   | 2025-04-16    |       2
+       1653 | Nombre1648 Apellido1648   | 2025-04-24    |       4
+       5971 | Nombre5966 Apellido5966   | 2025-04-25    |       2
+       3218 | Nombre3213 Apellido3213   | 2025-04-26    |       5
+      10113 | Nombre10108 Apellido10108 | 2025-04-28    |       5
+      17172 | Nombre17167 Apellido17167 | 2025-05-12    |       4
+       3367 | Nombre3362 Apellido3362   | 2025-05-19    |       3
+       1779 | Nombre1774 Apellido1774   | 2025-05-21    |       3
+        106 | Nombre101 Apellido101     | 2025-05-31    |       5
+      18513 | Nombre18508 Apellido18508 | 2025-06-05    |       1
+       9941 | Nombre9936 Apellido9936   | 2025-06-08    |       4
+      10487 | Nombre10482 Apellido10482 | 2025-06-18    |       2
+      14244 | Nombre14239 Apellido14239 | 2025-06-19    |       2
+      18881 | Nombre18876 Apellido18876 | 2025-06-19    |       5
+      10031 | Nombre10026 Apellido10026 | 2025-06-20    |       8
+       1094 | Nombre1089 Apellido1089   | 2025-06-21    |       5
+      12581 | Nombre12576 Apellido12576 | 2025-06-23    |       5
+(20 filas)
+
+== Equivalencia de la spec B
+ filas_b1 | filas_b2 | diferencias_a_menos_b | diferencias_b_menos_a 
+----------+----------+-----------------------+-----------------------
+       20 |       20 |                     0 |                     0
+(1 fila)
+

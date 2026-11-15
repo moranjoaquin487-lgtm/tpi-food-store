@@ -1,0 +1,20 @@
+                                   Listado de índices
+ Esquema |                  Nombre                  | Tipo |   Due    |     Tabla      
+---------+------------------------------------------+------+----------+----------------
+ public  | categoria_nombre_key                     | índice | postgres | categoria
+ public  | categoria_pkey                           | índice | postgres | categoria
+ public  | cliente_email_key                        | índice | postgres | cliente
+ public  | cliente_pkey                             | índice | postgres | cliente
+ public  | detalle_pedido_id_pedido_id_producto_key | índice | postgres | detalle_pedido
+ public  | detalle_pedido_pkey                      | índice | postgres | detalle_pedido
+ public  | idx_detalle_producto_cantidad            | índice | postgres | detalle_pedido
+ public  | idx_pedido_fecha                         | índice | postgres | pedido
+ public  | idx_pedido_id_cliente                    | índice | postgres | pedido
+ public  | idx_producto_categoria_activo            | índice | postgres | producto
+ public  | idx_producto_categoria_precio_activo     | índice | postgres | producto
+ public  | pedido_pkey                              | índice | postgres | pedido
+ public  | producto_pkey                            | índice | postgres | producto
+ public  | usuario_mail_key                         | índice | postgres | usuario
+ public  | usuario_pkey                             | índice | postgres | usuario
+(15 filas)
+

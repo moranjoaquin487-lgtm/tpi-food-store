@@ -1,0 +1,239 @@
+######## Q1 · Facturación por categoría y mes, consulta original
+ filas 
+-------
+    35
+(1 fila)
+
+                                                                                       QUERY PLAN                                                                                        
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=42824.62..43090.99 rows=106546 width=61) (actual time=509.412..509.422 rows=35.00 loops=1)
+   Sort Key: (((date_trunc('month'::text, p.fecha)))::date), (sum(((d.cantidad)::numeric * d.precio_unitario))) DESC
+   Sort Method: quicksort  Memory: 27kB
+   Buffers: shared hit=4138, temp read=791 written=793
+   ->  GroupAggregate  (cost=25924.46..29919.94 rows=106546 width=61) (actual time=438.506..509.338 rows=35.00 loops=1)
+         Group Key: c.nombre, (date_trunc('month'::text, p.fecha))
+         Buffers: shared hit=4132, temp read=791 written=793
+         ->  Sort  (cost=25924.46..26190.83 rows=106546 width=43) (actual time=436.004..469.676 rows=108616.00 loops=1)
+               Sort Key: c.nombre, (date_trunc('month'::text, p.fecha)), p.id_pedido
+               Sort Method: external merge  Disk: 6328kB
+               Buffers: shared hit=4132, temp read=791 written=793
+               ->  Hash Join  (cost=4301.02..13747.78 rows=106546 width=43) (actual time=28.404..207.076 rows=108616.00 loops=1)
+                     Hash Cond: (pr.id_categoria = c.id_categoria)
+                     Buffers: shared hit=4123
+                     ->  Hash Join  (cost=4299.90..12963.55 rows=106546 width=34) (actual time=28.354..165.022 rows=108616.00 loops=1)
+                           Hash Cond: (d.id_producto = pr.id_producto)
+                           Buffers: shared hit=4122
+                           ->  Hash Join  (cost=2658.68..11042.62 rows=106546 width=34) (actual time=14.834..111.817 rows=108616.00 loops=1)
+                                 Hash Cond: (d.id_pedido = p.id_pedido)
+                                 Buffers: shared hit=3606
+                                 ->  Seq Scan on detalle_pedido d  (cost=0.00..7333.94 rows=399994 width=26) (actual time=0.030..23.979 rows=399994.00 loops=1)
+                                       Buffers: shared hit=3334
+                                 ->  Hash  (cost=1992.74..1992.74 rows=53275 width=16) (actual time=14.637..14.639 rows=54309.00 loops=1)
+                                       Buckets: 65536  Batches: 1  Memory Usage: 3058kB
+                                       Buffers: shared hit=272
+                                       ->  Index Only Scan using idx_pedido_fecha on pedido p  (cost=0.43..1992.74 rows=53275 width=16) (actual time=0.030..6.967 rows=54309.00 loops=1)
+                                             Index Cond: (fecha >= (date_trunc('month'::text, now()) - '6 mons'::interval))
+                                             Heap Fetches: 0
+                                             Index Searches: 1
+                                             Buffers: shared hit=272
+                           ->  Hash  (cost=1016.10..1016.10 rows=50010 width=16) (actual time=13.345..13.346 rows=50010.00 loops=1)
+                                 Buckets: 65536  Batches: 1  Memory Usage: 2857kB
+                                 Buffers: shared hit=516
+                                 ->  Seq Scan on producto pr  (cost=0.00..1016.10 rows=50010 width=16) (actual time=0.014..6.461 rows=50010.00 loops=1)
+                                       Buffers: shared hit=516
+                     ->  Hash  (cost=1.05..1.05 rows=5 width=17) (actual time=0.037..0.038 rows=5.00 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on categoria c  (cost=0.00..1.05 rows=5 width=17) (actual time=0.026..0.028 rows=5.00 loops=1)
+                                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=75
+ Planning Time: 1.081 ms
+ Execution Time: 512.420 ms
+(44 filas)
+
+######## Q1R · Facturación por categoría y mes, reescritura R1 de OpenCode (sin COUNT DISTINCT)
+ filas 
+-------
+    35
+(1 fila)
+
+                                                                                          QUERY PLAN                                                                                           
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Incremental Sort  (cost=29958.39..30032.01 rows=1000 width=53) (actual time=520.913..520.921 rows=35.00 loops=1)
+   Sort Key: (((date_trunc('month'::text, p.fecha)))::date), (sum((sum(((d.cantidad)::numeric * d.precio_unitario))))) DESC
+   Presorted Key: (((date_trunc('month'::text, p.fecha)))::date)
+   Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 26kB  Peak Memory: 26kB
+   Buffers: shared hit=4123, temp read=1026 written=1851
+   ->  GroupAggregate  (cost=29958.10..30003.90 rows=1000 width=53) (actual time=485.399..520.882 rows=35.00 loops=1)
+         Group Key: (((date_trunc('month'::text, p.fecha)))::date), c.nombre
+         Buffers: shared hit=4123, temp read=1026 written=1851
+         ->  Sort  (cost=29958.10..29964.76 rows=2664 width=45) (actual time=484.285..498.983 rows=108610.00 loops=1)
+               Sort Key: (((date_trunc('month'::text, p.fecha)))::date), c.nombre
+               Sort Method: external merge  Disk: 3424kB
+               Buffers: shared hit=4123, temp read=1026 written=1851
+               ->  Hash Join  (cost=24451.66..29806.53 rows=2664 width=45) (actual time=280.353..414.290 rows=108610.00 loops=1)
+                     Hash Cond: (pr.id_categoria = c.id_categoria)
+                     Buffers: shared hit=4123, temp read=598 written=1422
+                     ->  HashAggregate  (cost=24450.55..28454.34 rows=106546 width=60) (actual time=280.306..391.737 rows=108610.00 loops=1)
+                           Group Key: d.id_pedido, date_trunc('month'::text, p.fecha), pr.id_categoria
+                           Planned Partitions: 8  Batches: 9  Memory Usage: 8273kB  Disk Usage: 7312kB
+                           Buffers: shared hit=4122, temp read=598 written=1422
+                           ->  Hash Join  (cost=4299.90..13229.92 rows=106546 width=42) (actual time=27.473..187.145 rows=108616.00 loops=1)
+                                 Hash Cond: (d.id_producto = pr.id_producto)
+                                 Buffers: shared hit=4122
+                                 ->  Hash Join  (cost=2658.68..11042.62 rows=106546 width=34) (actual time=14.334..116.731 rows=108616.00 loops=1)
+                                       Hash Cond: (d.id_pedido = p.id_pedido)
+                                       Buffers: shared hit=3606
+                                       ->  Seq Scan on detalle_pedido d  (cost=0.00..7333.94 rows=399994 width=26) (actual time=0.028..24.070 rows=399994.00 loops=1)
+                                             Buffers: shared hit=3334
+                                       ->  Hash  (cost=1992.74..1992.74 rows=53275 width=16) (actual time=14.149..14.149 rows=54309.00 loops=1)
+                                             Buckets: 65536  Batches: 1  Memory Usage: 3058kB
+                                             Buffers: shared hit=272
+                                             ->  Index Only Scan using idx_pedido_fecha on pedido p  (cost=0.43..1992.74 rows=53275 width=16) (actual time=0.021..6.594 rows=54309.00 loops=1)
+                                                   Index Cond: (fecha >= (date_trunc('month'::text, now()) - '6 mons'::interval))
+                                                   Heap Fetches: 0
+                                                   Index Searches: 1
+                                                   Buffers: shared hit=272
+                                 ->  Hash  (cost=1016.10..1016.10 rows=50010 width=16) (actual time=13.028..13.029 rows=50010.00 loops=1)
+                                       Buckets: 65536  Batches: 1  Memory Usage: 2857kB
+                                       Buffers: shared hit=516
+                                       ->  Seq Scan on producto pr  (cost=0.00..1016.10 rows=50010 width=16) (actual time=0.015..6.378 rows=50010.00 loops=1)
+                                             Buffers: shared hit=516
+                     ->  Hash  (cost=1.05..1.05 rows=5 width=17) (actual time=0.033..0.033 rows=5.00 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on categoria c  (cost=0.00..1.05 rows=5 width=17) (actual time=0.026..0.028 rows=5.00 loops=1)
+                                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=42
+ Planning Time: 0.991 ms
+ Execution Time: 525.130 ms
+(49 filas)
+
+######## Q2 · Ranking de clientes por gasto, consulta original
+ filas 
+-------
+    20
+(1 fila)
+
+                                                                                             QUERY PLAN                                                                                             
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=18668.91..18718.92 rows=20005 width=88) (actual time=175.836..175.843 rows=20.00 loops=1)
+   Sort Key: r.puesto, r.id_cliente
+   Sort Method: quicksort  Memory: 26kB
+   Buffers: shared hit=3688, temp read=394 written=395
+   ->  Subquery Scan on r  (cost=16589.60..17239.74 rows=20005 width=88) (actual time=175.805..175.832 rows=20.00 loops=1)
+         Buffers: shared hit=3688, temp read=394 written=395
+         ->  WindowAgg  (cost=16589.60..17039.69 rows=20005 width=112) (actual time=175.804..175.828 rows=20.00 loops=1)
+               Window: w1 AS (ORDER BY (sum(((d.cantidad)::numeric * d.precio_unitario))) ROWS UNBOUNDED PRECEDING)
+               Run Condition: (rank() OVER w1 <= 20)
+               Storage: Memory  Maximum Storage: 17kB
+               Buffers: shared hit=3688, temp read=394 written=395
+               ->  Sort  (cost=16589.58..16639.59 rows=20005 width=72) (actual time=175.786..175.792 rows=21.00 loops=1)
+                     Sort Key: (sum(((d.cantidad)::numeric * d.precio_unitario))) DESC
+                     Sort Method: quicksort  Memory: 1329kB
+                     Buffers: shared hit=3688, temp read=394 written=395
+                     ->  GroupAggregate  (cost=14181.99..15160.42 rows=20005 width=72) (actual time=140.675..170.159 rows=14199.00 loops=1)
+                           Group Key: c.id_cliente
+                           Buffers: shared hit=3688, temp read=394 written=395
+                           ->  Sort  (cost=14181.99..14303.38 rows=48558 width=50) (actual time=140.657..147.161 rows=49459.00 loops=1)
+                                 Sort Key: c.id_cliente, p.id_pedido
+                                 Sort Method: external merge  Disk: 3152kB
+                                 Buffers: shared hit=3688, temp read=394 written=395
+                                 ->  Hash Join  (cost=1890.94..10402.37 rows=48558 width=50) (actual time=14.230..108.075 rows=49459.00 loops=1)
+                                       Hash Cond: (p.id_cliente = c.id_cliente)
+                                       Buffers: shared hit=3688
+                                       ->  Hash Join  (cost=1212.83..9596.77 rows=48558 width=26) (actual time=6.585..85.006 rows=49459.00 loops=1)
+                                             Hash Cond: (d.id_pedido = p.id_pedido)
+                                             Buffers: shared hit=3460
+                                             ->  Seq Scan on detalle_pedido d  (cost=0.00..7333.94 rows=399994 width=18) (actual time=0.026..23.789 rows=399994.00 loops=1)
+                                                   Buffers: shared hit=3334
+                                             ->  Hash  (cost=909.33..909.33 rows=24280 width=16) (actual time=6.485..6.486 rows=24726.00 loops=1)
+                                                   Buckets: 32768  Batches: 1  Memory Usage: 1416kB
+                                                   Buffers: shared hit=126
+                                                   ->  Index Only Scan using idx_pedido_fecha on pedido p  (cost=0.42..909.33 rows=24280 width=16) (actual time=0.029..3.089 rows=24726.00 loops=1)
+                                                         Index Cond: (fecha >= (now() - '90 days'::interval))
+                                                         Heap Fetches: 0
+                                                         Index Searches: 1
+                                                         Buffers: shared hit=126
+                                       ->  Hash  (cost=428.05..428.05 rows=20005 width=32) (actual time=7.522..7.523 rows=20005.00 loops=1)
+                                             Buckets: 32768  Batches: 1  Memory Usage: 1524kB
+                                             Buffers: shared hit=228
+                                             ->  Seq Scan on cliente c  (cost=0.00..428.05 rows=20005 width=32) (actual time=0.033..2.947 rows=20005.00 loops=1)
+                                                   Buffers: shared hit=228
+ Planning:
+   Buffers: shared hit=28
+ Planning Time: 0.871 ms
+ Execution Time: 177.617 ms
+(47 filas)
+
+######## Q2R · Ranking de clientes por gasto, reescritura R2 de OpenCode (gasto por pedido primero)
+ filas 
+-------
+    20
+(1 fila)
+
+                                                                                             QUERY PLAN                                                                                             
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=15311.16..15361.18 rows=20005 width=88) (actual time=161.549..161.554 rows=20.00 loops=1)
+   Sort Key: r.puesto, r.id_cliente
+   Sort Method: quicksort  Memory: 26kB
+   Buffers: shared hit=3688, temp read=44 written=113
+   ->  Subquery Scan on r  (cost=13231.85..13882.00 rows=20005 width=88) (actual time=161.520..161.546 rows=20.00 loops=1)
+         Buffers: shared hit=3688, temp read=44 written=113
+         ->  WindowAgg  (cost=13231.85..13681.95 rows=20005 width=112) (actual time=161.519..161.541 rows=20.00 loops=1)
+               Window: w1 AS (ORDER BY (sum((sum(((d.cantidad)::numeric * d.precio_unitario))))) ROWS UNBOUNDED PRECEDING)
+               Run Condition: (rank() OVER w1 <= 20)
+               Storage: Memory  Maximum Storage: 17kB
+               Buffers: shared hit=3688, temp read=44 written=113
+               ->  Sort  (cost=13231.84..13281.85 rows=20005 width=72) (actual time=161.507..161.512 rows=21.00 loops=1)
+                     Sort Key: (sum((sum(((d.cantidad)::numeric * d.precio_unitario))))) DESC
+                     Sort Method: quicksort  Memory: 1329kB
+                     Buffers: shared hit=3688, temp read=44 written=113
+                     ->  HashAggregate  (cost=11552.61..11802.67 rows=20005 width=72) (actual time=149.384..155.761 rows=14199.00 loops=1)
+                           Group Key: c.id_cliente
+                           Batches: 1  Memory Usage: 6161kB
+                           Buffers: shared hit=3688, temp read=44 written=113
+                           ->  Hash Join  (cost=10760.46..11370.51 rows=24280 width=64) (actual time=113.083..137.637 rows=24726.00 loops=1)
+                                 Hash Cond: (p.id_cliente = c.id_cliente)
+                                 Buffers: shared hit=3688, temp read=44 written=113
+                                 ->  HashAggregate  (cost=10082.35..10385.85 rows=24280 width=48) (actual time=107.384..123.053 rows=24726.00 loops=1)
+                                       Group Key: p.id_pedido
+                                       Batches: 5  Memory Usage: 8241kB  Disk Usage: 664kB
+                                       Buffers: shared hit=3460, temp read=44 written=113
+                                       ->  Hash Join  (cost=1212.83..9596.77 rows=48558 width=26) (actual time=6.544..81.089 rows=49459.00 loops=1)
+                                             Hash Cond: (d.id_pedido = p.id_pedido)
+                                             Buffers: shared hit=3460
+                                             ->  Seq Scan on detalle_pedido d  (cost=0.00..7333.94 rows=399994 width=18) (actual time=0.017..23.098 rows=399994.00 loops=1)
+                                                   Buffers: shared hit=3334
+                                             ->  Hash  (cost=909.33..909.33 rows=24280 width=16) (actual time=6.453..6.454 rows=24726.00 loops=1)
+                                                   Buckets: 32768  Batches: 1  Memory Usage: 1416kB
+                                                   Buffers: shared hit=126
+                                                   ->  Index Only Scan using idx_pedido_fecha on pedido p  (cost=0.42..909.33 rows=24280 width=16) (actual time=0.021..3.115 rows=24726.00 loops=1)
+                                                         Index Cond: (fecha >= (now() - '90 days'::interval))
+                                                         Heap Fetches: 0
+                                                         Index Searches: 1
+                                                         Buffers: shared hit=126
+                                 ->  Hash  (cost=428.05..428.05 rows=20005 width=32) (actual time=5.631..5.632 rows=20005.00 loops=1)
+                                       Buckets: 32768  Batches: 1  Memory Usage: 1524kB
+                                       Buffers: shared hit=228
+                                       ->  Seq Scan on cliente c  (cost=0.00..428.05 rows=20005 width=32) (actual time=0.026..2.243 rows=20005.00 loops=1)
+                                             Buffers: shared hit=228
+ Planning:
+   Buffers: shared hit=16
+ Planning Time: 0.547 ms
+ Execution Time: 164.571 ms
+(48 filas)
+
+######## Equivalencia de las reescrituras con las consultas originales (se espera 0 en todas)
+ q1_menos_q1r | q1r_menos_q1 
+--------------+--------------
+            0 |            0
+(1 fila)
+
+ q2_menos_q2r | q2r_menos_q2 
+--------------+--------------
+            0 |            0
+(1 fila)
+
