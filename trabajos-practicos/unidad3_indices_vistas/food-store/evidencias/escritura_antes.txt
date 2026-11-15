@@ -1,0 +1,38 @@
+BEGIN
+CREATE TABLE
+DO
+######## Índices de detalle_pedido durante la medición
+                indexname                 
+------------------------------------------
+ detalle_pedido_id_pedido_id_producto_key
+ detalle_pedido_pkey
+ idx_detalle_pedido_id_producto
+(3 filas)
+
+######## Tiempo de cada ronda de 500 INSERT (ms)
+ ronda |  ms   
+-------+-------
+     1 | 17.20
+     2 | 17.06
+     3 | 17.31
+     4 | 16.36
+     5 | 16.54
+     6 | 20.47
+     7 | 16.77
+     8 | 17.10
+     9 | 16.32
+    10 | 21.62
+    11 | 17.93
+    12 | 17.49
+    13 | 16.62
+    14 | 24.56
+    15 | 21.26
+(15 filas)
+
+######## Mediana (ms)
+ mediana_ms 
+------------
+       17.2
+(1 fila)
+
+ROLLBACK

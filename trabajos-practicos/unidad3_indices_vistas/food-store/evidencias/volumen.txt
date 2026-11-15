@@ -1,0 +1,1 @@
+categoria 5, producto 50010, cliente 20005, pedido 200005, detalle_pedido 399994, usuario 3
