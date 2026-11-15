@@ -1,0 +1,89 @@
+-- =====================================================================
+-- propuestas/indices_opencode.sql
+-- Índices propuestos para las specs de la Parte A.
+-- Este archivo es una propuesta: NO se ejecutó contra la base.
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- A1 · Facturación por día de la última semana
+--      (specs/A1_facturacion_semana.md)
+-- Nodo del plan que ataca:
+--   Parallel Seq Scan on pedido p
+--     Filter: fecha >= (CURRENT_DATE - 7)::timestamptz
+--     Rows Removed by Filter: 197 774   (≈ 92 ms de ejecución total)
+-- Índice propuesto: índice sobre pedido(fecha) con INCLUDE(id_pedido,
+--   id_cliente). La columna guía es fecha porque es el único predicado
+--   de filtrado y es muy selectivo (~1 % de las filas, ≈ 2 231 de 200 005).
+-- Por qué espero que el plan cambie: con un índice cuya primera columna
+--   es fecha, el planner puede sustituir el Seq Scan por un Index Scan,
+--   Index Only Scan o Bitmap Heap Scan que entrega directamente las filas
+--   del período en lugar de leer y descartar las 200 005 filas de pedido.
+--   Al incluir id_pedido, el JOIN con detalle_pedido y el
+--   COUNT(DISTINCT p.id_pedido) se resuelven sin acceder al heap de pedido
+--   (index-only scan). La columna incluida id_cliente no la usa A1, pero
+--   permite que el mismo índice sirva a A2 sin duplicar cobertura.
+-- Este único índice también atiende A2 y A3 (mismo filtro de rango sobre
+--   pedido.fecha); por eso se crea una sola vez.
+-- ---------------------------------------------------------------------
+CREATE INDEX idx_pedido_fecha ON pedido (fecha) INCLUDE (id_pedido, id_cliente);
+
+-- ---------------------------------------------------------------------
+-- A2 · Top 10 clientes que más gastaron en los últimos 30 días
+--      (specs/A2_top_clientes_30_dias.md)
+-- Nodo del plan que ataca:
+--   Parallel Seq Scan on pedido p
+--     Filter: fecha >= now() - '30 days'::interval
+--     Rows Removed by Filter: 191 636   (≈ 132 ms de ejecución total)
+-- Índice propuesto: NINGUNO NUEVO. El mismo idx_pedido_fecha de A1 ya
+--   cubre el filtro de rango sobre pedido.fecha y, gracias al INCLUDE,
+--   también aporta id_pedido (JOIN con detalle_pedido) e id_cliente
+--   (JOIN con cliente). No conviene crear un índice compuesto
+--   (fecha, id_cliente) ni un segundo índice sobre fecha: repetiría la
+--   cobertura de idx_pedido_fecha y de idx_pedido_id_cliente.
+-- Por qué espero que el plan cambie: el planner pasa de leer las 200 005
+--   filas de pedido a recorrer por índice solo las ≈ 8 369 filas de los
+--   últimos 30 días, reduciendo el hash que alimenta el JOIN con
+--   detalle_pedido.
+-- ---------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------
+-- A3 · Top 10 productos que más facturaron en los últimos 30 días
+--      (specs/A3_top_productos_30_dias.md)
+-- Nodo del plan que ataca:
+--   Parallel Seq Scan on pedido p
+--     Filter: fecha >= now() - '30 days'::interval
+--     Rows Removed by Filter: 191 636   (≈ 134 ms de ejecución total)
+-- Índice propuesto: NINGUNO NUEVO. El único gap del plan es el filtro de
+--   fecha en pedido; las demás columnas de JOIN ya están cubiertas por
+--   PKs y por idx_detalle_pedido_id_producto e idx_producto_categoria_activo.
+--   idx_pedido_fecha (de A1) cubre ese filtro y evita duplicar cobertura.
+-- Por qué espero que el plan cambie: al restringir pedido por fecha vía
+--   índice, el JOIN con detalle_pedido recibe un hash mucho más chico y
+--   deja de escanear secuencialmente las 200 005 filas de pedido.
+-- ---------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------
+-- A4 · Productos vigentes nunca vendidos
+--      (specs/A4_productos_nunca_vendidos.md)
+-- Nodo del plan que ataca:
+--   Hash Right Anti Join
+--     Seq Scan on detalle_pedido  — 399 994 filas (3 334 buffers)
+--     Hash / Seq Scan on producto — 50 009 filas (516 buffers)
+--       Filter: activo = TRUE; Rows Removed by Filter: 1  (≈ 90 ms total)
+-- Índice propuesto: NINGUNO NUEVO.
+--   * El filtro producto.activo = TRUE es casi no selectivo (50 009 de
+--     50 010 filas), así que un índice parcial WHERE activo = TRUE no
+--     reduce prácticamente nada el conjunto a leer.
+--   * El costo dominante es el escaneo de las 399 994 filas de
+--     detalle_pedido para construir el anti-join; ninguna columna de
+--     producto lo evita.
+--   * La clave de la subconsulta (detalle_pedido.id_producto) ya está
+--     indexada por idx_detalle_pedido_id_producto. El planner elige el
+--     hash anti-join porque es más barato que un Nested Loop Anti Join de
+--     50 000 sondas sobre una tabla de 400 000 filas.
+--   Un índice compuesto (nombre, id_producto) WHERE activo = TRUE podría
+--   dar un Index Only Scan ordenado sobre producto, pero no ataca el
+--   cuello de botella (el scan de detalle_pedido) y no permitiría bajar
+--   de la mitad del tiempo; según el criterio de aceptación se rechaza.
+--   No se crea ningún índice para esta spec.
+-- ---------------------------------------------------------------------
