@@ -16,3 +16,12 @@
 -- No repite ningún índice: pedido solo tenía la PK y (id_cliente).
 CREATE INDEX idx_pedido_fecha ON pedido (fecha) INCLUDE (id_pedido, id_cliente);
 
+-- ===== I2 · idx_detalle_pedido_id_pedido_cover (OpenCode, ronda 2)
+-- Spec: A1. Se propuso después de medir I1: el cuello de botella pasó a ser el Seq Scan de detalle_pedido.
+-- Tipo: B-tree sobre id_pedido, la clave del join, con INCLUDE de las columnas que leen las consultas.
+-- Con I1 e I2, C1 pasa a Nested Loop: por cada pedido de la semana, un Index Only Scan en este índice.
+-- Se solapa con el UNIQUE (id_pedido, id_producto) en la primera columna, pero no lo repite: el UNIQUE no
+-- tiene cantidad ni precio_unitario y obliga a leer la tabla en cada búsqueda. Costo: un índice más que
+-- mantener en cada INSERT de detalle_pedido (medido en evidencias/final_escritura_*.txt).
+CREATE INDEX idx_detalle_pedido_id_pedido_cover
+    ON detalle_pedido (id_pedido) INCLUDE (id_producto, cantidad, precio_unitario);
