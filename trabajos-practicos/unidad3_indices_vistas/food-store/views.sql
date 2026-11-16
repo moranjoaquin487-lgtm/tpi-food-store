@@ -39,3 +39,21 @@ SELECT p.id_pedido,
 FROM pedido p
 JOIN cliente c ON c.id_cliente = p.id_cliente;
 
+-- ===== B3 · v_detalle_pedido
+-- ---------------------------------------------------------------------
+-- B3 · v_detalle_pedido (specs/B3_v_detalle_pedido.md)
+-- Cada línea de detalle_pedido con el nombre del producto y el subtotal.
+-- Sin filtro por producto.activo: el historial debe conservar productos
+-- dados de baja. Columnas en el orden de la spec.
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE VIEW v_detalle_pedido AS
+SELECT dp.id_pedido,
+       dp.id_detalle,
+       dp.id_producto,
+       pr.nombre AS producto,
+       dp.cantidad,
+       dp.precio_unitario,
+       dp.cantidad * dp.precio_unitario AS subtotal
+FROM detalle_pedido dp
+JOIN producto pr ON pr.id_producto = dp.id_producto;
+
