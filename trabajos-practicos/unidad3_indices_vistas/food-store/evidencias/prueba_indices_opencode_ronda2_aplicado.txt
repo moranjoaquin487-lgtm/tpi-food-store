@@ -1,0 +1,213 @@
+-- =====================================================================
+-- propuestas/indices_opencode.sql
+-- Índices propuestos para las specs de la Parte A.
+-- Este archivo es una propuesta: NO se ejecutó contra la base.
+-- =====================================================================
+-- ---------------------------------------------------------------------
+-- A1 · Facturación por día de la última semana
+--      (specs/A1_facturacion_semana.md)
+-- Nodo del plan que ataca:
+--   Parallel Seq Scan on pedido p
+--     Filter: fecha >= (CURRENT_DATE - 7)::timestamptz
+--     Rows Removed by Filter: 197 774   (≈ 92 ms de ejecución total)
+-- Índice propuesto: índice sobre pedido(fecha) con INCLUDE(id_pedido,
+--   id_cliente). La columna guía es fecha porque es el único predicado
+--   de filtrado y es muy selectivo (~1 % de las filas, ≈ 2 231 de 200 005).
+-- Por qué espero que el plan cambie: con un índice cuya primera columna
+--   es fecha, el planner puede sustituir el Seq Scan por un Index Scan,
+--   Index Only Scan o Bitmap Heap Scan que entrega directamente las filas
+--   del período en lugar de leer y descartar las 200 005 filas de pedido.
+--   Al incluir id_pedido, el JOIN con detalle_pedido y el
+--   COUNT(DISTINCT p.id_pedido) se resuelven sin acceder al heap de pedido
+--   (index-only scan). La columna incluida id_cliente no la usa A1, pero
+--   permite que el mismo índice sirva a A2 sin duplicar cobertura.
+-- Este único índice también atiende A2 y A3 (mismo filtro de rango sobre
+--   pedido.fecha); por eso se crea una sola vez.
+-- ---------------------------------------------------------------------
+CREATE INDEX idx_pedido_fecha ON pedido (fecha) INCLUDE (id_pedido, id_cliente);
+CREATE INDEX
+-- ---------------------------------------------------------------------
+-- A2 · Top 10 clientes que más gastaron en los últimos 30 días
+--      (specs/A2_top_clientes_30_dias.md)
+-- Nodo del plan que ataca:
+--   Parallel Seq Scan on pedido p
+--     Filter: fecha >= now() - '30 days'::interval
+--     Rows Removed by Filter: 191 636   (≈ 132 ms de ejecución total)
+-- Índice propuesto: NINGUNO NUEVO. El mismo idx_pedido_fecha de A1 ya
+--   cubre el filtro de rango sobre pedido.fecha y, gracias al INCLUDE,
+--   también aporta id_pedido (JOIN con detalle_pedido) e id_cliente
+--   (JOIN con cliente). No conviene crear un índice compuesto
+--   (fecha, id_cliente) ni un segundo índice sobre fecha: repetiría la
+--   cobertura de idx_pedido_fecha y de idx_pedido_id_cliente.
+-- Por qué espero que el plan cambie: el planner pasa de leer las 200 005
+--   filas de pedido a recorrer por índice solo las ≈ 8 369 filas de los
+--   últimos 30 días, reduciendo el hash que alimenta el JOIN con
+--   detalle_pedido.
+-- ---------------------------------------------------------------------
+-- ---------------------------------------------------------------------
+-- A3 · Top 10 productos que más facturaron en los últimos 30 días
+--      (specs/A3_top_productos_30_dias.md)
+-- Nodo del plan que ataca:
+--   Parallel Seq Scan on pedido p
+--     Filter: fecha >= now() - '30 days'::interval
+--     Rows Removed by Filter: 191 636   (≈ 134 ms de ejecución total)
+-- Índice propuesto: NINGUNO NUEVO. El único gap del plan es el filtro de
+--   fecha en pedido; las demás columnas de JOIN ya están cubiertas por
+--   PKs y por idx_detalle_pedido_id_producto e idx_producto_categoria_activo.
+--   idx_pedido_fecha (de A1) cubre ese filtro y evita duplicar cobertura.
+-- Por qué espero que el plan cambie: al restringir pedido por fecha vía
+--   índice, el JOIN con detalle_pedido recibe un hash mucho más chico y
+--   deja de escanear secuencialmente las 200 005 filas de pedido.
+-- ---------------------------------------------------------------------
+-- ---------------------------------------------------------------------
+-- A4 · Productos vigentes nunca vendidos
+--      (specs/A4_productos_nunca_vendidos.md)
+-- Nodo del plan que ataca:
+--   Hash Right Anti Join
+--     Seq Scan on detalle_pedido  — 399 994 filas (3 334 buffers)
+--     Hash / Seq Scan on producto — 50 009 filas (516 buffers)
+--       Filter: activo = TRUE; Rows Removed by Filter: 1  (≈ 90 ms total)
+-- Índice propuesto: NINGUNO NUEVO.
+--   * El filtro producto.activo = TRUE es casi no selectivo (50 009 de
+--     50 010 filas), así que un índice parcial WHERE activo = TRUE no
+--     reduce prácticamente nada el conjunto a leer.
+--   * El costo dominante es el escaneo de las 399 994 filas de
+--     detalle_pedido para construir el anti-join; ninguna columna de
+--     producto lo evita.
+--   * La clave de la subconsulta (detalle_pedido.id_producto) ya está
+--     indexada por idx_detalle_pedido_id_producto. El planner elige el
+--     hash anti-join porque es más barato que un Nested Loop Anti Join de
+--     50 000 sondas sobre una tabla de 400 000 filas.
+--   Un índice compuesto (nombre, id_producto) WHERE activo = TRUE podría
+--   dar un Index Only Scan ordenado sobre producto, pero no ataca el
+--   cuello de botella (el scan de detalle_pedido) y no permitiría bajar
+--   de la mitad del tiempo; según el criterio de aceptación se rechaza.
+--   No se crea ningún índice para esta spec.
+-- ---------------------------------------------------------------------
+-- =====================================================================
+-- propuestas/indices_opencode_ronda2.sql
+-- Ajustes propuestos tras medir la ronda 1 (planes de la ronda 2).
+-- Este archivo es una propuesta: NO se ejecutó contra la base.
+--
+-- Resumen de lo medido:
+--   C1: 92.231 -> 133.484 ms (+45 %) NO cumple
+--   C2: 132.009 -> 145.157 ms (+10 %) NO cumple
+--   C3: 133.836 -> 170.368 ms (+27 %) NO cumple
+--   C4: 89.943 -> 136.753 ms (+52 %) NO cumple
+--
+-- En las cuatro consultas idx_pedido_fecha hizo lo que se esperaba (en
+-- C1/C2/C3 el Seq Scan sobre pedido se reemplazó por un Index Only Scan
+-- con Heap Fetches: 0). El cuello de botella se corrió al otro lado del
+-- JOIN: el escaneo completo de detalle_pedido.
+-- =====================================================================
+-- ---------------------------------------------------------------------
+-- C1 · Facturación por día de la última semana
+--      (specs/A1_facturacion_semana.md)
+-- Resultado ronda 1: 92.231 -> 133.484 ms. NO cumple el tiempo.
+-- Qué logró idx_pedido_fecha:
+--   el Seq Scan sobre pedido desapareció y pasó a
+--   Index Only Scan using idx_pedido_fecha (Heap Fetches: 0, 0.583 ms).
+-- Nodo que ahora es el cuello de botella:
+--   Parallel Seq Scan on detalle_pedido d
+--     (399 994 filas, 3 467 buffers) — es el lado externo del Hash Join
+--   cuyo hash es ahora el pequeño conjunto de pedidos recientes.
+--   Ese escaneo completo de detalle_pedido domina el plan (junto con el
+--   Sort/Gather Merge que consume su salida).
+-- Ajuste propuesto: índice de cobertura sobre detalle_pedido, guiado por
+--   la clave del join, para que el lado externo del Hash Join pueda
+--   resolverse con Index Only Scan en lugar del heap completo.
+-- Por qué espero que cambie: el índice tiene menos páginas que el heap de
+--   detalle_pedido y, al ser index-only (se espera Heap Fetches: 0, igual
+--   que en pedido), el planner puede elegir Index Only Scan para el lado
+--   externo del join y bajar los buffers leídos de ~3 467 a ~1 400.
+--   Este mismo índice sirve a C2 y C3; no se crea más de una vez.
+-- No duplica cobertura: el UNIQUE (id_pedido, id_producto) tiene
+--   id_pedido como prefijo, pero NO incluye cantidad ni precio_unitario,
+--   así que no puede hacer un index-only scan de las columnas que usa la
+--   agregación (cantidad * precio_unitario).
+-- ---------------------------------------------------------------------
+CREATE INDEX idx_detalle_pedido_id_pedido_cover
+    ON detalle_pedido (id_pedido) INCLUDE (id_producto, cantidad, precio_unitario);
+CREATE INDEX
+-- ---------------------------------------------------------------------
+-- C2 · Top 10 clientes que más gastaron en los últimos 30 días
+--      (specs/A2_top_clientes_30_dias.md)
+-- Resultado ronda 1: 132.009 -> 145.157 ms. NO cumple el tiempo.
+-- Qué logró idx_pedido_fecha:
+--   el Seq Scan sobre pedido desapareció (Index Only Scan, Heap Fetches:
+--   0, 8 366 filas). El Seq Scan on cliente (20 005 filas, 684 buffers)
+--   es barato y no es el problema.
+-- Nodo que ahora es el cuello de botella:
+--   Parallel Seq Scan on detalle_pedido d
+--     (399 994 filas, 3 467 buffers) — lado externo del Hash Join que
+--   alimenta el HashAggregate por cliente.
+-- Ajuste propuesto: NINGUNO NUEVO. El idx_detalle_pedido_id_pedido_cover
+--   creado para C1 ya incluye todas las columnas que C2 necesita de
+--   detalle_pedido (id_pedido como clave; cantidad y precio_unitario en
+--   el INCLUDE), habilitando el mismo Index Only Scan.
+-- Por qué espero que cambie: reduce el costo del lado externo del join
+--   (mismo razonamiento que C1); el resto del plan (Hash Join con cliente
+--   y HashAggregate) queda igual.
+-- ---------------------------------------------------------------------
+-- ---------------------------------------------------------------------
+-- C3 · Top 10 productos que más facturaron en los últimos 30 días
+--      (specs/A3_top_productos_30_dias.md)
+-- Resultado ronda 1: 133.836 -> 170.368 ms. NO cumple el tiempo.
+-- Qué logró idx_pedido_fecha:
+--   el Seq Scan sobre pedido desapareció (Index Only Scan, Heap Fetches:
+--   0). Los Seq Scan on producto (50 010 filas, 1 548 buffers) y
+--   categoria (5 filas) son mucho más chicos y no son el cuello.
+-- Nodo que ahora es el cuello de botella:
+--   Parallel Seq Scan on detalle_pedido d
+--     (399 994 filas, 3 467 buffers) — lado externo del Hash Join con
+--   pedido, del que cuelgan los joins con producto y categoria.
+-- Ajuste propuesto: NINGUNO NUEVO. El idx_detalle_pedido_id_pedido_cover
+--   de C1 incluye también id_producto, así que C3 obtiene de
+--   detalle_pedido todo lo que necesita (id_pedido, id_producto, cantidad,
+--   precio_unitario) mediante Index Only Scan.
+-- Por qué espero que cambie: reduce el escaneo del nodo más costoso del
+--   plan medido (el lado externo del join); los joins posteriores con
+--   producto y categoria se mantienen.
+-- ---------------------------------------------------------------------
+-- ---------------------------------------------------------------------
+-- C4 · Productos vigentes nunca vendidos
+--      (specs/A4_productos_nunca_vendidos.md)
+-- Resultado ronda 1: 89.943 -> 136.753 ms. NO cumple el tiempo.
+--   En la ronda 1 no se propuso ningún índice para A4, por lo que el plan
+--   medido es esencialmente el mismo Hash Right Anti Join de antes.
+-- Nodo que ahora es el cuello de botella:
+--   Seq Scan on detalle_pedido (399 994 filas, 3 467 buffers), que
+--   alimenta el Hash del anti-join. El Seq Scan on producto
+--   (50 009 filas, 516 buffers) es mucho más chico.
+-- Ajuste propuesto: NINGUNO.
+--   * El filtro producto.activo = TRUE sigue siendo no selectivo
+--     (50 009 de 50 010 filas): un índice parcial WHERE activo = TRUE no
+--     reduce el conjunto leído.
+--   * La columna de correlación detalle_pedido.id_producto ya está
+--     indexada (idx_detalle_pedido_id_producto); no corresponde crear otro
+--     índice que repita esa cobertura.
+--   * El anti-join debe confirmar que ningún producto tiene filas en
+--     detalle_pedido, lo que obliga a recorrer las 400 000 filas (o a
+--     50 000 sondas en un Nested Loop Anti Join, que el planner estima
+--     más caro con random_page_cost = 4).
+--   Ningún índice disponible puede bajar la mediana a la mitad.
+-- ---------------------------------------------------------------------
+                indexname                 | tamano  |                                                                     indexdef                                                                      
+------------------------------------------+---------+---------------------------------------------------------------------------------------------------------------------------------------------------
+ categoria_nombre_key                     | 16 kB   | CREATE UNIQUE INDEX categoria_nombre_key ON public.categoria USING btree (nombre)
+ categoria_pkey                           | 16 kB   | CREATE UNIQUE INDEX categoria_pkey ON public.categoria USING btree (id_categoria)
+ cliente_email_key                        | 1376 kB | CREATE UNIQUE INDEX cliente_email_key ON public.cliente USING btree (email)
+ cliente_pkey                             | 456 kB  | CREATE UNIQUE INDEX cliente_pkey ON public.cliente USING btree (id_cliente)
+ detalle_pedido_id_pedido_id_producto_key | 13 MB   | CREATE UNIQUE INDEX detalle_pedido_id_pedido_id_producto_key ON public.detalle_pedido USING btree (id_pedido, id_producto)
+ detalle_pedido_pkey                      | 9488 kB | CREATE UNIQUE INDEX detalle_pedido_pkey ON public.detalle_pedido USING btree (id_detalle)
+ idx_detalle_pedido_id_pedido_cover       | 19 MB   | CREATE INDEX idx_detalle_pedido_id_pedido_cover ON public.detalle_pedido USING btree (id_pedido) INCLUDE (id_producto, cantidad, precio_unitario)
+ idx_detalle_pedido_id_producto           | 4856 kB | CREATE INDEX idx_detalle_pedido_id_producto ON public.detalle_pedido USING btree (id_producto)
+ idx_pedido_fecha                         | 7936 kB | CREATE INDEX idx_pedido_fecha ON public.pedido USING btree (fecha) INCLUDE (id_pedido, id_cliente)
+ idx_pedido_id_cliente                    | 2512 kB | CREATE INDEX idx_pedido_id_cliente ON public.pedido USING btree (id_cliente)
+ pedido_pkey                              | 4928 kB | CREATE UNIQUE INDEX pedido_pkey ON public.pedido USING btree (id_pedido)
+ idx_producto_categoria_activo            | 336 kB  | CREATE INDEX idx_producto_categoria_activo ON public.producto USING btree (id_categoria) WHERE (activo = true)
+ producto_pkey                            | 1112 kB | CREATE UNIQUE INDEX producto_pkey ON public.producto USING btree (id_producto)
+ usuario_mail_key                         | 16 kB   | CREATE UNIQUE INDEX usuario_mail_key ON public.usuario USING btree (mail)
+ usuario_pkey                             | 16 kB   | CREATE UNIQUE INDEX usuario_pkey ON public.usuario USING btree (id)
+(15 filas)
+

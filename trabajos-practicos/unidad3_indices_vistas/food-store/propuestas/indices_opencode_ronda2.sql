@@ -1,0 +1,111 @@
+-- =====================================================================
+-- propuestas/indices_opencode_ronda2.sql
+-- Ajustes propuestos tras medir la ronda 1 (planes de la ronda 2).
+-- Este archivo es una propuesta: NO se ejecutó contra la base.
+--
+-- Resumen de lo medido:
+--   C1: 92.231 -> 133.484 ms (+45 %) NO cumple
+--   C2: 132.009 -> 145.157 ms (+10 %) NO cumple
+--   C3: 133.836 -> 170.368 ms (+27 %) NO cumple
+--   C4: 89.943 -> 136.753 ms (+52 %) NO cumple
+--
+-- En las cuatro consultas idx_pedido_fecha hizo lo que se esperaba (en
+-- C1/C2/C3 el Seq Scan sobre pedido se reemplazó por un Index Only Scan
+-- con Heap Fetches: 0). El cuello de botella se corrió al otro lado del
+-- JOIN: el escaneo completo de detalle_pedido.
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- C1 · Facturación por día de la última semana
+--      (specs/A1_facturacion_semana.md)
+-- Resultado ronda 1: 92.231 -> 133.484 ms. NO cumple el tiempo.
+-- Qué logró idx_pedido_fecha:
+--   el Seq Scan sobre pedido desapareció y pasó a
+--   Index Only Scan using idx_pedido_fecha (Heap Fetches: 0, 0.583 ms).
+-- Nodo que ahora es el cuello de botella:
+--   Parallel Seq Scan on detalle_pedido d
+--     (399 994 filas, 3 467 buffers) — es el lado externo del Hash Join
+--   cuyo hash es ahora el pequeño conjunto de pedidos recientes.
+--   Ese escaneo completo de detalle_pedido domina el plan (junto con el
+--   Sort/Gather Merge que consume su salida).
+-- Ajuste propuesto: índice de cobertura sobre detalle_pedido, guiado por
+--   la clave del join, para que el lado externo del Hash Join pueda
+--   resolverse con Index Only Scan en lugar del heap completo.
+-- Por qué espero que cambie: el índice tiene menos páginas que el heap de
+--   detalle_pedido y, al ser index-only (se espera Heap Fetches: 0, igual
+--   que en pedido), el planner puede elegir Index Only Scan para el lado
+--   externo del join y bajar los buffers leídos de ~3 467 a ~1 400.
+--   Este mismo índice sirve a C2 y C3; no se crea más de una vez.
+-- No duplica cobertura: el UNIQUE (id_pedido, id_producto) tiene
+--   id_pedido como prefijo, pero NO incluye cantidad ni precio_unitario,
+--   así que no puede hacer un index-only scan de las columnas que usa la
+--   agregación (cantidad * precio_unitario).
+-- ---------------------------------------------------------------------
+CREATE INDEX idx_detalle_pedido_id_pedido_cover
+    ON detalle_pedido (id_pedido) INCLUDE (id_producto, cantidad, precio_unitario);
+
+-- ---------------------------------------------------------------------
+-- C2 · Top 10 clientes que más gastaron en los últimos 30 días
+--      (specs/A2_top_clientes_30_dias.md)
+-- Resultado ronda 1: 132.009 -> 145.157 ms. NO cumple el tiempo.
+-- Qué logró idx_pedido_fecha:
+--   el Seq Scan sobre pedido desapareció (Index Only Scan, Heap Fetches:
+--   0, 8 366 filas). El Seq Scan on cliente (20 005 filas, 684 buffers)
+--   es barato y no es el problema.
+-- Nodo que ahora es el cuello de botella:
+--   Parallel Seq Scan on detalle_pedido d
+--     (399 994 filas, 3 467 buffers) — lado externo del Hash Join que
+--   alimenta el HashAggregate por cliente.
+-- Ajuste propuesto: NINGUNO NUEVO. El idx_detalle_pedido_id_pedido_cover
+--   creado para C1 ya incluye todas las columnas que C2 necesita de
+--   detalle_pedido (id_pedido como clave; cantidad y precio_unitario en
+--   el INCLUDE), habilitando el mismo Index Only Scan.
+-- Por qué espero que cambie: reduce el costo del lado externo del join
+--   (mismo razonamiento que C1); el resto del plan (Hash Join con cliente
+--   y HashAggregate) queda igual.
+-- ---------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------
+-- C3 · Top 10 productos que más facturaron en los últimos 30 días
+--      (specs/A3_top_productos_30_dias.md)
+-- Resultado ronda 1: 133.836 -> 170.368 ms. NO cumple el tiempo.
+-- Qué logró idx_pedido_fecha:
+--   el Seq Scan sobre pedido desapareció (Index Only Scan, Heap Fetches:
+--   0). Los Seq Scan on producto (50 010 filas, 1 548 buffers) y
+--   categoria (5 filas) son mucho más chicos y no son el cuello.
+-- Nodo que ahora es el cuello de botella:
+--   Parallel Seq Scan on detalle_pedido d
+--     (399 994 filas, 3 467 buffers) — lado externo del Hash Join con
+--   pedido, del que cuelgan los joins con producto y categoria.
+-- Ajuste propuesto: NINGUNO NUEVO. El idx_detalle_pedido_id_pedido_cover
+--   de C1 incluye también id_producto, así que C3 obtiene de
+--   detalle_pedido todo lo que necesita (id_pedido, id_producto, cantidad,
+--   precio_unitario) mediante Index Only Scan.
+-- Por qué espero que cambie: reduce el escaneo del nodo más costoso del
+--   plan medido (el lado externo del join); los joins posteriores con
+--   producto y categoria se mantienen.
+-- ---------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------
+-- C4 · Productos vigentes nunca vendidos
+--      (specs/A4_productos_nunca_vendidos.md)
+-- Resultado ronda 1: 89.943 -> 136.753 ms. NO cumple el tiempo.
+--   En la ronda 1 no se propuso ningún índice para A4, por lo que el plan
+--   medido es esencialmente el mismo Hash Right Anti Join de antes.
+-- Nodo que ahora es el cuello de botella:
+--   Seq Scan on detalle_pedido (399 994 filas, 3 467 buffers), que
+--   alimenta el Hash del anti-join. El Seq Scan on producto
+--   (50 009 filas, 516 buffers) es mucho más chico.
+-- Ajuste propuesto: NINGUNO.
+--   * El filtro producto.activo = TRUE sigue siendo no selectivo
+--     (50 009 de 50 010 filas): un índice parcial WHERE activo = TRUE no
+--     reduce el conjunto leído.
+--   * La columna de correlación detalle_pedido.id_producto ya está
+--     indexada (idx_detalle_pedido_id_producto); no corresponde crear otro
+--     índice que repita esa cobertura.
+--   * El anti-join debe confirmar que ningún producto tiene filas en
+--     detalle_pedido, lo que obliga a recorrer las 400 000 filas (o a
+--     50 000 sondas en un Nested Loop Anti Join, que el planner estima
+--     más caro con random_page_cost = 4).
+--   Ningún índice disponible puede bajar la mediana a la mitad.
+-- ---------------------------------------------------------------------

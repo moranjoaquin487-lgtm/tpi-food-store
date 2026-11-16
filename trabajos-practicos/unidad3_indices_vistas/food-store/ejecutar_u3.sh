@@ -7,6 +7,8 @@
 #   bash ejecutar_u3.sh probar ARCHIVO.sql [...]
 #                                 Prueba índices propuestos: los crea sobre la base limpia, mide las 4 consultas
 #                                 y las escrituras, y los vuelve a borrar. Arma el prompt de la ronda siguiente
+#   bash ejecutar_u3.sh despues   Medición final en una sola corrida: sin y con indices.sql, el índice descartado,
+#                                 views.sql con su verificación y materializadas.sql con su medición
 #   bash ejecutar_u3.sh despues   Índices aceptados de a uno con su medición, escrituras DESPUÉS,
 #                                 vistas con su verificación y la vista materializada
 set -euo pipefail
@@ -116,7 +118,9 @@ probar)
     ETIQ="$(basename "${@: -1}" .sql)"
     echo ">> Base limpia: solo los índices de schema.sql"
     limpiar_indices
-    echo ">> Escrituras sin los índices propuestos, en esta misma corrida (base de comparación)"
+    RONDA="prompts/opencode_ronda$(($# + 1)).md"
+    echo ">> Base de comparación en esta misma corrida: consultas y escrituras sin los índices propuestos"
+    correr mediciones/parteA_consultas.sql "evidencias/prueba_${ETIQ}_planes_sin.txt"
     correr mediciones/parteA_escritura.sql "evidencias/prueba_${ETIQ}_escritura_sin.txt"
     : > "evidencias/prueba_${ETIQ}_aplicado.txt"
     for f in "$@"; do
@@ -137,13 +141,14 @@ probar)
         echo "# Ronda siguiente para OpenCode: resultado medido de tus índices"
         echo
         echo "Probé tus propuestas ($*) sobre la copia de prueba, con la configuración por defecto"
-        echo "(random_page_cost = 4, hasta 2 workers paralelos por consulta). Cada consulta se ejecutó una vez para"
-        echo "calentar la caché y después 3 veces; abajo van las medianas y el último plan de cada una."
+        echo "(random_page_cost = 4, hasta 2 workers paralelos por consulta). En la misma corrida medí primero sin tus"
+        echo "índices y después con ellos. Cada consulta se ejecutó una vez para calentar la caché y después 3 veces;"
+        echo "abajo van las medianas (sin -> con) y el último plan de cada una con tus índices."
         echo
         echo "Criterio de las specs: el plan deja el Seq Scan sobre la tabla grande y la mediana baja al menos a la mitad."
         echo
         echo '```'
-        criterio evidencias/parteA_antes.txt "evidencias/prueba_${ETIQ}_planes.txt"
+        criterio "evidencias/prueba_${ETIQ}_planes_sin.txt" "evidencias/prueba_${ETIQ}_planes.txt"
         echo '```'
         echo
         echo "Escrituras, 500 INSERT de a uno (mediana de 15 rondas, en la misma corrida) sin -> con tus índices:"
@@ -169,20 +174,82 @@ probar)
         tr -d '\r' < "evidencias/prueba_${ETIQ}_planes.txt" | awk '/^######## C/{print; n=0; next} /QUERY PLAN/{n++} n==3{print}' \
             | grep -v -e '^ *QUERY PLAN' -e '^-----' -e '^ *filas *$' -e '^([0-9]* filas*)$'
         echo '```'
-    } > prompts/opencode_ronda2.md
+    } > "$RONDA"
 
     echo
     echo "================ Resumen ================"
     echo "Archivos probados: $*"
-    echo "Medianas ANTES -> con los índices (criterio: bajar al menos a la mitad):"
-    criterio evidencias/parteA_antes.txt "evidencias/prueba_${ETIQ}_planes.txt"
+    echo "Medianas sin -> con los índices, en esta corrida (criterio: bajar al menos a la mitad):"
+    criterio "evidencias/prueba_${ETIQ}_planes_sin.txt" "evidencias/prueba_${ETIQ}_planes.txt"
     echo "Nodos con los índices:"; nodos "evidencias/prueba_${ETIQ}_planes.txt" | sed 's/^/  /'
     echo "Escritura, 500 INSERT (mediana de 15 rondas), sin -> con los índices:"
     echo "  detalle_pedido: $(mediana_escritura "evidencias/prueba_${ETIQ}_escritura_sin.txt") -> $(mediana_escritura "evidencias/prueba_${ETIQ}_escritura.txt") ms"
     echo "  pedido:         $(mediana_pedido "evidencias/prueba_${ETIQ}_escritura_sin.txt") -> $(mediana_pedido "evidencias/prueba_${ETIQ}_escritura.txt") ms"
-    echo "Siguiente paso: prompts/opencode_ronda2.md en OpenCode"
+    echo "Prompt de la ronda siguiente: $RONDA"
+    ;;
+
+despues)
+    for f in indices.sql views.sql materializadas.sql consultas_manuales.sql mediciones/parteA_descartado.sql \
+             mediciones/parteB_verificacion.sql mediciones/parteC_materializada.sql; do
+        [ -f "$f" ] || { echo "Falta $f"; exit 1; }
+    done
+    # Las 4 consultas manuales tienen que estar escritas: ningún CREATE TEMP VIEW puede quedar vacío
+    VACIAS="$(tr -d '\r' < consultas_manuales.sql | awk '/CREATE TEMP VIEW/{v=$4; s=0; next}
+        v && /^[[:space:]]*(--|$)/{next} v && /^[[:space:]]*;/{if (!s) print v; v=""; next} v{s=1}')"
+    [ -z "$VACIAS" ] || { echo "Falta escribir en consultas_manuales.sql: $VACIAS"; exit 1; }
+
+    echo ">> Base limpia: sin vistas, sin vista materializada y solo con los índices de schema.sql"
+    PGOPTIONS="-c client_min_messages=warning" psql -X -q -d "$DB" -v ON_ERROR_STOP=1 -c "DROP MATERIALIZED VIEW IF EXISTS mv_facturacion_categoria_mes" \
+        -c "DROP VIEW IF EXISTS v_productos_vigentes, v_pedidos_cliente, v_detalle_pedido, v_usuario_publico" > /dev/null
+    limpiar_indices
+    psql -X -q -d "$DB" -c 'VACUUM (ANALYZE)'
+
+    echo ">> Parte A: consultas y escrituras SIN los índices nuevos"
+    correr mediciones/parteA_consultas.sql evidencias/final_planes_sin.txt
+    correr mediciones/parteA_escritura.sql evidencias/final_escritura_sin.txt
+    echo ">> Parte A: indices.sql en una transacción"
+    psql -X -d "$DB" -v ON_ERROR_STOP=1 --single-transaction -a -f indices.sql > evidencias/final_indices_aplicados.txt 2>&1 \
+        || { echo "   ERROR (ver evidencias/final_indices_aplicados.txt)"; exit 1; }
+    psql -X -q -d "$DB" -c 'VACUUM (ANALYZE)'
+    psql -X -d "$DB" -c "SELECT indexname, pg_size_pretty(pg_relation_size(('public.' || indexname)::regclass)) AS tamano FROM pg_indexes WHERE schemaname = 'public' AND tablename IN ('pedido', 'detalle_pedido') ORDER BY tablename, indexname" >> evidencias/final_indices_aplicados.txt 2>&1
+    echo ">> Parte A: consultas y escrituras CON los índices"
+    correr mediciones/parteA_consultas.sql evidencias/final_planes_con.txt
+    correr mediciones/parteA_escritura.sql evidencias/final_escritura_con.txt
+    echo ">> Parte A: índice descartado por sobreindexación (se mide y se deshace)"
+    correr mediciones/parteA_descartado.sql evidencias/final_descartado.txt
+
+    echo ">> Parte B: views.sql en una transacción y verificación contra las consultas manuales"
+    psql -X -d "$DB" -v ON_ERROR_STOP=1 --single-transaction -a -f views.sql > evidencias/final_vistas_aplicadas.txt 2>&1 \
+        || { echo "   ERROR (ver evidencias/final_vistas_aplicadas.txt)"; exit 1; }
+    correr mediciones/parteB_verificacion.sql evidencias/parteB_verificacion.txt
+
+    echo ">> Parte C: materializadas.sql en una transacción y medición"
+    psql -X -d "$DB" -v ON_ERROR_STOP=1 --single-transaction -a -f materializadas.sql > evidencias/final_materializada_aplicada.txt 2>&1 \
+        || { echo "   ERROR (ver evidencias/final_materializada_aplicada.txt)"; exit 1; }
+    correr mediciones/parteC_materializada.sql evidencias/parteC_materializada.txt
+
+    echo
+    echo "================ Resumen ================"
+    echo "Parte A, medianas sin -> con indices.sql (criterio de las specs: bajar al menos a la mitad):"
+    criterio evidencias/final_planes_sin.txt evidencias/final_planes_con.txt
+    echo "Parte A, nodos con los índices:"; nodos evidencias/final_planes_con.txt | sed 's/^/  /'
+    echo "Escritura, 500 INSERT (mediana de 15 rondas), sin -> con los índices:"
+    echo "  detalle_pedido: $(mediana_escritura evidencias/final_escritura_sin.txt) -> $(mediana_escritura evidencias/final_escritura_con.txt) ms"
+    echo "  pedido:         $(mediana_pedido evidencias/final_escritura_sin.txt) -> $(mediana_pedido evidencias/final_escritura_con.txt) ms"
+    echo "Índice descartado, C4 sin -> con el candidato:"
+    criterio evidencias/final_planes_sin.txt evidencias/final_descartado.txt
+    echo "  nodos: $(nodos evidencias/final_descartado.txt | sed 's/^C4: //')"
+    echo "Parte B (filas vista | filas manual | vista - manual | manual - vista; se espera 0 y 0):"
+    tr -d '\r' < evidencias/parteB_verificacion.txt | awk '/^######## V/{v=$2} /^ *[0-9]+ \| *[0-9]+ \| *[0-9]+ \| *[0-9]+ *$/{print "  " v ": " $0}' | tr -s ' '
+    echo "Parte B, rol_reportes: vista $(tr -d '\r' < evidencias/parteB_verificacion.txt | awk '/usuarios_visibles/{f=1; next} f && /^ *[0-9]+ *$/{print $1 " filas"; exit}'), tabla usuario: $(tr -d '\r' < evidencias/parteB_verificacion.txt | grep -m1 -E '^(psql:.*)?ERROR' | sed 's/.*ERROR: *//')"
+    echo "Parte C, medianas: reporte en el momento y desde la vista materializada:"
+    medianas evidencias/parteC_materializada.txt | sed 's/^/  /'
+    echo "Parte C (filas vista | filas consulta | vista - consulta | consulta - vista):"
+    tr -d '\r' < evidencias/parteC_materializada.txt | grep -m1 -E '^ *[0-9]+ \| *[0-9]+ \| *[0-9]+ \| *[0-9]+ *$' | tr -s ' ' | sed 's/^/ /'
+    echo "Parte C, REFRESH: $(tr -d '\r' < evidencias/parteC_materializada.txt | awk '/refresh_concurrently_ms|refresh_comun_ms/{n=$1; f=1; next} f && /^ *[0-9.]+ *$/{printf "%s %s ms  ", n, $1; f=0}')"
+    echo "Siguiente paso: avisar para armar el informe"
     ;;
 
 *)
-    echo "Uso: bash $0 antes | probar ARCHIVO.sql [...]"; exit 1 ;;
+    echo "Uso: bash $0 antes | probar ARCHIVO.sql [...] | despues"; exit 1 ;;
 esac

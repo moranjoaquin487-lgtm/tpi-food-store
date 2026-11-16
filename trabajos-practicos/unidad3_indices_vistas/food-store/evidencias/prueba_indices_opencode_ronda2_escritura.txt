@@ -1,0 +1,63 @@
+BEGIN
+CREATE TABLE
+DO
+######## Índices de detalle_pedido y de pedido durante la medición
+   tablename    |                indexname                 
+----------------+------------------------------------------
+ detalle_pedido | detalle_pedido_id_pedido_id_producto_key
+ detalle_pedido | detalle_pedido_pkey
+ detalle_pedido | idx_detalle_pedido_id_pedido_cover
+ detalle_pedido | idx_detalle_pedido_id_producto
+ pedido         | idx_pedido_fecha
+ pedido         | idx_pedido_id_cliente
+ pedido         | pedido_pkey
+(7 filas)
+
+######## Tiempo de cada ronda de 500 INSERT (ms)
+     tabla      | ronda |  ms   
+----------------+-------+-------
+ detalle_pedido |     1 | 20.33
+ detalle_pedido |     2 | 20.98
+ detalle_pedido |     3 | 19.66
+ detalle_pedido |     4 | 20.26
+ detalle_pedido |     5 | 18.79
+ detalle_pedido |     6 | 18.51
+ detalle_pedido |     7 | 18.81
+ detalle_pedido |     8 | 22.77
+ detalle_pedido |     9 | 24.65
+ detalle_pedido |    10 | 20.02
+ detalle_pedido |    11 | 18.24
+ detalle_pedido |    12 | 18.89
+ detalle_pedido |    13 | 17.19
+ detalle_pedido |    14 | 24.25
+ detalle_pedido |    15 | 30.49
+ pedido         |     1 |  9.99
+ pedido         |     2 |  9.97
+ pedido         |     3 |  9.68
+ pedido         |     4 | 10.36
+ pedido         |     5 |  9.84
+ pedido         |     6 |  9.52
+ pedido         |     7 |  9.56
+ pedido         |     8 |  9.41
+ pedido         |     9 |  9.53
+ pedido         |    10 | 10.03
+ pedido         |    11 |  8.89
+ pedido         |    12 |  9.84
+ pedido         |    13 | 10.00
+ pedido         |    14 |  8.99
+ pedido         |    15 | 12.98
+(30 filas)
+
+######## Mediana (ms)
+ mediana_ms 
+------------
+      20.02
+(1 fila)
+
+######## Mediana pedido (ms)
+ mediana_ms 
+------------
+       9.84
+(1 fila)
+
+ROLLBACK
