@@ -2,6 +2,8 @@
 -- Las escribe el estudiante a mano, a partir de las specs y sin copiar las vistas de OpenCode.
 -- Cada una va dentro de su CREATE TEMP VIEW y tiene que devolver las mismas columnas,
 -- en el mismo orden, que la vista que verifica. El runner compara con EXCEPT en los dos sentidos.
+-- Si dos columnas se llaman igual (por ejemplo, el nombre del producto y el de la categoría), ponele un
+-- alias a una: una vista no puede tener dos columnas con el mismo nombre.
 
 -- ######## V1 · productos vigentes con su categoría (specs/B1_v_productos_vigentes.md)
 CREATE TEMP VIEW manual_v1 AS
