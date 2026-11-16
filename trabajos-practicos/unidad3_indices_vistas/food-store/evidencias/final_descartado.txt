@@ -1,0 +1,94 @@
+BEGIN
+######## Selectividad de la condición del índice parcial (activo = TRUE)
+ activos | total | porcentaje_activos 
+---------+-------+--------------------
+   50009 | 50010 |             99.998
+(1 fila)
+
+CREATE INDEX
+ANALYZE
+######## Tamaño del índice candidato frente a la tabla
+ indice  | tabla_producto 
+---------+----------------
+ 2008 kB | 4128 kB
+(1 fila)
+
+######## C4 · Productos vigentes nunca vendidos, con el índice candidato
+ filas 
+-------
+    10
+(1 fila)
+
+                                                             QUERY PLAN                                                              
+-------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=14602.97..14603.19 rows=90 width=32) (actual time=175.605..175.609 rows=10.00 loops=1)
+   Sort Key: producto.nombre
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=3983
+   ->  Hash Right Anti Join  (cost=1641.20..14600.05 rows=90 width=32) (actual time=174.209..175.537 rows=10.00 loops=1)
+         Hash Cond: (detalle_pedido.id_producto = producto.id_producto)
+         Buffers: shared hit=3983
+         ->  Seq Scan on detalle_pedido  (cost=0.00..7466.94 rows=399994 width=8) (actual time=0.043..32.719 rows=399994.00 loops=1)
+               Buffers: shared hit=3467
+         ->  Hash  (cost=1016.10..1016.10 rows=50008 width=32) (actual time=23.242..23.243 rows=50009.00 loops=1)
+               Buckets: 65536  Batches: 1  Memory Usage: 3828kB
+               Buffers: shared hit=516
+               ->  Seq Scan on producto  (cost=0.00..1016.10 rows=50008 width=32) (actual time=0.033..11.145 rows=50009.00 loops=1)
+                     Filter: activo
+                     Rows Removed by Filter: 1
+                     Buffers: shared hit=516
+ Planning:
+   Buffers: shared hit=20
+ Planning Time: 0.561 ms
+ Execution Time: 176.564 ms
+(20 filas)
+
+                                                             QUERY PLAN                                                              
+-------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=14602.97..14603.19 rows=90 width=32) (actual time=178.481..178.485 rows=10.00 loops=1)
+   Sort Key: producto.nombre
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=3983
+   ->  Hash Right Anti Join  (cost=1641.20..14600.05 rows=90 width=32) (actual time=177.214..178.424 rows=10.00 loops=1)
+         Hash Cond: (detalle_pedido.id_producto = producto.id_producto)
+         Buffers: shared hit=3983
+         ->  Seq Scan on detalle_pedido  (cost=0.00..7466.94 rows=399994 width=8) (actual time=0.043..33.138 rows=399994.00 loops=1)
+               Buffers: shared hit=3467
+         ->  Hash  (cost=1016.10..1016.10 rows=50008 width=32) (actual time=24.301..24.302 rows=50009.00 loops=1)
+               Buckets: 65536  Batches: 1  Memory Usage: 3828kB
+               Buffers: shared hit=516
+               ->  Seq Scan on producto  (cost=0.00..1016.10 rows=50008 width=32) (actual time=0.031..11.553 rows=50009.00 loops=1)
+                     Filter: activo
+                     Rows Removed by Filter: 1
+                     Buffers: shared hit=516
+ Planning:
+   Buffers: shared hit=14
+ Planning Time: 0.525 ms
+ Execution Time: 179.141 ms
+(20 filas)
+
+                                                             QUERY PLAN                                                              
+-------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=14602.97..14603.19 rows=90 width=32) (actual time=206.213..206.217 rows=10.00 loops=1)
+   Sort Key: producto.nombre
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=3983
+   ->  Hash Right Anti Join  (cost=1641.20..14600.05 rows=90 width=32) (actual time=204.685..206.167 rows=10.00 loops=1)
+         Hash Cond: (detalle_pedido.id_producto = producto.id_producto)
+         Buffers: shared hit=3983
+         ->  Seq Scan on detalle_pedido  (cost=0.00..7466.94 rows=399994 width=8) (actual time=0.046..35.179 rows=399994.00 loops=1)
+               Buffers: shared hit=3467
+         ->  Hash  (cost=1016.10..1016.10 rows=50008 width=32) (actual time=31.968..31.969 rows=50009.00 loops=1)
+               Buckets: 65536  Batches: 1  Memory Usage: 3828kB
+               Buffers: shared hit=516
+               ->  Seq Scan on producto  (cost=0.00..1016.10 rows=50008 width=32) (actual time=0.030..14.158 rows=50009.00 loops=1)
+                     Filter: activo
+                     Rows Removed by Filter: 1
+                     Buffers: shared hit=516
+ Planning:
+   Buffers: shared hit=14
+ Planning Time: 0.438 ms
+ Execution Time: 206.906 ms
+(20 filas)
+
+ROLLBACK

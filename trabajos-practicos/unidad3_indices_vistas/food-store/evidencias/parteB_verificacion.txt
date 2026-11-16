@@ -1,0 +1,61 @@
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+CREATE VIEW
+######## V1 · v_productos_vigentes contra manual_v1
+ filas_vista | filas_manual | vista_menos_manual | manual_menos_vista 
+-------------+--------------+--------------------+--------------------
+       40009 |        40009 |                  0 |                  0
+(1 fila)
+
+######## V2 · v_pedidos_cliente contra manual_v2
+ filas_vista | filas_manual | vista_menos_manual | manual_menos_vista 
+-------------+--------------+--------------------+--------------------
+      200005 |       200005 |                  0 |                  0
+(1 fila)
+
+######## V3 · v_detalle_pedido contra manual_v3
+ filas_vista | filas_manual | vista_menos_manual | manual_menos_vista 
+-------------+--------------+--------------------+--------------------
+      399994 |       399994 |                  0 |                  0
+(1 fila)
+
+######## V4 · v_usuario_publico contra manual_v4
+ filas_vista | filas_manual | vista_menos_manual | manual_menos_vista 
+-------------+--------------+--------------------+--------------------
+           2 |            2 |                  0 |                  0
+(1 fila)
+
+######## Columnas que expone v_usuario_publico (no tiene que estar contrasena)
+ ordinal_position | column_name 
+------------------+-------------
+                1 | id
+                2 | nombre
+                3 | apellido
+                4 | mail
+                5 | rol
+(5 filas)
+
+######## Permisos de rol_reportes sobre objetos de la base
+    table_name     | privilege_type 
+-------------------+----------------
+ v_usuario_publico | SELECT
+(1 fila)
+
+######## Prueba con SET ROLE rol_reportes
+SET
+  rol_actual  
+--------------
+ rol_reportes
+(1 fila)
+
+== SELECT sobre la vista (tiene que funcionar)
+ usuarios_visibles 
+-------------------
+                 2
+(1 fila)
+
+== SELECT sobre la tabla usuario (tiene que fallar por falta de permisos)
+psql:mediciones/parteB_verificacion.sql:47: ERROR:  permiso denegado a la tabla usuario
+RESET
+== Fin de la prueba de permisos

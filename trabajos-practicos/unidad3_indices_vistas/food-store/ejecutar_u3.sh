@@ -9,6 +9,8 @@
 #                                 y las escrituras, y los vuelve a borrar. Arma el prompt de la ronda siguiente
 #   bash ejecutar_u3.sh despues   Medición final en una sola corrida: sin y con indices.sql, el índice descartado,
 #                                 views.sql con su verificación y materializadas.sql con su medición
+#   bash ejecutar_u3.sh diagnostico   Después de despues: costos de los dos planes posibles de C1 y C1 con
+#                                 random_page_cost = 1.1 (solo en la sesión)
 #   bash ejecutar_u3.sh despues   Índices aceptados de a uno con su medición, escrituras DESPUÉS,
 #                                 vistas con su verificación y la vista materializada
 set -euo pipefail
@@ -250,6 +252,17 @@ despues)
     echo "Siguiente paso: avisar para armar el informe"
     ;;
 
+diagnostico)
+    correr mediciones/parteA_diagnostico_c1.sql evidencias/final_diagnostico_c1.txt
+    echo
+    echo "================ Resumen ================"
+    echo "C1, costo estimado del plan que elige el planner y del Nested Loop forzado:"
+    tr -d '\r' < evidencias/final_diagnostico_c1.txt | awk '/^######## Plan que elige/{f=1; next} /^######## Plan Nested/{f=2; next} /^######## C1/{f=0}
+        f && /cost=/{n++; if (n==1 || (f==2 && !g)) {sub(/^ */, ""); print "  " (f==1 ? "elegido: " : "forzado: ") $0; if (f==2) g=1}}' 
+    echo "C1, medianas en esta corrida:"; medianas evidencias/final_diagnostico_c1.txt | sed 's/^/  /'
+    echo "C1, nodos:"; nodos evidencias/final_diagnostico_c1.txt | sed 's/^/  /'
+    ;;
+
 *)
-    echo "Uso: bash $0 antes | probar ARCHIVO.sql [...] | despues"; exit 1 ;;
+    echo "Uso: bash $0 antes | probar ARCHIVO.sql [...] | despues | diagnostico"; exit 1 ;;
 esac

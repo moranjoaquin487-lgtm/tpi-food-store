@@ -1,0 +1,242 @@
+######## Plan que elige el planner con la configuración por defecto (solo costos)
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=6787.22..7380.03 rows=2172 width=44)
+   Group Key: (date(p.fecha))
+   ->  Gather Merge  (cost=6787.22..7293.15 rows=4344 width=22)
+         Workers Planned: 2
+         ->  Sort  (cost=5787.20..5791.72 rows=1810 width=22)
+               Sort Key: (date(p.fecha)), p.id_pedido
+               ->  Hash Join  (cost=113.59..5689.26 rows=1810 width=22)
+                     Hash Cond: (d.id_pedido = p.id_pedido)
+                     ->  Parallel Seq Scan on detalle_pedido d  (cost=0.00..5133.64 rows=166664 width=18)
+                     ->  Hash  (cost=86.44..86.44 rows=2172 width=16)
+                           ->  Index Only Scan using idx_pedido_fecha on pedido p  (cost=0.43..86.44 rows=2172 width=16)
+                                 Index Cond: (fecha >= ((CURRENT_DATE - 7))::timestamp with time zone)
+(12 filas)
+
+######## Plan Nested Loop forzado, solo para ver su costo estimado (enable_hashjoin y enable_mergejoin en off)
+SET
+SET
+                                                            QUERY PLAN                                                             
+-----------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=7448.91..7546.65 rows=2172 width=44)
+   Group Key: (date(p.fecha))
+   ->  Sort  (cost=7448.91..7459.77 rows=4344 width=22)
+         Sort Key: (date(p.fecha)), p.id_pedido
+         ->  Nested Loop  (cost=0.85..7186.43 rows=4344 width=22)
+               ->  Index Only Scan using idx_pedido_fecha on pedido p  (cost=0.43..86.44 rows=2172 width=16)
+                     Index Cond: (fecha >= ((CURRENT_DATE - 7))::timestamp with time zone)
+               ->  Index Only Scan using idx_detalle_pedido_id_pedido_cover on detalle_pedido d  (cost=0.42..3.24 rows=2 width=18)
+                     Index Cond: (id_pedido = p.id_pedido)
+(9 filas)
+
+RESET
+RESET
+ random_page_cost 
+------------------
+ 4
+(1 fila)
+
+######## C1d · C1 con la configuración por defecto (random_page_cost = 4)
+ filas 
+-------
+     8
+(1 fila)
+
+                                                                               QUERY PLAN                                                                                
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=6787.22..7380.03 rows=2172 width=44) (actual time=188.794..203.246 rows=8.00 loops=1)
+   Group Key: (date(p.fecha))
+   Buffers: shared hit=3606
+   ->  Gather Merge  (cost=6787.22..7293.15 rows=4344 width=22) (actual time=188.337..201.407 rows=4473.00 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=3606
+         ->  Sort  (cost=5787.20..5791.72 rows=1810 width=22) (actual time=57.525..57.666 rows=1491.00 loops=3)
+               Sort Key: (date(p.fecha)), p.id_pedido
+               Sort Method: quicksort  Memory: 401kB
+               Buffers: shared hit=3606
+               Worker 0:  Sort Method: quicksort  Memory: 26kB
+               Worker 1:  Sort Method: quicksort  Memory: 25kB
+               ->  Hash Join  (cost=113.59..5689.26 rows=1810 width=22) (actual time=1.020..55.751 rows=1491.00 loops=3)
+                     Hash Cond: (d.id_pedido = p.id_pedido)
+                     Buffers: shared hit=3574
+                     ->  Parallel Seq Scan on detalle_pedido d  (cost=0.00..5133.64 rows=166664 width=18) (actual time=0.012..20.751 rows=133331.33 loops=3)
+                           Buffers: shared hit=3467
+                     ->  Hash  (cost=86.44..86.44 rows=2172 width=16) (actual time=1.378..1.379 rows=2231.00 loops=2)
+                           Buckets: 4096  Batches: 1  Memory Usage: 137kB
+                           Buffers: shared hit=107
+                           ->  Index Only Scan using idx_pedido_fecha on pedido p  (cost=0.43..86.44 rows=2172 width=16) (actual time=0.216..0.883 rows=2231.00 loops=2)
+                                 Index Cond: (fecha >= ((CURRENT_DATE - 7))::timestamp with time zone)
+                                 Heap Fetches: 2
+                                 Index Searches: 2
+                                 Buffers: shared hit=107
+ Planning:
+   Buffers: shared hit=192
+ Planning Time: 0.836 ms
+ Execution Time: 203.602 ms
+(30 filas)
+
+                                                                               QUERY PLAN                                                                                
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=6787.22..7380.03 rows=2172 width=44) (actual time=246.016..263.553 rows=8.00 loops=1)
+   Group Key: (date(p.fecha))
+   Buffers: shared hit=3552
+   ->  Gather Merge  (cost=6787.22..7293.15 rows=4344 width=22) (actual time=245.470..260.338 rows=4473.00 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=3552
+         ->  Sort  (cost=5787.20..5791.72 rows=1810 width=22) (actual time=37.110..37.317 rows=1491.00 loops=3)
+               Sort Key: (date(p.fecha)), p.id_pedido
+               Sort Method: quicksort  Memory: 402kB
+               Buffers: shared hit=3552
+               Worker 0:  Sort Method: quicksort  Memory: 25kB
+               Worker 1:  Sort Method: quicksort  Memory: 25kB
+               ->  Hash Join  (cost=113.59..5689.26 rows=1810 width=22) (actual time=0.331..35.885 rows=1491.00 loops=3)
+                     Hash Cond: (d.id_pedido = p.id_pedido)
+                     Buffers: shared hit=3520
+                     ->  Parallel Seq Scan on detalle_pedido d  (cost=0.00..5133.64 rows=166664 width=18) (actual time=0.006..12.553 rows=133331.33 loops=3)
+                           Buffers: shared hit=3467
+                     ->  Hash  (cost=86.44..86.44 rows=2172 width=16) (actual time=0.865..0.866 rows=2231.00 loops=1)
+                           Buckets: 4096  Batches: 1  Memory Usage: 137kB
+                           Buffers: shared hit=53
+                           ->  Index Only Scan using idx_pedido_fecha on pedido p  (cost=0.43..86.44 rows=2172 width=16) (actual time=0.037..0.455 rows=2231.00 loops=1)
+                                 Index Cond: (fecha >= ((CURRENT_DATE - 7))::timestamp with time zone)
+                                 Heap Fetches: 1
+                                 Index Searches: 1
+                                 Buffers: shared hit=53
+ Planning:
+   Buffers: shared hit=193
+ Planning Time: 0.780 ms
+ Execution Time: 263.791 ms
+(30 filas)
+
+                                                                               QUERY PLAN                                                                                
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=6787.22..7380.03 rows=2172 width=44) (actual time=166.550..181.118 rows=8.00 loops=1)
+   Group Key: (date(p.fecha))
+   Buffers: shared hit=3552
+   ->  Gather Merge  (cost=6787.22..7293.15 rows=4344 width=22) (actual time=166.080..179.136 rows=4473.00 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=3552
+         ->  Sort  (cost=5787.20..5791.72 rows=1810 width=22) (actual time=38.650..38.803 rows=1491.00 loops=3)
+               Sort Key: (date(p.fecha)), p.id_pedido
+               Sort Method: quicksort  Memory: 402kB
+               Buffers: shared hit=3552
+               Worker 0:  Sort Method: quicksort  Memory: 25kB
+               Worker 1:  Sort Method: quicksort  Memory: 25kB
+               ->  Hash Join  (cost=113.59..5689.26 rows=1810 width=22) (actual time=0.343..37.205 rows=1491.00 loops=3)
+                     Hash Cond: (d.id_pedido = p.id_pedido)
+                     Buffers: shared hit=3520
+                     ->  Parallel Seq Scan on detalle_pedido d  (cost=0.00..5133.64 rows=166664 width=18) (actual time=0.006..12.884 rows=133331.33 loops=3)
+                           Buffers: shared hit=3467
+                     ->  Hash  (cost=86.44..86.44 rows=2172 width=16) (actual time=0.863..0.864 rows=2231.00 loops=1)
+                           Buckets: 4096  Batches: 1  Memory Usage: 137kB
+                           Buffers: shared hit=53
+                           ->  Index Only Scan using idx_pedido_fecha on pedido p  (cost=0.43..86.44 rows=2172 width=16) (actual time=0.042..0.465 rows=2231.00 loops=1)
+                                 Index Cond: (fecha >= ((CURRENT_DATE - 7))::timestamp with time zone)
+                                 Heap Fetches: 1
+                                 Index Searches: 1
+                                 Buffers: shared hit=53
+ Planning:
+   Buffers: shared hit=193
+ Planning Time: 0.960 ms
+ Execution Time: 181.329 ms
+(30 filas)
+
+SET
+ random_page_cost 
+------------------
+ 1.1
+(1 fila)
+
+######## C1r · C1 con random_page_cost = 1.1, solo en la sesión
+ filas 
+-------
+     8
+(1 fila)
+
+                                                                                    QUERY PLAN                                                                                     
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=3026.41..3124.15 rows=2172 width=44) (actual time=19.216..21.142 rows=8.00 loops=1)
+   Group Key: (date(p.fecha))
+   Buffers: shared hit=6765
+   ->  Sort  (cost=3026.41..3037.27 rows=4344 width=22) (actual time=18.924..19.268 rows=4473.00 loops=1)
+         Sort Key: (date(p.fecha)), p.id_pedido
+         Sort Method: quicksort  Memory: 402kB
+         Buffers: shared hit=6765
+         ->  Nested Loop  (cost=0.85..2763.93 rows=4344 width=22) (actual time=0.052..16.450 rows=4473.00 loops=1)
+               Buffers: shared hit=6765
+               ->  Index Only Scan using idx_pedido_fecha on pedido p  (cost=0.43..51.64 rows=2172 width=16) (actual time=0.030..0.426 rows=2231.00 loops=1)
+                     Index Cond: (fecha >= ((CURRENT_DATE - 7))::timestamp with time zone)
+                     Heap Fetches: 1
+                     Index Searches: 1
+                     Buffers: shared hit=53
+               ->  Index Only Scan using idx_detalle_pedido_id_pedido_cover on detalle_pedido d  (cost=0.42..1.22 rows=2 width=18) (actual time=0.006..0.006 rows=2.00 loops=2231)
+                     Index Cond: (id_pedido = p.id_pedido)
+                     Heap Fetches: 0
+                     Index Searches: 2231
+                     Buffers: shared hit=6712
+ Planning:
+   Buffers: shared hit=195
+ Planning Time: 0.680 ms
+ Execution Time: 21.373 ms
+(23 filas)
+
+                                                                                    QUERY PLAN                                                                                     
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=3026.41..3124.15 rows=2172 width=44) (actual time=12.849..14.778 rows=8.00 loops=1)
+   Group Key: (date(p.fecha))
+   Buffers: shared hit=6765
+   ->  Sort  (cost=3026.41..3037.27 rows=4344 width=22) (actual time=12.561..12.905 rows=4473.00 loops=1)
+         Sort Key: (date(p.fecha)), p.id_pedido
+         Sort Method: quicksort  Memory: 402kB
+         Buffers: shared hit=6765
+         ->  Nested Loop  (cost=0.85..2763.93 rows=4344 width=22) (actual time=0.032..10.116 rows=4473.00 loops=1)
+               Buffers: shared hit=6765
+               ->  Index Only Scan using idx_pedido_fecha on pedido p  (cost=0.43..51.64 rows=2172 width=16) (actual time=0.022..0.468 rows=2231.00 loops=1)
+                     Index Cond: (fecha >= ((CURRENT_DATE - 7))::timestamp with time zone)
+                     Heap Fetches: 1
+                     Index Searches: 1
+                     Buffers: shared hit=53
+               ->  Index Only Scan using idx_detalle_pedido_id_pedido_cover on detalle_pedido d  (cost=0.42..1.22 rows=2 width=18) (actual time=0.003..0.003 rows=2.00 loops=2231)
+                     Index Cond: (id_pedido = p.id_pedido)
+                     Heap Fetches: 0
+                     Index Searches: 2231
+                     Buffers: shared hit=6712
+ Planning:
+   Buffers: shared hit=196
+ Planning Time: 0.693 ms
+ Execution Time: 14.942 ms
+(23 filas)
+
+                                                                                    QUERY PLAN                                                                                     
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=3026.41..3124.15 rows=2172 width=44) (actual time=12.535..14.451 rows=8.00 loops=1)
+   Group Key: (date(p.fecha))
+   Buffers: shared hit=6765
+   ->  Sort  (cost=3026.41..3037.27 rows=4344 width=22) (actual time=12.250..12.591 rows=4473.00 loops=1)
+         Sort Key: (date(p.fecha)), p.id_pedido
+         Sort Method: quicksort  Memory: 402kB
+         Buffers: shared hit=6765
+         ->  Nested Loop  (cost=0.85..2763.93 rows=4344 width=22) (actual time=0.031..9.898 rows=4473.00 loops=1)
+               Buffers: shared hit=6765
+               ->  Index Only Scan using idx_pedido_fecha on pedido p  (cost=0.43..51.64 rows=2172 width=16) (actual time=0.022..0.413 rows=2231.00 loops=1)
+                     Index Cond: (fecha >= ((CURRENT_DATE - 7))::timestamp with time zone)
+                     Heap Fetches: 1
+                     Index Searches: 1
+                     Buffers: shared hit=53
+               ->  Index Only Scan using idx_detalle_pedido_id_pedido_cover on detalle_pedido d  (cost=0.42..1.22 rows=2 width=18) (actual time=0.003..0.003 rows=2.00 loops=2231)
+                     Index Cond: (id_pedido = p.id_pedido)
+                     Heap Fetches: 0
+                     Index Searches: 2231
+                     Buffers: shared hit=6712
+ Planning:
+   Buffers: shared hit=197
+ Planning Time: 0.660 ms
+ Execution Time: 14.610 ms
+(23 filas)
+
+RESET

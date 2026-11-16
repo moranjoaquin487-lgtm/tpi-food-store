@@ -11,6 +11,7 @@
 | 1 | Semana 2 — Laboratorio de concurrencia e IA | [`unidad1/semana2_laboratorio_concurrencia`](unidad1/semana2_laboratorio_concurrencia) |
 | 2 | Semana 3 — Optimización asistida por IA: carga masiva, EXPLAIN e índices | [`unidad2/semana3_optimizacion_ia`](unidad2/semana3_optimizacion_ia) |
 | 2 | Semana 4 — Reportes analíticos asistidos por IA: joins, subconsultas, agregación y ventana | [`unidad2/semana4_reportes_analiticos_ia`](unidad2/semana4_reportes_analiticos_ia) |
+| 3 | Semana 5 — Índices, vistas y vistas materializadas (Kiro, OpenCode y Git) | [`unidad3_indices_vistas/food-store`](unidad3_indices_vistas/food-store) |
 | 4 | Normalización avanzada: BCNF, migración reversible y desnormalización | [`unidad4_fnbc_desnormalizacion`](unidad4_fnbc_desnormalizacion) |
 | 4 | TP Semana 8 — FNBC de `control_lote_almacen` y top 5 de categorías desnormalizado | [`unidad4_tp_semana8`](unidad4_tp_semana8) |
 | 5 | Administración y seguridad: roles, auditoría, incidente y anonimización | [`unidad5_seguridad`](unidad5_seguridad) |
