@@ -22,3 +22,20 @@ JOIN categoria c ON c.id_categoria = p.id_categoria
 WHERE p.activo = TRUE
   AND c.activo = TRUE;
 
+-- ===== B2 · v_pedidos_cliente
+-- ---------------------------------------------------------------------
+-- B2 · v_pedidos_cliente (specs/B2_v_pedidos_cliente.md)
+-- Cada pedido con los datos básicos de identificación del cliente.
+-- Sin filtro de vigencia: pedido y cliente no tienen borrado lógico.
+-- Columnas en el orden de la spec.
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE VIEW v_pedidos_cliente AS
+SELECT p.id_pedido,
+       p.fecha,
+       p.forma_pago,
+       p.id_cliente,
+       c.nombre,
+       c.apellido
+FROM pedido p
+JOIN cliente c ON c.id_cliente = p.id_cliente;
+
