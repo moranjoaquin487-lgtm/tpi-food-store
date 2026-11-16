@@ -57,3 +57,40 @@ SELECT dp.id_pedido,
 FROM detalle_pedido dp
 JOIN producto pr ON pr.id_producto = dp.id_producto;
 
+-- ===== B4 · v_usuario_publico y rol_reportes
+-- ---------------------------------------------------------------------
+-- B4 · v_usuario_publico (specs/B4_v_usuario_publico.md)
+-- Vista de seguridad: expone solo id, nombre, apellido, mail y rol de los
+-- usuarios no eliminados, ocultando contrasena y celular. Columnas en el
+-- orden de la spec.
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE VIEW v_usuario_publico AS
+SELECT id,
+       nombre,
+       apellido,
+       mail,
+       rol
+FROM usuario
+WHERE eliminado = FALSE;
+
+-- ---------------------------------------------------------------------
+-- B4 · Control de acceso
+-- El rol de solo lectura rol_reportes puede consultar la vista pero no la
+-- tabla base usuario. La vista corre con los privilegios de su owner, por
+-- lo que basta con el GRANT sobre la vista.
+-- ---------------------------------------------------------------------
+
+-- Crear el rol solo si no existe (CREATE ROLE no admite IF NOT EXISTS).
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rol_reportes') THEN
+        CREATE ROLE rol_reportes NOLOGIN;
+    END IF;
+END
+$$;
+
+-- El rol recibe SELECT sobre la vista...
+GRANT SELECT ON v_usuario_publico TO rol_reportes;
+
+-- ...y ningún permiso sobre la tabla base.
+REVOKE ALL ON usuario FROM rol_reportes;
